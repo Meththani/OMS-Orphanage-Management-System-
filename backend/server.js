@@ -27,6 +27,7 @@ app.use('/api/finances', financialRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/messages', messageRoutes);
 
+
 // Centralized error handler — catches anything thrown that wasn't already
 // caught and turned into a res.status().json() inside a controller.
 app.use((err, req, res, next) => {

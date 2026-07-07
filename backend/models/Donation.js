@@ -53,6 +53,9 @@ const MealDonation = Donation.discriminator(
     mealDate: { type: Date, required: true },
     mealType: { type: String, enum: ['breakfast', 'lunch', 'dinner'], required: true },
     quantity: { type: Number, required: true, min: 1 },
+    occasion: { type: String },
+    menuPackage: { type: String, enum: ['standard', 'special', 'feast'], default: 'standard' },
+    dietaryNotes: { type: String },
   })
 );
 

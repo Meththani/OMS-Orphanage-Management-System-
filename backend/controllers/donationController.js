@@ -131,3 +131,34 @@ exports.getMyDonations = async (req, res) => {
     res.status(500).json({ status: 'error', message: err.message });
   }
 };
+
+// PUT /api/donations/:id — Admin/Staff/Accountant only
+exports.updateDonation = async (req, res) => {
+  try {
+    const donation = await Donation.findById(req.params.id);
+    if (!donation) {
+      return res.status(404).json({ status: 'fail', message: 'Donation not found.' });
+    }
+
+    const fieldsToUpdate = [
+      'status', 'receiptRef', 'notes', 'mealDate', 'mealType', 
+      'quantity', 'occasion', 'menuPackage', 'dietaryNotes', 'amount', 
+      'paymentMethod', 'itemType', 'donorID'
+    ];
+
+    fieldsToUpdate.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === 'mealDate' || field === 'date') {
+          donation[field] = new Date(req.body[field]);
+        } else {
+          donation[field] = req.body[field];
+        }
+      }
+    });
+
+    await donation.save();
+    res.status(200).json({ status: 'success', data: donation });
+  } catch (err) {
+    res.status(400).json({ status: 'error', message: err.message });
+  }
+};

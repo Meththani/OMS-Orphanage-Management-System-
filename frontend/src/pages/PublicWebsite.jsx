@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, modalOverlay, modalBox } from '../styles';
-import { Heart, Phone, Mail, MapPin, Calendar, Clock, Award, ShieldAlert, Check } from 'lucide-react';
+import { Heart, Phone, Mail, MapPin, Calendar, Clock, Award, ShieldAlert, Check, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useEffect } from 'react';
 
@@ -26,9 +26,107 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   const [cashLoading, setCashLoading] = useState(false);
 
   // Meal Booking Form State
-  const [mealForm, setMealForm] = useState({ name: '', email: '', contactDetails: '', mealDate: '', mealType: 'lunch', quantity: '50' });
+  const [mealForm, setMealForm] = useState({
+    name: '',
+    email: '',
+    contactDetails: '',
+    mealDate: '',
+    mealType: 'lunch',
+    quantity: '50',
+    occasion: '',
+    menuPackage: 'standard',
+    dietaryNotes: ''
+  });
   const [mealSuccess, setMealSuccess] = useState(false);
   const [mealLoading, setMealLoading] = useState(false);
+
+  // Calendar & Booked Meals State
+  const [bookings, setBookings] = useState([]);
+  const [childCount, setChildCount] = useState(50);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
+  const fetchBookedMeals = async () => {
+    setCalendarLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/public/booked-meals');
+      const json = await res.json();
+      if (json.status === 'success') {
+        setBookings(json.data.bookings || []);
+        setChildCount(json.data.activeChildCount || 50);
+        // Pre-fill quantity with child count
+        setMealForm(prev => ({
+          ...prev,
+          quantity: String(json.data.activeChildCount || 50)
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching booked meals:', err);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showMealModal) {
+      fetchBookedMeals();
+    }
+  }, [showMealModal]);
+
+  const getDaysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(prev => prev - 1);
+    } else {
+      setCurrentMonth(prev => prev - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(prev => prev + 1);
+    } else {
+      setCurrentMonth(prev => prev + 1);
+    }
+  };
+
+  const getSlotsForDate = (dateKey) => {
+    return bookings.filter(b => {
+      const bDate = new Date(b.mealDate);
+      const bYear = bDate.getFullYear();
+      const bMonth = String(bDate.getMonth() + 1).padStart(2, '0');
+      const bDay = String(bDate.getDate()).padStart(2, '0');
+      const bKey = `${bYear}-${bMonth}-${bDay}`;
+      return bKey === dateKey;
+    });
+  };
+
+  const monthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const getPackagePrice = (pkg) => {
+    if (pkg === 'feast') return 1800;
+    if (pkg === 'special') return 1200;
+    return 600; // standard
+  };
+
+  const calendarDays = [];
+  const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+  const firstDayIndex = getFirstDayOfMonth(currentMonth, currentYear);
+
+  for (let i = 0; i < firstDayIndex; i++) {
+    calendarDays.push(null);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    calendarDays.push(d);
+  }
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
@@ -77,6 +175,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
   const handleMealSubmit = async (e) => {
     e.preventDefault();
+    if (!mealForm.mealDate) {
+      alert('Please select a date from the calendar.');
+      return;
+    }
     setMealLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/public/book-meal', {
@@ -84,16 +186,31 @@ export default function PublicWebsite({ initialTab = 'home' }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mealForm),
       });
+      const data = await res.json();
       if (res.ok) {
         setMealSuccess(true);
-        setMealForm({ name: '', email: '', contactDetails: '', mealDate: '', mealType: 'lunch', quantity: '50' });
+        setMealForm({
+          name: '',
+          email: '',
+          contactDetails: '',
+          mealDate: '',
+          mealType: 'lunch',
+          quantity: String(childCount),
+          occasion: '',
+          menuPackage: 'standard',
+          dietaryNotes: ''
+        });
+        fetchBookedMeals();
         setTimeout(() => {
           setMealSuccess(false);
           setShowMealModal(false);
         }, 3000);
+      } else {
+        alert(data.message || 'Booking failed.');
       }
     } catch (err) {
       console.error(err);
+      alert('An error occurred during booking.');
     } finally {
       setMealLoading(false);
     }
@@ -117,8 +234,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             boxShadow: `0 4px 14px ${colors.primaryGlow}`,
           }} />
           <div>
-            <div style={{ fontSize: '18px', fontWeight: 800, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>OMS</div>
-            <div style={{ fontSize: '11px', color: colors.textMuted }}>Orphanage Management</div>
+            <div style={{ fontSize: '18px', fontWeight: 800, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>Senehasa</div>
+            <div style={{ fontSize: '11px', color: colors.textMuted }}>Child Development Center</div>
           </div>
         </div>
 
@@ -571,9 +688,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       {/* ─── BOOK MEAL MODAL ─── */}
       {showMealModal && (
         <div style={modalOverlay} onClick={() => setShowMealModal(false)}>
-          <div style={{ ...modalBox, width: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '6px' }}>Book Meal Page Modal</h2>
-            <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>Sponsor a delicious meal reservation for the children.</p>
+          <div style={{ ...modalBox, width: '850px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '6px' }}>Book / Sponsor a Meal</h2>
+            <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>Select an available slot on the calendar and fill out the sponsorship details.</p>
 
             {mealSuccess ? (
               <div style={{
@@ -586,50 +703,374 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               </div>
             ) : (
               <form onSubmit={handleMealSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Select Date</label>
-                    <input type="date" style={inputStyle} value={mealForm.mealDate} onChange={(e) => setMealForm({ ...mealForm, mealDate: e.target.value })} required />
+                <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '24px', alignItems: 'start' }}>
+                  
+                  {/* Left Column: Calendar */}
+                  <div style={{ borderRight: `1px solid ${colors.border}`, paddingRight: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <button type="button" onClick={handlePrevMonth} style={{ ...buttonSecondary, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+                        <ChevronLeft size={16} />
+                      </button>
+                      <span style={{ fontWeight: 700, fontSize: '15px', color: colors.text }}>
+                        {monthNames[currentMonth]} {currentYear}
+                      </span>
+                      <button type="button" onClick={handleNextMonth} style={{ ...buttonSecondary, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+
+                    {/* Weekdays header */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '8px' }}>
+                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                        <div key={day} style={{ fontSize: '11px', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase' }}>
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Calendar days grid */}
+                    {calendarLoading ? (
+                      <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.textMuted, fontSize: '13px' }}>
+                        Loading calendar...
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+                        {calendarDays.map((day, idx) => {
+                          if (day === null) {
+                            return <div key={`empty-${idx}`} />;
+                          }
+
+                          const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                          const targetDate = new Date(currentYear, currentMonth, day);
+                          const today = new Date();
+                          today.setHours(0,0,0,0);
+                          const isPast = targetDate < today;
+                          const isSelected = mealForm.mealDate === dateKey;
+                          const isToday = new Date().toDateString() === targetDate.toDateString();
+
+                          const dayBookings = getSlotsForDate(dateKey);
+                          const breakfastBooked = dayBookings.some(b => b.mealType === 'breakfast');
+                          const lunchBooked = dayBookings.some(b => b.mealType === 'lunch');
+                          const dinnerBooked = dayBookings.some(b => b.mealType === 'dinner');
+                          const allBooked = breakfastBooked && lunchBooked && dinnerBooked;
+
+                          let bg = 'transparent';
+                          let txtColor = colors.text;
+                          let borderStyle = '1px solid transparent';
+                          let opacityVal = 1;
+                          let cursorVal = 'pointer';
+
+                          if (isPast) {
+                            opacityVal = 0.4;
+                            cursorVal = 'not-allowed';
+                          } else if (isSelected) {
+                            bg = colors.primary;
+                            txtColor = '#fff';
+                          } else if (allBooked) {
+                            bg = colors.dangerGlow;
+                            txtColor = colors.danger;
+                          } else if (isToday) {
+                            borderStyle = `1px solid ${colors.primary}`;
+                            txtColor = colors.primary;
+                          } else {
+                            bg = colors.surface;
+                          }
+
+                          return (
+                            <div
+                              key={`day-${day}`}
+                              onClick={() => {
+                                if (!isPast) {
+                                  setMealForm(prev => ({ ...prev, mealDate: dateKey }));
+                                }
+                              }}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '8px 4px',
+                                borderRadius: '8px',
+                                height: '42px',
+                                backgroundColor: bg,
+                                color: txtColor,
+                                border: borderStyle,
+                                opacity: opacityVal,
+                                cursor: cursorVal,
+                                transition: 'all 0.15s ease',
+                                fontWeight: (isSelected || isToday) ? 'bold' : 'normal',
+                                fontSize: '13px',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isPast && !isSelected) {
+                                  e.currentTarget.style.filter = 'brightness(0.95)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.filter = 'none';
+                              }}
+                            >
+                              <span>{day}</span>
+                              {!isPast && (
+                                <div style={{ display: 'flex', gap: '3px', marginTop: '2px' }}>
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: breakfastBooked ? colors.danger : colors.success }} title="Breakfast" />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: lunchBooked ? colors.danger : colors.success }} title="Lunch" />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: dinnerBooked ? colors.danger : colors.success }} title="Dinner" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Calendar Legend */}
+                    <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: colors.textSecondary }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors.success }} /> Available
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors.danger }} /> Sponsored
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: colors.primary }} /> Selected
+                        </div>
+                      </div>
+                      <p style={{ margin: '4px 0 0', fontStyle: 'italic', fontSize: '10px', color: colors.textMuted }}>
+                        * Note: To prevent food waste or scheduling gaps, only 1 sponsor is assigned to each slot per day.
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Right Column: Slot Selection & Form */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Meal Type</label>
-                    <select style={selectStyle} value={mealForm.mealType} onChange={(e) => setMealForm({ ...mealForm, mealType: e.target.value })}>
-                      <option value="breakfast">Breakfast</option>
-                      <option value="lunch">Lunch</option>
-                      <option value="dinner">Dinner</option>
-                    </select>
+                    {!mealForm.mealDate ? (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
+                        <Calendar size={48} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                        <h4 style={{ margin: '0 0 6px', color: colors.text }}>No Date Selected</h4>
+                        <p style={{ margin: 0, fontSize: '12px' }}>Please select a date from the calendar to view slot availability and book your sponsorship.</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ marginBottom: '14px' }}>
+                          <h4 style={{ margin: '0 0 4px', fontSize: '13px', color: colors.textMuted }}>Selected Date</h4>
+                          <div style={{ fontWeight: 700, fontSize: '15px', color: colors.primary, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Calendar size={15} />
+                            {new Date(mealForm.mealDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                          </div>
+                        </div>
+
+                        {/* Slots Selector */}
+                        <div style={{ marginBottom: '16px' }}>
+                          <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Available Meal Slots</label>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                            {['breakfast', 'lunch', 'dinner'].map(slotType => {
+                              const dayBookings = getSlotsForDate(mealForm.mealDate);
+                              const existingSponsor = dayBookings.find(b => b.mealType === slotType);
+
+                              if (existingSponsor) {
+                                return (
+                                  <div
+                                    key={slotType}
+                                    style={{
+                                      padding: '10px 4px',
+                                      borderRadius: '8px',
+                                      border: `1px solid ${colors.border}`,
+                                      backgroundColor: colors.surface,
+                                      color: colors.textMuted,
+                                      textAlign: 'center',
+                                      fontSize: '11px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '4px',
+                                      cursor: 'not-allowed',
+                                      opacity: 0.85
+                                    }}
+                                  >
+                                    <Lock size={12} color={colors.danger} />
+                                    <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{slotType}</span>
+                                    <span style={{ fontSize: '9px', color: colors.danger, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', padding: '0 4px' }} title={existingSponsor.donorName}>
+                                      {existingSponsor.donorName}
+                                    </span>
+                                  </div>
+                                );
+                              }
+
+                              const isSelectedSlot = mealForm.mealType === slotType;
+                              return (
+                                <button
+                                  key={slotType}
+                                  type="button"
+                                  onClick={() => setMealForm(prev => ({ ...prev, mealType: slotType }))}
+                                  style={{
+                                    padding: '10px 4px',
+                                    borderRadius: '8px',
+                                    border: `2px solid ${isSelectedSlot ? colors.success : colors.border}`,
+                                    backgroundColor: isSelectedSlot ? colors.successGlow : '#fff',
+                                    color: isSelectedSlot ? colors.success : colors.text,
+                                    cursor: 'pointer',
+                                    textAlign: 'center',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    textTransform: 'capitalize',
+                                    transition: 'all 0.15s',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '4px'
+                                  }}
+                                >
+                                  {isSelectedSlot ? <Check size={12} /> : <Clock size={12} color={colors.textMuted} />}
+                                  {slotType}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Occasion */}
+                        <div style={{ marginBottom: '12px' }}>
+                          <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Occasion / Purpose (Optional)</label>
+                          <input
+                            style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
+                            placeholder="e.g. Birthday, Anniversary, Memorial"
+                            value={mealForm.occasion}
+                            onChange={(e) => setMealForm(prev => ({ ...prev, occasion: e.target.value }))}
+                          />
+                        </div>
+
+                        {/* Menu Package Selection */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', marginBottom: '12px', alignItems: 'start' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Menu Package</label>
+                            <select
+                              style={{ ...selectStyle, marginBottom: 0, padding: '8px 12px' }}
+                              value={mealForm.menuPackage}
+                              onChange={(e) => setMealForm(prev => ({ ...prev, menuPackage: e.target.value }))}
+                            >
+                              <option value="standard">Standard Menu (LKR 600/kid)</option>
+                              <option value="special">Special Menu (LKR 1,200/kid)</option>
+                              <option value="feast">Feast Menu (LKR 1,800/kid)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Portions count</label>
+                            <input
+                              type="number"
+                              min="10"
+                              style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
+                              value={mealForm.quantity}
+                              onChange={(e) => setMealForm(prev => ({ ...prev, quantity: e.target.value }))}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Menu descriptions */}
+                        <div style={{
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: colors.surface,
+                          fontSize: '11px',
+                          color: colors.textSecondary,
+                          lineHeight: '1.4',
+                          marginBottom: '12px',
+                          border: `1px solid ${colors.border}`
+                        }}>
+                          {mealForm.menuPackage === 'standard' && (
+                            <span>🍚 <strong>Standard Package:</strong> White rice, tempered dhal, mixed vegetable curry, coconut sambol, and papadum. A simple, wholesome meal.</span>
+                          )}
+                          {mealForm.menuPackage === 'special' && (
+                            <span>🍗 <strong>Special Package:</strong> Fragrant ghee rice, chicken/paneer curry, dhal gravy, fresh fruit salad, and caramel pudding for dessert.</span>
+                          )}
+                          {mealForm.menuPackage === 'feast' && (
+                            <span>🍲 <strong>Grand Feast:</strong> Premium basmati biryani (chicken/paneer), eggs, onion raita, traditional watalappam dessert, ice cream, and juice.</span>
+                          )}
+                        </div>
+
+                        {/* Dietary Notes */}
+                        <div style={{ marginBottom: '12px' }}>
+                          <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Dietary Requests / Instructions (Optional)</label>
+                          <textarea
+                            style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px', minHeight: '40px', resize: 'vertical' }}
+                            placeholder="e.g. Vegetarian only, mild spices, no nuts"
+                            value={mealForm.dietaryNotes}
+                            onChange={(e) => setMealForm(prev => ({ ...prev, dietaryNotes: e.target.value }))}
+                          />
+                        </div>
+
+                        {/* Cost Callout */}
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 14px',
+                          backgroundColor: colors.successGlow,
+                          border: `1px solid rgba(16, 185, 129, 0.2)`,
+                          borderRadius: '8px',
+                          color: colors.success,
+                          marginBottom: '16px'
+                        }}>
+                          <span style={{ fontSize: '11px', fontWeight: 600 }}>Estimated Contribution:</span>
+                          <span style={{ fontWeight: 800, fontSize: '15px' }}>
+                            LKR {(Number(mealForm.quantity || childCount) * getPackagePrice(mealForm.menuPackage)).toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Donor Info Header */}
+                        <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '12px', marginTop: '12px' }}>
+                          <h4 style={{ margin: '0 0 8px', fontSize: '13px', color: colors.text }}>Donor Contact Details</h4>
+                          
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
+                            <div>
+                              <input
+                                style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
+                                placeholder="Your full name"
+                                value={mealForm.name}
+                                onChange={(e) => setMealForm(prev => ({ ...prev, name: e.target.value }))}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="email"
+                                style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
+                                placeholder="email@example.com"
+                                value={mealForm.email}
+                                onChange={(e) => setMealForm(prev => ({ ...prev, email: e.target.value }))}
+                                required
+                              />
+                            </div>
+                          </div>
+                          <input
+                            style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
+                            placeholder="Contact number (optional)"
+                            value={mealForm.contactDetails}
+                            onChange={(e) => setMealForm(prev => ({ ...prev, contactDetails: e.target.value }))}
+                          />
+                        </div>
+
+                        {/* Agreement */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', marginBottom: '14px' }}>
+                          <input type="checkbox" id="agree" required style={{ marginTop: '3px' }} />
+                          <label htmlFor="agree" style={{ fontSize: '10px', color: colors.textSecondary, cursor: 'pointer' }}>
+                            I agree to coordinate details with the orphanage coordinator if scheduling conflicts occur.
+                          </label>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                          <button type="button" style={buttonSecondary} onClick={() => setShowMealModal(false)}>Cancel</button>
+                          <button type="submit" style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)` }} disabled={mealLoading}>
+                            {mealLoading ? 'Scheduling...' : 'Confirm Booking'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-
-                <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Quantity (Meals count)</label>
-                  <input type="number" style={inputStyle} min="10" placeholder="e.g. 50" value={mealForm.quantity} onChange={(e) => setMealForm({ ...mealForm, quantity: e.target.value })} required />
-                  <span style={{ fontSize: '11px', color: colors.textMuted }}>Minimum 10 meals recommended to cover child facility.</span>
-                </div>
-
-                {/* Donor Details */}
-                <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Your Name</label>
-                  <input style={inputStyle} placeholder="Full name" value={mealForm.name} onChange={(e) => setMealForm({ ...mealForm, name: e.target.value })} required />
-
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Email Address</label>
-                  <input type="email" style={inputStyle} placeholder="email@example.com" value={mealForm.email} onChange={(e) => setMealForm({ ...mealForm, email: e.target.value })} required />
-
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Contact Number (Optional)</label>
-                  <input style={inputStyle} placeholder="Phone number" value={mealForm.contactDetails} onChange={(e) => setMealForm({ ...mealForm, contactDetails: e.target.value })} />
-                </div>
-
-                {/* Agreement */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '14px', marginBottom: '14px' }}>
-                  <input type="checkbox" id="agree" required style={{ marginTop: '3px' }} />
-                  <label htmlFor="agree" style={{ fontSize: '11px', color: colors.textSecondary, cursor: 'pointer' }}>
-                    I agree to coordinates dates with the orphanage coordinator if scheduling conflicts occur.
-                  </label>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                  <button type="button" style={buttonSecondary} onClick={() => setShowMealModal(false)}>Cancel</button>
-                  <button type="submit" style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)` }} disabled={mealLoading}>{mealLoading ? 'Scheduling...' : 'Confirm Booking'}</button>
                 </div>
               </form>
             )}

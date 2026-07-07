@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
-import { TrendingDown, Plus, DollarSign, Calendar } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 
 const emptyForm = { category: 'Food & Nutrition', amount: '', referenceReceipt: '', description: '', bankAccountId: '' };
 
 export default function ExpenseManagement() {
   const [expenses, setExpenses] = useState([]);
+  const [incomes, setIncomes] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,11 +19,13 @@ export default function ExpenseManagement() {
     setLoading(true);
     setError('');
     try {
-      const [expenseRes, bankRes] = await Promise.all([
+      const [expenseRes, incomeRes, bankRes] = await Promise.all([
         api.get('/finances/expenses'),
+        api.get('/finances/income'),
         api.get('/finances/bank-accounts'),
       ]);
       setExpenses(expenseRes.data);
+      setIncomes(incomeRes.data);
       setBankAccounts(bankRes.data);
       if (bankRes.data.length > 0) {
         setForm(f => ({ ...f, bankAccountId: bankRes.data[0]._id }));
@@ -68,6 +71,10 @@ export default function ExpenseManagement() {
     }
   };
 
+  const totalIncome = incomes.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const netBalance = totalIncome - totalExpenses;
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -93,6 +100,42 @@ export default function ExpenseManagement() {
           ⚠️ {error}
         </div>
       )}
+
+      {/* Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+        <div style={cardStyle}>
+          <div style={{ fontSize: '12px', color: colors.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: colors.success }}></span>
+            Total Income
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 700, color: colors.success, marginTop: '8px', fontFamily: "'Outfit', sans-serif" }}>
+            LKR {totalIncome.toLocaleString()}
+          </div>
+          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>{incomes.length} records logged</div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: '12px', color: colors.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: colors.danger }}></span>
+            Total Expenses
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 700, color: colors.danger, marginTop: '8px', fontFamily: "'Outfit', sans-serif" }}>
+            LKR {totalExpenses.toLocaleString()}
+          </div>
+          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>{expenses.length} records logged</div>
+        </div>
+
+        <div style={cardStyle}>
+          <div style={{ fontSize: '12px', color: colors.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: netBalance >= 0 ? colors.primary : colors.warning }}></span>
+            Net Balance
+          </div>
+          <div style={{ fontSize: '24px', fontWeight: 700, color: netBalance >= 0 ? colors.primary : colors.danger, marginTop: '8px', fontFamily: "'Outfit', sans-serif" }}>
+            LKR {netBalance.toLocaleString()}
+          </div>
+          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>Overall cash flow</div>
+        </div>
+      </div>
 
       <div style={cardStyle}>
         {loading ? (

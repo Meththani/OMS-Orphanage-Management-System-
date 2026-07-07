@@ -5,6 +5,7 @@ const {
   getDonation,
   updateDonationStatus,
   getMyDonations,
+  updateDonation,
 } = require('../controllers/donationController');
 const { protect, restrictTo } = require('../middleware/auth');
 
@@ -31,7 +32,7 @@ router.get('/donors-list', async (req, res) => {
 
 router.route('/').get(getAllDonations).post(createDonation);
 
-router.route('/:id').get(getDonation);
+router.route('/:id').get(getDonation).put(updateDonation);
 
 router.patch('/:id/status', updateDonationStatus);
 

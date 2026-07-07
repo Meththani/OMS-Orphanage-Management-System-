@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import {
   colors, cardStyle, buttonPrimary, buttonSecondary, buttonDanger,
-  inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox,
+  inputStyle, selectStyle, modalOverlay, modalBox,
 } from '../styles';
 import { Eye, Edit2, Trash2, X, Phone, User, Calendar, Hash, Briefcase, Award } from 'lucide-react';
 
@@ -192,81 +192,36 @@ export default function StaffManagement() {
                 e.currentTarget.style.borderColor = colors.border;
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '46px', height: '46px', borderRadius: '8px',
-                    background: `linear-gradient(135deg, ${colors.primary}, #a855f7)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: '18px', fontWeight: 800, flexShrink: 0
-                  }}>
-                    {member.name?.charAt(0)?.toUpperCase() || '?'}
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 700, color: colors.text, margin: 0 }}>
-                      {member.name}
-                    </h3>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
-                      <span style={{
-                        padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700,
-                        background: member.role === 'admin' ? colors.dangerGlow : member.role === 'accountant' ? colors.warningGlow : colors.primaryGlow,
-                        color: member.role === 'admin' ? colors.danger : member.role === 'accountant' ? colors.warning : colors.primary,
-                        textTransform: 'uppercase'
-                      }}>
-                        {member.role}
-                      </span>
-                      <span style={{
-                        padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700,
-                        background: member.isActive ? colors.successGlow : colors.dangerGlow,
-                        color: member.isActive ? colors.success : colors.danger,
-                      }}>
-                        {member.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                  </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '46px', height: '46px', borderRadius: '8px',
+                  background: `linear-gradient(135deg, ${colors.primary}, #a855f7)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: '18px', fontWeight: 800, flexShrink: 0
+                }}>
+                  {member.name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
-
-                {/* Actions Icon Group */}
-                <div style={{ display: 'flex', gap: '2px' }}>
-                  <button
-                    onClick={() => setSelectedStaff(member)}
-                    title="View Profile Details"
-                    style={{
-                      background: 'none', border: 'none', color: colors.primary, cursor: 'pointer',
-                      padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center',
-                      transition: 'background 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.primaryGlow}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <Eye size={16} />
-                  </button>
-                  <button
-                    onClick={() => startEdit(member)}
-                    title="Edit Profile"
-                    style={{
-                      background: 'none', border: 'none', color: colors.textSecondary, cursor: 'pointer',
-                      padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center',
-                      transition: 'background 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.05)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(member._id)}
-                    title="Delete Account"
-                    style={{
-                      background: 'none', border: 'none', color: colors.danger, cursor: 'pointer',
-                      padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center',
-                      transition: 'background 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.dangerGlow}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: colors.text, margin: 0 }}>
+                    {member.name}
+                  </h3>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
+                    <span style={{
+                      padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700,
+                      background: member.role === 'admin' ? colors.dangerGlow : member.role === 'accountant' ? colors.warningGlow : colors.primaryGlow,
+                      color: member.role === 'admin' ? colors.danger : member.role === 'accountant' ? colors.warning : colors.primary,
+                      textTransform: 'uppercase'
+                    }}>
+                      {member.role}
+                    </span>
+                    <span style={{
+                      padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700,
+                      background: member.isActive ? colors.successGlow : colors.dangerGlow,
+                      color: member.isActive ? colors.success : colors.danger,
+                    }}>
+                      {member.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -274,6 +229,63 @@ export default function StaffManagement() {
                 <div>Job Title: <strong style={{ color: colors.text }}>{member.jobRole || 'Staff Member'}</strong></div>
                 {member.department && <div>Dept: <strong style={{ color: colors.text }}>{member.department}</strong></div>}
                 <div>Phone: <strong style={{ color: colors.text }}>{member.contactDetails || 'N/A'}</strong></div>
+              </div>
+
+              {/* Action Buttons Row */}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <button
+                  onClick={() => setSelectedStaff(member)}
+                  title="View Profile Details"
+                  style={{
+                    ...buttonSecondary,
+                    flex: 1,
+                    padding: '8px',
+                    fontSize: '13px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Eye size={14} /> Details
+                </button>
+                <button
+                  onClick={() => startEdit(member)}
+                  title="Edit Profile"
+                  style={{
+                    ...buttonSecondary,
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  onClick={() => handleDelete(member._id)}
+                  title="Delete Account"
+                  style={{
+                    ...buttonSecondary,
+                    padding: '8px 12px',
+                    color: colors.danger,
+                    borderColor: 'rgba(239,68,68,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.dangerGlow;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.surface;
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
 
               <button

@@ -164,3 +164,68 @@ button:disabled {
 main > div {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Print styles for high-fidelity PDF generation */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  aside, 
+  button, 
+  nav, 
+  header, 
+  footer,
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+  
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+
+  /* Printable container resets */
+  .printable-report {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Ensure text colors are high-contrast on white paper */
+  .printable-report h1,
+  .printable-report h2,
+  .printable-report h3,
+  .printable-report h4,
+  .printable-report td,
+  .printable-report th {
+    color: #000000 !important;
+  }
+
+  /* Avoid splitting items in list */
+  tr {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Tables formatting for print */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8px 12px !important;
+  }
+}

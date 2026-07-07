@@ -9,6 +9,7 @@ import { Heart, Plus, Calendar, Filter } from 'lucide-react';
 const emptyForm = {
   type: 'cash', donorID: '', amount: '', itemType: '', quantity: '',
   mealDate: '', mealType: 'breakfast', receiptRef: '', notes: '',
+  occasion: '', menuPackage: 'standard', dietaryNotes: '',
 };
 
 export default function DonationsManagement() {
@@ -183,7 +184,7 @@ export default function DonationsManagement() {
                   <td style={tdStyle}>
                     {d.type === 'cash' && `LKR ${d.amount?.toLocaleString()}`}
                     {d.type === 'goods' && `${d.quantity} × ${d.itemType}`}
-                    {d.type === 'meal' && `${d.quantity} × ${d.mealType}`}
+                    {d.type === 'meal' && `${d.quantity} × ${d.mealType}${d.occasion ? ` (${d.occasion})` : ''}`}
                   </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -287,6 +288,16 @@ export default function DonationsManagement() {
                   </select>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity (Kids portions)</label>
                   <input style={inputStyle} name="quantity" type="number" placeholder="Number of kids fed" value={form.quantity} onChange={handleChange} required />
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Occasion (Optional)</label>
+                  <input style={inputStyle} name="occasion" placeholder="e.g. Birthday Celebration" value={form.occasion} onChange={handleChange} />
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Menu Package</label>
+                  <select style={selectStyle} name="menuPackage" value={form.menuPackage} onChange={handleChange}>
+                    <option value="standard">Standard Menu ($2/kid)</option>
+                    <option value="special">Special Menu ($4/kid)</option>
+                    <option value="feast">Feast Menu ($6/kid)</option>
+                  </select>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Dietary Notes (Optional)</label>
+                  <textarea style={{ ...inputStyle, minHeight: '50px', resize: 'vertical' }} name="dietaryNotes" placeholder="e.g. Vegetarian only, no seafood" value={form.dietaryNotes} onChange={handleChange} />
                 </>
               )}
 
