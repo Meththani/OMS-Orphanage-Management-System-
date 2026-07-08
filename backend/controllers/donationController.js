@@ -141,9 +141,10 @@ exports.updateDonation = async (req, res) => {
     }
 
     const fieldsToUpdate = [
-      'status', 'receiptRef', 'notes', 'mealDate', 'mealType', 
-      'quantity', 'occasion', 'menuPackage', 'dietaryNotes', 'amount', 
-      'paymentMethod', 'itemType', 'donorID'
+      'status', 'receiptRef', 'notes', 'mealDate', 'mealType',
+      'quantity', 'occasion', 'menuPackage', 'dietaryNotes', 'amount',
+      'paymentMethod', 'itemType', 'donorID',
+      'mealDonationType', 'estimatedCost', 'donorCooksMenu'
     ];
 
     fieldsToUpdate.forEach(field => {

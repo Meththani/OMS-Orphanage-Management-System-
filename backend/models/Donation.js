@@ -54,7 +54,11 @@ const MealDonation = Donation.discriminator(
     mealType: { type: String, enum: ['breakfast', 'lunch', 'dinner'], required: true },
     quantity: { type: Number, required: true, min: 1 },
     occasion: { type: String },
+    // 'sponsor' = donor pays, orphanage cooks | 'bringyourown' = donor prepares meal themselves
+    mealDonationType: { type: String, enum: ['sponsor', 'bringyourown'], default: 'sponsor' },
     menuPackage: { type: String, enum: ['standard', 'special', 'feast'], default: 'standard' },
+    estimatedCost: { type: Number, min: 0 },      // used when mealDonationType = 'sponsor'
+    donorCooksMenu: { type: String },              // used when mealDonationType = 'bringyourown'
     dietaryNotes: { type: String },
   })
 );
