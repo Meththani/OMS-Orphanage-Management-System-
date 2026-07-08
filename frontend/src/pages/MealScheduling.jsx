@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
-import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, Lock, User, MessageSquare, Sparkles, Plus, Edit2 } from 'lucide-react';
+import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign } from 'lucide-react';
 
 export default function MealScheduling() {
   const [meals, setMeals] = useState([]);
@@ -24,7 +24,10 @@ export default function MealScheduling() {
     mealType: 'breakfast',
     quantity: '50',
     occasion: '',
+    mealDonationType: 'sponsor',   // 'sponsor' | 'bringyourown'
     menuPackage: 'standard',
+    estimatedCost: '',
+    donorCooksMenu: '',
     dietaryNotes: '',
     status: 'pending'
   });
@@ -68,7 +71,10 @@ export default function MealScheduling() {
         mealType: meal.mealType || 'breakfast',
         quantity: String(meal.quantity || 50),
         occasion: meal.occasion || '',
+        mealDonationType: meal.mealDonationType || 'sponsor',
         menuPackage: meal.menuPackage || 'standard',
+        estimatedCost: meal.estimatedCost ? String(meal.estimatedCost) : '',
+        donorCooksMenu: meal.donorCooksMenu || '',
         dietaryNotes: meal.dietaryNotes || '',
         status: meal.status || 'pending'
       });
@@ -80,7 +86,10 @@ export default function MealScheduling() {
         mealType: 'breakfast',
         quantity: '50',
         occasion: '',
+        mealDonationType: 'sponsor',
         menuPackage: 'standard',
+        estimatedCost: '',
+        donorCooksMenu: '',
         dietaryNotes: '',
         status: 'pending'
       });
@@ -302,14 +311,24 @@ export default function MealScheduling() {
                         )}
                       </td>
                       <td style={tdStyle}>
-                        <span style={{
-                          padding: '3px 8px', borderRadius: '4px',
-                          backgroundColor: meal.menuPackage === 'feast' ? colors.warningGlow : meal.menuPackage === 'special' ? colors.successGlow : colors.primaryGlow,
-                          color: meal.menuPackage === 'feast' ? colors.warning : meal.menuPackage === 'special' ? colors.success : colors.primary,
-                          fontWeight: 600, fontSize: '11px', textTransform: 'capitalize'
-                        }}>
-                          {meal.menuPackage || 'standard'}
-                        </span>
+                        {meal.mealDonationType === 'bringyourown' ? (
+                          <span style={{
+                            padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            backgroundColor: 'rgba(168,85,247,0.12)', color: '#a855f7',
+                            fontWeight: 600, fontSize: '11px'
+                          }}>
+                            <ShoppingBag size={10} /> Self-Catered
+                          </span>
+                        ) : (
+                          <span style={{
+                            padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            backgroundColor: meal.menuPackage === 'feast' ? colors.warningGlow : meal.menuPackage === 'special' ? colors.successGlow : colors.primaryGlow,
+                            color: meal.menuPackage === 'feast' ? colors.warning : meal.menuPackage === 'special' ? colors.success : colors.primary,
+                            fontWeight: 600, fontSize: '11px', textTransform: 'capitalize'
+                          }}>
+                            <Utensils size={10} /> {meal.menuPackage || 'standard'}
+                          </span>
+                        )}
                       </td>
                       <td style={tdStyle}>{meal.quantity} Kids portions</td>
                       <td style={{ ...tdStyle, fontSize: '12px', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meal.dietaryNotes}>
@@ -566,20 +585,67 @@ export default function MealScheduling() {
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Menu Package</span>
-                  <div style={{ fontWeight: 600, fontSize: '13px', color: colors.primary, marginTop: '4px', textTransform: 'capitalize' }}>
-                    🍽️ {selectedMeal.menuPackage || 'standard'}
-                  </div>
-                </div>
-                <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Quantity</span>
-                  <div style={{ fontWeight: 600, fontSize: '13px', color: colors.text, marginTop: '4px' }}>
-                    😋 {selectedMeal.quantity} Kids Portions
-                  </div>
-                </div>
+              {/* Donation type badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                {selectedMeal.mealDonationType === 'bringyourown' ? (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '5px 12px', borderRadius: '20px',
+                    background: 'rgba(168,85,247,0.12)', color: '#a855f7', fontWeight: 700, fontSize: '12px'
+                  }}>
+                    <ShoppingBag size={12} /> Bring Your Own Meal
+                  </span>
+                ) : (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '5px 12px', borderRadius: '20px',
+                    background: colors.primaryGlow, color: colors.primary, fontWeight: 700, fontSize: '12px'
+                  }}>
+                    <DollarSign size={12} /> Sponsor a Meal
+                  </span>
+                )}
               </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {selectedMeal.mealDonationType !== 'bringyourown' && (
+                  <div>
+                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Menu Package</span>
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: colors.primary, marginTop: '4px', textTransform: 'capitalize' }}>
+                      🍽️ {selectedMeal.menuPackage || 'standard'}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Children to Feed</span>
+                  <div style={{ fontWeight: 600, fontSize: '13px', color: colors.text, marginTop: '4px' }}>
+                    😋 {selectedMeal.quantity} Kids
+                  </div>
+                </div>
+                {selectedMeal.mealDonationType === 'sponsor' && selectedMeal.estimatedCost && (
+                  <div>
+                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Estimated Cost</span>
+                    <div style={{ fontWeight: 600, fontSize: '13px', color: colors.success, marginTop: '4px' }}>
+                      💰 LKR {selectedMeal.estimatedCost.toLocaleString()}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bring Your Own Meal description */}
+              {selectedMeal.mealDonationType === 'bringyourown' && selectedMeal.donorCooksMenu && (
+                <div>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Donor&apos;s Menu Plan</span>
+                  <div style={{
+                    fontSize: '13px', color: '#a855f7', fontWeight: 500, marginTop: '4px',
+                    padding: '8px 12px', background: 'rgba(168,85,247,0.08)',
+                    borderRadius: '8px', border: '1px solid rgba(168,85,247,0.15)',
+                    display: 'flex', gap: '6px', alignItems: 'flex-start'
+                  }}>
+                    <ShoppingBag size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
+                    <span>{selectedMeal.donorCooksMenu}</span>
+                  </div>
+                </div>
+              )}
 
               {selectedMeal.dietaryNotes && (
                 <div>
@@ -657,12 +723,12 @@ export default function MealScheduling() {
       {/* ─── SCHEDULING / EDITING FORM MODAL ─── */}
       {showFormModal && (
         <div style={modalOverlay} onClick={() => setShowFormModal(false)}>
-          <div style={{ ...modalBox, width: '520px' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '6px' }}>
-              {editingMealId ? 'Edit Meal Sponsorship' : 'Schedule Meal Donation'}
+          <div style={{ ...modalBox, width: '560px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '4px' }}>
+              {editingMealId ? '✏️ Edit Meal Donation' : '🍽️ Schedule Meal Donation'}
             </h2>
             <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>
-              {editingMealId ? 'Update the sponsored meal reservation details.' : 'Record a new meal sponsorship in the system.'}
+              {editingMealId ? 'Update the meal donation reservation details.' : 'Choose how the donor would like to contribute a meal.'}
             </p>
 
             {formError && (
@@ -676,7 +742,94 @@ export default function MealScheduling() {
             )}
 
             <form onSubmit={handleFormSubmit}>
-              {/* Select Donor */}
+
+              {/* ── DONATION MODE TOGGLE ── */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Donation Type
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+
+                  {/* Card 1: Sponsor a Meal */}
+                  <div
+                    onClick={() => setForm({ ...form, mealDonationType: 'sponsor' })}
+                    style={{
+                      border: form.mealDonationType === 'sponsor'
+                        ? `2px solid ${colors.primary}`
+                        : `2px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      background: form.mealDonationType === 'sponsor'
+                        ? `linear-gradient(135deg, ${colors.primaryGlow}, rgba(29,112,184,0.05))`
+                        : colors.surface,
+                      transition: 'all 0.2s ease',
+                      boxShadow: form.mealDonationType === 'sponsor' ? `0 4px 16px ${colors.primaryGlow}` : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                      <div style={{
+                        width: '34px', height: '34px', borderRadius: '10px',
+                        background: form.mealDonationType === 'sponsor'
+                          ? `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`
+                          : colors.border,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.2s ease',
+                      }}>
+                        <DollarSign size={16} color="#fff" />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: form.mealDonationType === 'sponsor' ? colors.primary : colors.text }}>Sponsor a Meal</div>
+                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '1px' }}>Donate money · Staff cook</div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '11px', color: colors.textSecondary, margin: 0, lineHeight: '1.5' }}>
+                      Donor contributes funds. Our orphanage staff will prepare and serve the meal.
+                    </p>
+                  </div>
+
+                  {/* Card 2: Bring Your Own Meal */}
+                  <div
+                    onClick={() => setForm({ ...form, mealDonationType: 'bringyourown' })}
+                    style={{
+                      border: form.mealDonationType === 'bringyourown'
+                        ? '2px solid #a855f7'
+                        : `2px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      background: form.mealDonationType === 'bringyourown'
+                        ? 'linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.03))'
+                        : colors.surface,
+                      transition: 'all 0.2s ease',
+                      boxShadow: form.mealDonationType === 'bringyourown' ? '0 4px 16px rgba(168,85,247,0.2)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                      <div style={{
+                        width: '34px', height: '34px', borderRadius: '10px',
+                        background: form.mealDonationType === 'bringyourown'
+                          ? 'linear-gradient(135deg, #a855f7, #7c3aed)'
+                          : colors.border,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.2s ease',
+                      }}>
+                        <ShoppingBag size={16} color="#fff" />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: form.mealDonationType === 'bringyourown' ? '#a855f7' : colors.text }}>Bring Your Own Meal</div>
+                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '1px' }}>Self-catered · Donor prepares</div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '11px', color: colors.textSecondary, margin: 0, lineHeight: '1.5' }}>
+                      Donor books a date and brings or prepares the meal themselves.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ── COMMON FIELDS ── */}
               <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Select Donor Profile</label>
               <select
                 style={selectStyle}
@@ -710,56 +863,108 @@ export default function MealScheduling() {
                     value={form.mealType}
                     onChange={(e) => setForm({ ...form, mealType: e.target.value })}
                   >
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
+                    <option value="breakfast">🌅 Breakfast</option>
+                    <option value="lunch">☀️ Lunch</option>
+                    <option value="dinner">🌙 Dinner</option>
                   </select>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Menu Package</label>
-                  <select
-                    style={selectStyle}
-                    value={form.menuPackage}
-                    onChange={(e) => setForm({ ...form, menuPackage: e.target.value })}
-                  >
-                    <option value="standard">Standard Menu ($2/kid)</option>
-                    <option value="special">Special Menu ($4/kid)</option>
-                    <option value="feast">Feast Menu ($6/kid)</option>
-                  </select>
+              {/* ── SPONSOR-SPECIFIC FIELDS ── */}
+              {form.mealDonationType === 'sponsor' && (
+                <div style={{
+                  background: colors.primaryGlow,
+                  border: `1px solid rgba(29,112,184,0.2)`,
+                  borderRadius: '10px', padding: '14px', marginBottom: '14px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                    <Utensils size={14} color={colors.primary} />
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Staff-Cooked Meal Options</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Menu Package</label>
+                      <select
+                        style={selectStyle}
+                        value={form.menuPackage}
+                        onChange={(e) => setForm({ ...form, menuPackage: e.target.value })}
+                      >
+                        <option value="standard">🍛 Standard Menu</option>
+                        <option value="special">⭐ Special Menu</option>
+                        <option value="feast">🎉 Feast Menu</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Estimated Cost (LKR)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        style={inputStyle}
+                        placeholder="e.g. 15000"
+                        value={form.estimatedCost}
+                        onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Quantity (portions)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    style={inputStyle}
-                    value={form.quantity}
-                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                    required
+              )}
+
+              {/* ── BRING YOUR OWN MEAL FIELDS ── */}
+              {form.mealDonationType === 'bringyourown' && (
+                <div style={{
+                  background: 'rgba(168,85,247,0.06)',
+                  border: '1px solid rgba(168,85,247,0.2)',
+                  borderRadius: '10px', padding: '14px', marginBottom: '14px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                    <ShoppingBag size={14} color="#a855f7" />
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What Will the Donor Bring?</span>
+                  </div>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Meal Description / Menu Plan</label>
+                  <textarea
+                    style={{ ...inputStyle, minHeight: '72px', resize: 'vertical', borderColor: 'rgba(168,85,247,0.3)' }}
+                    placeholder="e.g. Rice & curry with 3 side dishes, fresh juice and dessert for all children"
+                    value={form.donorCooksMenu}
+                    onChange={(e) => setForm({ ...form, donorCooksMenu: e.target.value })}
+                    required={form.mealDonationType === 'bringyourown'}
                   />
                 </div>
+              )}
+
+              {/* ── QUANTITY (always shown) ── */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Number of Children to Feed</label>
+                <input
+                  type="number"
+                  min="1"
+                  style={inputStyle}
+                  value={form.quantity}
+                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+                  required
+                />
               </div>
 
               {/* Occasion */}
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Occasion / Purpose (Optional)</label>
-              <input
-                style={inputStyle}
-                placeholder="e.g. Birthday celebration, Memorial day"
-                value={form.occasion}
-                onChange={(e) => setForm({ ...form, occasion: e.target.value })}
-              />
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Occasion / Purpose (Optional)</label>
+                <input
+                  style={inputStyle}
+                  placeholder="e.g. Birthday celebration, Memorial day"
+                  value={form.occasion}
+                  onChange={(e) => setForm({ ...form, occasion: e.target.value })}
+                />
+              </div>
 
               {/* Dietary Notes */}
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Dietary Instructions (Optional)</label>
-              <textarea
-                style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
-                placeholder="e.g. Vegetarian only, mild spices, no nuts"
-                value={form.dietaryNotes}
-                onChange={(e) => setForm({ ...form, dietaryNotes: e.target.value })}
-              />
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Dietary Instructions (Optional)</label>
+                <textarea
+                  style={{ ...inputStyle, minHeight: '56px', resize: 'vertical' }}
+                  placeholder="e.g. Vegetarian only, mild spices, no nuts"
+                  value={form.dietaryNotes}
+                  onChange={(e) => setForm({ ...form, dietaryNotes: e.target.value })}
+                />
+              </div>
 
               {/* Status (Only when editing) */}
               {editingMealId && (
@@ -779,8 +984,17 @@ export default function MealScheduling() {
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px', borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
                 <button type="button" style={buttonSecondary} onClick={() => setShowFormModal(false)}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={savingForm}>
-                  {savingForm ? 'Saving...' : 'Save Reservation'}
+                <button
+                  type="submit"
+                  style={{
+                    ...buttonPrimary,
+                    background: form.mealDonationType === 'bringyourown'
+                      ? 'linear-gradient(135deg, #a855f7, #7c3aed)'
+                      : `linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark})`,
+                  }}
+                  disabled={savingForm}
+                >
+                  {savingForm ? 'Saving...' : editingMealId ? 'Update Booking' : 'Confirm Booking'}
                 </button>
               </div>
             </form>
