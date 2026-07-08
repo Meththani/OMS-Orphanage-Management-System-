@@ -837,9 +837,6 @@ export default function FinancialReports() {
           <h1 style={{ margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
             Financial Reports
           </h1>
-          <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Generate and export custom statement summaries to PDF
-          </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button style={buttonSecondary} onClick={loadData} disabled={loading}>

@@ -43,6 +43,7 @@ function SidebarLink({ to, icon: Icon, label }) {
           ? `4px solid #f19c38`
           : '4px solid transparent',
         textDecoration: 'none',
+        textDecorationLine: 'none',
         fontSize: '14px',
         fontWeight: isActive ? 600 : 500,
         transition: 'all 0.2s ease',
@@ -54,7 +55,7 @@ function SidebarLink({ to, icon: Icon, label }) {
       {({ isActive }) => (
         <>
           <Icon size={18} color={isActive ? '#ffffff' : (hovered ? '#f19c38' : '#94a3b8')} />
-          {label}
+          <span style={{ textDecoration: 'none', textDecorationLine: 'none' }}>{label}</span>
         </>
       )}
     </NavLink>
