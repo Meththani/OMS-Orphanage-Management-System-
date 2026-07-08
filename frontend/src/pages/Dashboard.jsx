@@ -180,11 +180,6 @@ export default function Dashboard() {
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: colors.text, margin: '0 0 6px', fontFamily: "'Outfit', sans-serif" }}>
           {greeting()}, {user?.name || 'User'} 👋
         </h1>
-        <p style={{ color: colors.textMuted, fontSize: '15px', margin: 0 }}>
-          {user?.role === 'accountant' 
-            ? "Here is the financial ledger overview for today."
-            : "Here's an overview of the children and support schedules."}
-        </p>
       </div>
 
       {error && (

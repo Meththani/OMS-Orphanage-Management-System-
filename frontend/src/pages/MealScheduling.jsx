@@ -176,9 +176,6 @@ export default function MealScheduling() {
           <h1 style={{ margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
             Meal Scheduling
           </h1>
-          <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Monitor and complete meal bookings sponsored by donors
-          </p>
         </div>
 
         {/* Actions & View Mode Toggle */}

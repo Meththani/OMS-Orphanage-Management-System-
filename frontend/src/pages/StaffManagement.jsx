@@ -139,9 +139,6 @@ export default function StaffManagement() {
           }}>
             Staff
           </h1>
-          <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Manage staff, accountants, and administrators
-          </p>
         </div>
         <button style={buttonPrimary} onClick={openAddModal}>+ Add Staff Member</button>
       </div>

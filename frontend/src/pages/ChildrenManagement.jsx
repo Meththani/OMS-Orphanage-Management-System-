@@ -228,9 +228,6 @@ export default function ChildrenManagement() {
           }}>
             Our Children
           </h1>
-          <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Manage child profiles, medical and education records
-          </p>
         </div>
         <button style={buttonPrimary} onClick={() => {
           setIsEditing(false);
