@@ -4,11 +4,11 @@ import {
   colors, cardStyle, buttonPrimary, buttonSecondary, buttonDanger,
   inputStyle, selectStyle, modalOverlay, modalBox,
 } from '../styles';
-import { Eye, Edit2, Trash2, X, Phone, User, Calendar, Hash, Briefcase, Award } from 'lucide-react';
+import { Eye, EyeOff, Edit2, Trash2, X, Phone, User, Calendar, Hash, Briefcase, Award } from 'lucide-react';
 
 const emptyForm = {
-  name: '', username: '', password: '', role: 'staff',
-  jobRole: '', department: '', contactDetails: '', nic: '', DOB: '',
+  name: '', username: '', password: '', confirmPassword: '', role: 'staff',
+  jobRole: '', contactDetails: '', nic: '', DOB: '',
 };
 
 export default function StaffManagement() {
@@ -21,6 +21,13 @@ export default function StaffManagement() {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  // Field-level errors
+  const [fieldErrors, setFieldErrors] = useState({ name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' });
+
+  // Password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const loadStaff = async () => {
     setLoading(true);
@@ -36,15 +43,125 @@ export default function StaffManagement() {
 
   useEffect(() => { loadStaff(); }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // Full Name: only letters and spaces
+    if (name === 'name') {
+      const filtered = value.replace(/[^a-zA-Z\s]/g, '');
+      setForm({ ...form, name: filtered });
+      setFieldErrors((prev) => ({ ...prev, name: '' }));
+      return;
+    }
+
+    // Phone Number: only digits, max 10
+    if (name === 'contactDetails') {
+      const filtered = value.replace(/\D/g, '');
+      if (filtered.length > 10) {
+        setFieldErrors((prev) => ({ ...prev, phone: 'Phone number cannot exceed 10 digits.' }));
+        setForm({ ...form, contactDetails: filtered.slice(0, 10) });
+      } else {
+        setFieldErrors((prev) => ({ ...prev, phone: filtered.length > 0 && filtered.length < 10 ? '' : '' }));
+        setForm({ ...form, contactDetails: filtered });
+        if (filtered.length === 10) {
+          setFieldErrors((prev) => ({ ...prev, phone: '' }));
+        }
+      }
+      return;
+    }
+
+    // NIC: max 12 characters
+    if (name === 'nic') {
+      if (value.length > 12) {
+        setFieldErrors((prev) => ({ ...prev, nic: 'NIC cannot exceed 12 characters.' }));
+        setForm({ ...form, nic: value.slice(0, 12) });
+      } else {
+        setFieldErrors((prev) => ({ ...prev, nic: '' }));
+        setForm({ ...form, nic: value });
+      }
+      return;
+    }
+
+    // Confirm password match check
+    if (name === 'confirmPassword') {
+      setForm({ ...form, confirmPassword: value });
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: value !== form.password ? 'Passwords do not match.' : '',
+      }));
+      return;
+    }
+
+    // If password changes, re-validate confirmPassword
+    if (name === 'password') {
+      setForm({ ...form, password: value });
+      if (form.confirmPassword) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          confirmPassword: form.confirmPassword !== value ? 'Passwords do not match.' : '',
+        }));
+      }
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
+  };
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
+
+    // Validate before submit
+    const newErrors = { name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' };
+    let hasError = false;
+
+    if (!form.name.trim()) {
+      newErrors.name = 'Full name is required.';
+      hasError = true;
+    } else if (/[^a-zA-Z\s]/.test(form.name)) {
+      newErrors.name = 'Full name must contain only letters.';
+      hasError = true;
+    }
+    if (!form.jobRole.trim()) {
+      newErrors.jobRole = 'Job title is required.';
+      hasError = true;
+    }
+    if (!form.contactDetails.trim()) {
+      newErrors.phone = 'Phone number is required.';
+      hasError = true;
+    } else if (form.contactDetails.length > 10) {
+      newErrors.phone = 'Phone number cannot exceed 10 digits.';
+      hasError = true;
+    }
+    if (!form.nic.trim()) {
+      newErrors.nic = 'NIC number is required.';
+      hasError = true;
+    } else if (form.nic.length > 12) {
+      newErrors.nic = 'NIC cannot exceed 12 characters.';
+      hasError = true;
+    }
+    if (!form.DOB) {
+      newErrors.DOB = 'Date of birth is required.';
+      hasError = true;
+    }
+    if (!isEditing && form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match.';
+      hasError = true;
+    }
+    if (isEditing && form.password && form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match.';
+      hasError = true;
+    }
+
+    setFieldErrors(newErrors);
+    if (hasError) return;
+
     setSaving(true);
     setError('');
     try {
+      // Strip confirmPassword before sending
+      const { confirmPassword, ...payload } = form;
       if (isEditing) {
-        await api.patch(`/staff/${editingId}`, form);
+        await api.patch(`/staff/${editingId}`, payload);
         if (selectedStaff && selectedStaff._id === editingId) {
           const res = await api.get(`/staff/${editingId}`);
           setSelectedStaff(res.data);
@@ -54,8 +171,7 @@ export default function StaffManagement() {
         setEditingId('');
         setForm(emptyForm);
       } else {
-        // Account creation goes through /auth/register (admin-only)
-        await api.post('/auth/register', form);
+        await api.post('/auth/register', payload);
         setShowModal(false);
         setForm(emptyForm);
       }
@@ -71,14 +187,17 @@ export default function StaffManagement() {
     setForm({
       name: member.name || '',
       username: member.username || '',
-      password: '', // blank to keep current
+      password: '',
+      confirmPassword: '',
       role: member.role || 'staff',
       jobRole: member.jobRole || '',
-      department: member.department || '',
       contactDetails: member.contactDetails || '',
       nic: member.nic || '',
       DOB: member.DOB ? new Date(member.DOB).toISOString().split('T')[0] : '',
     });
+    setFieldErrors({ name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setIsEditing(true);
     setEditingId(member._id);
     setShowModal(true);
@@ -102,7 +221,6 @@ export default function StaffManagement() {
       : `/staff/${member._id}/reactivate`;
     try {
       await api.patch(path);
-      // Update selectedStaff if currently being viewed in modal
       if (selectedStaff && selectedStaff._id === member._id) {
         const res = await api.get(`/staff/${member._id}`);
         setSelectedStaff(res.data);
@@ -115,6 +233,9 @@ export default function StaffManagement() {
 
   const openAddModal = () => {
     setForm(emptyForm);
+    setFieldErrors({ name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setIsEditing(false);
     setEditingId('');
     setShowModal(true);
@@ -126,7 +247,40 @@ export default function StaffManagement() {
     setIsEditing(false);
     setEditingId('');
     setForm(emptyForm);
+    setFieldErrors({ name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setError('');
+  };
+
+  // Reusable error message style
+  const errorMsgStyle = {
+    color: '#ef4444',
+    fontSize: '11px',
+    marginTop: '4px',
+    marginBottom: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  };
+
+  // Password field wrapper style
+  const pwWrapperStyle = {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+  };
+
+  const eyeBtnStyle = {
+    position: 'absolute',
+    right: '10px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.textMuted,
+    display: 'flex',
+    alignItems: 'center',
+    padding: '4px',
   };
 
   return (
@@ -224,7 +378,6 @@ export default function StaffManagement() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: colors.textSecondary }}>
                 <div>Job Title: <strong style={{ color: colors.text }}>{member.jobRole || 'Staff Member'}</strong></div>
-                {member.department && <div>Dept: <strong style={{ color: colors.text }}>{member.department}</strong></div>}
                 <div>Phone: <strong style={{ color: colors.text }}>{member.contactDetails || 'N/A'}</strong></div>
               </div>
 
@@ -311,47 +464,119 @@ export default function StaffManagement() {
               {isEditing ? 'Edit Staff Member' : 'Add Staff Member'}
             </h2>
             <form onSubmit={handleCreateOrUpdate}>
+
+              {/* Full Name */}
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Full Name</label>
-              <input style={inputStyle} name="name" placeholder="Full name" value={form.name} onChange={handleChange} required />
-              
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Username</label>
+              <input
+                style={inputStyle}
+                name="name"
+                placeholder="Full name (letters only)"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+              {fieldErrors.name && <div style={errorMsgStyle}>⚠️ {fieldErrors.name}</div>}
+
+              {/* Username */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Username</label>
               <input style={inputStyle} name="username" placeholder="Username" value={form.username} onChange={handleChange} required />
-              
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
+
+              {/* Password */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>
                 {isEditing ? 'New Password (leave blank to keep current)' : 'Password'}
               </label>
-              <input 
-                style={inputStyle} 
-                name="password" 
-                type="password" 
-                placeholder={isEditing ? "Leave blank to keep unchanged" : "Temporary password (min 8 chars)"} 
-                value={form.password} 
-                onChange={handleChange} 
-                required={!isEditing} 
-                minLength={8} 
-              />
-              
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Access Role (Permission level)</label>
+              <div style={pwWrapperStyle}>
+                <input
+                  style={{ ...inputStyle, paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder={isEditing ? 'Leave blank to keep unchanged' : 'Temporary password (min 8 chars)'}
+                  value={form.password}
+                  onChange={handleChange}
+                  required={!isEditing}
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  style={eyeBtnStyle}
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              {/* Confirm Password */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>
+                {isEditing ? 'Confirm New Password' : 'Confirm Password'}
+              </label>
+              <div style={pwWrapperStyle}>
+                <input
+                  style={{ ...inputStyle, paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Re-enter password"
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required={!isEditing || !!form.password}
+                />
+                <button
+                  type="button"
+                  style={eyeBtnStyle}
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  tabIndex={-1}
+                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {fieldErrors.confirmPassword && <div style={errorMsgStyle}>⚠️ {fieldErrors.confirmPassword}</div>}
+
+              {/* Access Role */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Access Role (Permission level)</label>
               <select style={selectStyle} name="role" value={form.role} onChange={handleChange}>
                 <option value="staff">Staff</option>
                 <option value="accountant">Accountant</option>
                 <option value="admin">Admin</option>
               </select>
 
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Job Title</label>
-              <input style={inputStyle} name="jobRole" placeholder="Job title (e.g. Caregiver)" value={form.jobRole} onChange={handleChange} />
-              
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Department</label>
-              <input style={inputStyle} name="department" placeholder="Department" value={form.department} onChange={handleChange} />
-              
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Phone Number</label>
-              <input style={inputStyle} name="contactDetails" placeholder="Phone number" value={form.contactDetails} onChange={handleChange} />
+              {/* Job Title */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Job Title <span style={{ color: '#ef4444' }}>*</span></label>
+              <input style={inputStyle} name="jobRole" placeholder="Job title (e.g. Caregiver)" value={form.jobRole} onChange={handleChange} required />
+              {fieldErrors.jobRole && <div style={errorMsgStyle}>⚠️ {fieldErrors.jobRole}</div>}
 
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>NIC Number</label>
-              <input style={inputStyle} name="nic" placeholder="NIC Identification (optional)" value={form.nic || ''} onChange={handleChange} />
+              {/* Phone Number */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Phone Number <span style={{ color: '#ef4444' }}>*</span></label>
+              <input
+                style={inputStyle}
+                name="contactDetails"
+                placeholder="Phone number (10 digits)"
+                value={form.contactDetails}
+                onChange={handleChange}
+                inputMode="numeric"
+                maxLength={10}
+                required
+              />
+              {fieldErrors.phone && <div style={errorMsgStyle}>⚠️ {fieldErrors.phone}</div>}
 
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Date of Birth</label>
-              <input type="date" style={inputStyle} name="DOB" value={form.DOB} onChange={handleChange} />
+              {/* NIC Number */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>NIC Number <span style={{ color: '#ef4444' }}>*</span></label>
+              <input
+                style={inputStyle}
+                name="nic"
+                placeholder="NIC Identification (max 12 chars)"
+                value={form.nic || ''}
+                onChange={handleChange}
+                maxLength={12}
+                required
+              />
+              {fieldErrors.nic && <div style={errorMsgStyle}>⚠️ {fieldErrors.nic}</div>}
+
+              {/* Date of Birth */}
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Date of Birth <span style={{ color: '#ef4444' }}>*</span></label>
+              <input type="date" style={inputStyle} name="DOB" value={form.DOB} onChange={handleChange} required />
+              {fieldErrors.DOB && <div style={errorMsgStyle}>⚠️ {fieldErrors.DOB}</div>}
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
                 <button type="button" style={buttonSecondary} onClick={closeModal}>Cancel</button>
@@ -426,7 +651,6 @@ export default function StaffManagement() {
               {[
                 { label: 'Username', value: selectedStaff.username, icon: User },
                 { label: 'Job Title', value: selectedStaff.jobRole || 'N/A', icon: Briefcase },
-                { label: 'Department', value: selectedStaff.department || 'N/A', icon: Award },
                 { label: 'NIC Number', value: selectedStaff.nic || 'N/A', icon: Hash },
                 { label: 'Contact Phone', value: selectedStaff.contactDetails || 'N/A', icon: Phone },
                 { label: 'Date of Birth', value: selectedStaff.DOB ? new Date(selectedStaff.DOB).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
