@@ -74,6 +74,14 @@ export default function IncomeManagement() {
     const file = e.target.files[0];
     if (!file) return;
 
+    const MAX_SIZE_MB = 10;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      setError(`File "${file.name}" is too large. Maximum allowed size is ${MAX_SIZE_MB}MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
     const reader = new FileReader();
     reader.onloadend = () => {
       setForm((prev) => ({
@@ -377,9 +385,9 @@ export default function IncomeManagement() {
               </select>
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Donor / Source Name <span style={{ color: '#ef4444' }}>*</span>
+                Donor / Source Name
               </label>
-              <input style={inputStyle} name="donor" placeholder="Donor name or sponsoring entity" value={form.donor} onChange={handleChange} required />
+              <input style={inputStyle} name="donor" placeholder="Donor name or sponsoring entity (leave blank for Anonymous)" value={form.donor} onChange={handleChange} />
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>Receipt / Txn Reference</label>
               <input style={inputStyle} name="refReceipt" placeholder="Transaction or reference code" value={form.refReceipt} onChange={handleChange} />
