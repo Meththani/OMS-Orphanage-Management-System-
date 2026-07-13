@@ -9,15 +9,23 @@ async function request(path, { method = 'GET', body, auth = true } = {}) {
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (networkErr) {
+    throw new Error('Unable to connect to the server. Please check your connection.');
+  }
 
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    if (res.status === 413) {
+      throw new Error('File is too large to upload. Please use a smaller file (under 10MB).');
+    }
     throw new Error(data.message || `Request failed with status ${res.status}`);
   }
 
@@ -30,3 +38,4 @@ export const api = {
   patch: (path, body) => request(path, { method: 'PATCH', body }),
   delete: (path) => request(path, { method: 'DELETE' }),
 };
+

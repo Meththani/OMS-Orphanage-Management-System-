@@ -73,6 +73,15 @@ export default function ExpenseManagement() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const MAX_SIZE_MB = 10;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      setError(`File "${file.name}" is too large. Maximum allowed size is ${MAX_SIZE_MB}MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
     const reader = new FileReader();
     reader.onloadend = () => {
       setForm((prev) => ({
