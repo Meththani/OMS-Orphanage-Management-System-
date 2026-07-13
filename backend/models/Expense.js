@@ -9,6 +9,11 @@ const expenseSchema = new mongoose.Schema(
     amount: { type: Number, required: true, min: 0 },
     description: { type: String, required: true },
     bankAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'BankAccount' },
+    proofOfReceipt: {
+      fileData: { type: String }, // Base64 data URI
+      fileName: { type: String },
+      fileType: { type: String },
+    },
   },
   { timestamps: true }
 );

@@ -3,7 +3,7 @@ import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
 import { Plus, Calendar } from 'lucide-react';
 
-const emptyForm = { category: 'Food & Nutrition', amount: '', referenceReceipt: '', description: '', bankAccountId: '' };
+const emptyForm = { category: 'Food & Nutrition', customCategory: '', amount: '', referenceReceipt: '', description: '', bankAccountId: '', proofOfReceipt: null };
 
 export default function ExpenseManagement() {
   const [expenses, setExpenses] = useState([]);
@@ -11,9 +11,11 @@ export default function ExpenseManagement() {
   const [bankAccounts, setBankAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ amount: '', referenceReceipt: '', customCategory: '' });
 
   const loadData = async () => {
     setLoading(true);
@@ -41,28 +43,126 @@ export default function ExpenseManagement() {
     loadData();
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const openModal = () => {
+    setForm({ ...emptyForm, bankAccountId: bankAccounts[0]?._id || '' });
+    setFieldErrors({ amount: '', referenceReceipt: '', customCategory: '' });
+    setError('');
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setFieldErrors({ amount: '', referenceReceipt: '', customCategory: '' });
+    setError('');
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    if (name === 'amount') {
+      setFieldErrors((prev) => ({ ...prev, amount: '' }));
+    }
+    if (name === 'referenceReceipt') {
+      setFieldErrors((prev) => ({ ...prev, referenceReceipt: '' }));
+    }
+    if (name === 'customCategory') {
+      setFieldErrors((prev) => ({ ...prev, customCategory: '' }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm((prev) => ({
+        ...prev,
+        proofOfReceipt: {
+          fileData: reader.result,
+          fileName: file.name,
+          fileType: file.type,
+        },
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setError('');
+    
+    const newErrors = { amount: '', referenceReceipt: '', customCategory: '' };
+    let hasError = false;
+
+    // customCategory validation
+    if (form.category === 'Other' && (!form.customCategory || !form.customCategory.trim())) {
+      newErrors.customCategory = 'Please specify the category.';
+      hasError = true;
+    }
+
+    // Amount validation
+    const rawAmount = form.amount ? form.amount.toString().trim() : '';
+    const cleanAmount = rawAmount.replace(/,/g, '');
+
+    if (!cleanAmount) {
+      newErrors.amount = 'Amount is required.';
+      hasError = true;
+    } else {
+      if (!/^\d+(\.\d+)?$/.test(cleanAmount)) {
+        newErrors.amount = 'Amount must be a valid positive number without special characters or letters.';
+        hasError = true;
+      } else {
+        const num = Number(cleanAmount);
+        if (num <= 0) {
+          newErrors.amount = 'Amount must be greater than zero.';
+          hasError = true;
+        }
+      }
+    }
+
+    // Reference validation
+    if (form.referenceReceipt && form.referenceReceipt.trim()) {
+      const refClean = form.referenceReceipt.trim();
+      const refRegex = /^[a-zA-Z0-9\-_/]+$/;
+      if (!refRegex.test(refClean)) {
+        newErrors.referenceReceipt = 'Receipt reference can only contain alphanumeric characters, hyphens, underscores, or slashes.';
+        hasError = true;
+      }
+    }
+
+    setFieldErrors(newErrors);
+    if (hasError) return;
+
+    const numericAmount = Number(cleanAmount);
 
     // Quick client-side balance validation
     const chosenAcc = bankAccounts.find(a => a._id === form.bankAccountId);
-    if (chosenAcc && chosenAcc.balance < Number(form.amount)) {
+    if (chosenAcc && chosenAcc.balance < numericAmount) {
       setError(`Insufficient balance in ${chosenAcc.bankName} (${chosenAcc.accountName}). Available: LKR ${chosenAcc.balance.toLocaleString()}`);
-      setSaving(false);
       return;
     }
 
+    setSaving(true);
     try {
+      let categoryToSend = form.category;
+      if (form.category === 'Other') {
+        categoryToSend = form.customCategory && form.customCategory.trim()
+          ? `Other: ${form.customCategory.trim()}`
+          : 'Other';
+      }
+
       await api.post('/finances/expenses', {
-        ...form,
-        amount: Number(form.amount),
+        category: categoryToSend,
+        amount: numericAmount,
+        referenceReceipt: form.referenceReceipt ? form.referenceReceipt.trim() : '',
+        description: form.description,
+        bankAccountId: form.bankAccountId,
+        proofOfReceipt: form.proofOfReceipt || undefined,
       });
+      setSuccess('Expense record saved successfully!');
       setShowModal(false);
       setForm({ ...emptyForm, bankAccountId: bankAccounts[0]?._id || '' });
+      setTimeout(() => setSuccess(''), 5000);
       loadData();
     } catch (err) {
       setError(err.message);
@@ -86,7 +186,7 @@ export default function ExpenseManagement() {
             Record operational spending, salaries, medical costs, and supplies
           </p>
         </div>
-        <button style={buttonPrimary} onClick={() => setShowModal(true)}>
+        <button style={buttonPrimary} onClick={openModal}>
           <Plus size={16} style={{ marginRight: '6px' }} /> Record Expense
         </button>
       </div>
@@ -98,6 +198,16 @@ export default function ExpenseManagement() {
           color: colors.danger, fontSize: '13px', marginBottom: '16px',
         }}>
           ⚠️ {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{
+          padding: '12px 16px', backgroundColor: colors.successGlow,
+          border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px',
+          color: colors.success, fontSize: '13px', marginBottom: '16px',
+        }}>
+          ✅ {success}
         </div>
       )}
 
@@ -193,9 +303,22 @@ export default function ExpenseManagement() {
                   <td style={tdStyle}>{exp.staffName}</td>
                   <td style={tdStyle}>{exp.bankAccount?.accountName || 'Cash In Hand'}</td>
                   <td style={tdStyle}>
-                    <span style={{ fontFamily: 'monospace', fontSize: '12px', background: colors.primaryGlow, color: colors.primary, padding: '2px 6px', borderRadius: '4px' }}>
-                      {exp.referenceReceipt || 'N/A'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '12px', background: colors.primaryGlow, color: colors.primary, padding: '2px 6px', borderRadius: '4px', alignSelf: 'flex-start' }}>
+                        {exp.referenceReceipt || 'N/A'}
+                      </span>
+                      {exp.proofOfReceipt && exp.proofOfReceipt.fileData && (
+                        <a
+                          href={exp.proofOfReceipt.fileData}
+                          download={exp.proofOfReceipt.fileName}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: '11px', color: colors.primary, textDecoration: 'underline', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          View Receipt 📄
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -206,11 +329,13 @@ export default function ExpenseManagement() {
 
       {/* Record Expense Modal */}
       {showModal && (
-        <div style={modalOverlay} onClick={() => setShowModal(false)}>
+        <div style={modalOverlay} onClick={closeModal}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Record Expense</h2>
             <form onSubmit={handleCreate}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Category</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                Category <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <select style={selectStyle} name="category" value={form.category} onChange={handleChange}>
                 <option value="Food & Nutrition">Food & Nutrition</option>
                 <option value="Salaries">Staff Salaries</option>
@@ -220,16 +345,62 @@ export default function ExpenseManagement() {
                 <option value="Other">Other Expenses</option>
               </select>
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Amount (LKR)</label>
-              <input type="number" style={inputStyle} name="amount" placeholder="Amount in LKR" value={form.amount} onChange={handleChange} required />
+              {form.category === 'Other' && (
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                    Specify Other Category <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    style={inputStyle}
+                    name="customCategory"
+                    placeholder="Describe the expense (e.g. stationery, transport)"
+                    value={form.customCategory || ''}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.customCategory && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.customCategory}</div>}
+                </div>
+              )}
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Short Description</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Amount (LKR) <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input type="text" style={inputStyle} name="amount" placeholder="Amount in LKR (e.g. 10,000)" value={form.amount} onChange={handleChange} required />
+              {fieldErrors.amount && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.amount}</div>}
+
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Short Description <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input style={inputStyle} name="description" placeholder="e.g. Purchase of caregiver masks, January water bill" value={form.description} onChange={handleChange} required />
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Receipt / Ref Code</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>Receipt / Ref Code</label>
               <input style={inputStyle} name="referenceReceipt" placeholder="Receipt Reference (optional)" value={form.referenceReceipt} onChange={handleChange} />
+              {fieldErrors.referenceReceipt && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.referenceReceipt}</div>}
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Debit Bank Account</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Upload Proof of Receipt (Any Format)
+              </label>
+              <input
+                type="file"
+                style={{ ...inputStyle, padding: '8px' }}
+                onChange={handleFileChange}
+              />
+              {form.proofOfReceipt && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '6px', background: colors.primaryGlow, padding: '6px 10px', borderRadius: '6px' }}>
+                  <span>Selected: <strong>{form.proofOfReceipt.fileName}</strong></span>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontWeight: 'bold' }}
+                    onClick={() => setForm(f => ({ ...f, proofOfReceipt: null }))}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Debit Bank Account <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <select style={selectStyle} name="bankAccountId" value={form.bankAccountId} onChange={handleChange}>
                 {bankAccounts.map((acc) => (
                   <option key={acc._id} value={acc._id}>
@@ -238,8 +409,8 @@ export default function ExpenseManagement() {
                 ))}
               </select>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>Cancel</button>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
+                <button type="button" style={buttonSecondary} onClick={closeModal}>Cancel</button>
                 <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Save Record'}</button>
               </div>
             </form>

@@ -3,7 +3,7 @@ import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
 import { Plus, Calendar } from 'lucide-react';
 
-const emptyForm = { category: 'Donation', amount: '', paymentMethod: 'bank_transfer', donor: '', refReceipt: '', bankAccountId: '' };
+const emptyForm = { category: 'Donation', customCategory: '', amount: '', paymentMethod: 'bank_transfer', donor: '', refReceipt: '', bankAccountId: '', proofOfReceipt: null };
 
 export default function IncomeManagement() {
   const [incomes, setIncomes] = useState([]);
@@ -11,9 +11,11 @@ export default function IncomeManagement() {
   const [bankAccounts, setBankAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ amount: '', refReceipt: '', customCategory: '' });
 
   const loadData = async () => {
     setLoading(true);
@@ -41,19 +43,122 @@ export default function IncomeManagement() {
     loadData();
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const openModal = () => {
+    setForm({ ...emptyForm, bankAccountId: bankAccounts[0]?._id || '' });
+    setFieldErrors({ amount: '', refReceipt: '' });
+    setError('');
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setFieldErrors({ amount: '', refReceipt: '' });
+    setError('');
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    if (name === 'amount') {
+      setFieldErrors((prev) => ({ ...prev, amount: '' }));
+    }
+    if (name === 'refReceipt') {
+      setFieldErrors((prev) => ({ ...prev, refReceipt: '' }));
+    }
+    if (name === 'customCategory') {
+      setFieldErrors((prev) => ({ ...prev, customCategory: '' }));
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm((prev) => ({
+        ...prev,
+        proofOfReceipt: {
+          fileData: reader.result, // Base64 data URL
+          fileName: file.name,
+          fileType: file.type,
+        },
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setError('');
+    
+    const newErrors = { amount: '', refReceipt: '', customCategory: '' };
+    let hasError = false;
+
+    // customCategory validation
+    if (form.category === 'Other' && (!form.customCategory || !form.customCategory.trim())) {
+      newErrors.customCategory = 'Please specify the category.';
+      hasError = true;
+    }
+
+    // Amount validation
+    const rawAmount = form.amount ? form.amount.toString().trim() : '';
+    // Strip commas
+    const cleanAmount = rawAmount.replace(/,/g, '');
+
+    if (!cleanAmount) {
+      newErrors.amount = 'Amount is required.';
+      hasError = true;
+    } else {
+      if (!/^\d+(\.\d+)?$/.test(cleanAmount)) {
+        newErrors.amount = 'Amount must be a valid positive number without special characters or letters.';
+        hasError = true;
+      } else {
+        const num = Number(cleanAmount);
+        if (num <= 0) {
+          newErrors.amount = 'Amount must be greater than zero.';
+          hasError = true;
+        }
+      }
+    }
+
+    // Reference validation
+    if (form.refReceipt && form.refReceipt.trim()) {
+      const refClean = form.refReceipt.trim();
+      const refRegex = /^[a-zA-Z0-9\-_/]+$/;
+      if (!refRegex.test(refClean)) {
+        newErrors.refReceipt = 'Receipt reference can only contain alphanumeric characters, hyphens, underscores, or slashes.';
+        hasError = true;
+      }
+    }
+
+    setFieldErrors(newErrors);
+    if (hasError) return;
+
+    setSaving(true);
     try {
+      let categoryToSend = form.category;
+      if (form.category === 'Other') {
+        if (form.customCategory && form.customCategory.trim()) {
+          categoryToSend = `Other: ${form.customCategory.trim()}`;
+        } else {
+          categoryToSend = 'Other';
+        }
+      }
+
       await api.post('/finances/income', {
-        ...form,
-        amount: Number(form.amount),
+        category: categoryToSend,
+        amount: Number(cleanAmount),
+        paymentMethod: form.paymentMethod,
+        donor: form.donor,
+        refReceipt: form.refReceipt ? form.refReceipt.trim() : '',
+        bankAccountId: form.bankAccountId,
+        proofOfReceipt: form.proofOfReceipt || undefined,
       });
+      setSuccess('Income record saved successfully!');
       setShowModal(false);
       setForm({ ...emptyForm, bankAccountId: bankAccounts[0]?._id || '' });
+      setTimeout(() => setSuccess(''), 5000);
       loadData();
     } catch (err) {
       setError(err.message);
@@ -77,7 +182,7 @@ export default function IncomeManagement() {
             Record donor support, grants, and fundraising funds
           </p>
         </div>
-        <button style={buttonPrimary} onClick={() => setShowModal(true)}>
+        <button style={buttonPrimary} onClick={openModal}>
           <Plus size={16} style={{ marginRight: '6px' }} /> Record Income
         </button>
       </div>
@@ -89,6 +194,16 @@ export default function IncomeManagement() {
           color: colors.danger, fontSize: '13px', marginBottom: '16px',
         }}>
           ⚠️ {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{
+          padding: '12px 16px', backgroundColor: colors.successGlow,
+          border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px',
+          color: colors.success, fontSize: '13px', marginBottom: '16px',
+        }}>
+          ✅ {success}
         </div>
       )}
 
@@ -188,9 +303,22 @@ export default function IncomeManagement() {
                   <td style={tdStyle}>{inc.donor}</td>
                   <td style={tdStyle}>{inc.bankAccount?.accountName || 'General Balance'}</td>
                   <td style={tdStyle}>
-                    <span style={{ fontFamily: 'monospace', fontSize: '12px', background: colors.primaryGlow, color: colors.primary, padding: '2px 6px', borderRadius: '4px' }}>
-                      {inc.refReceipt || 'N/A'}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '12px', background: colors.primaryGlow, color: colors.primary, padding: '2px 6px', borderRadius: '4px', alignSelf: 'flex-start' }}>
+                        {inc.refReceipt || 'N/A'}
+                      </span>
+                      {inc.proofOfReceipt && inc.proofOfReceipt.fileData && (
+                        <a
+                          href={inc.proofOfReceipt.fileData}
+                          download={inc.proofOfReceipt.fileName}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: '11px', color: colors.primary, textDecoration: 'underline', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          View Receipt 📄
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -201,11 +329,13 @@ export default function IncomeManagement() {
 
       {/* Record Income Modal */}
       {showModal && (
-        <div style={modalOverlay} onClick={() => setShowModal(false)}>
+        <div style={modalOverlay} onClick={closeModal}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Record Income</h2>
             <form onSubmit={handleCreate}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Category</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                Category <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <select style={selectStyle} name="category" value={form.category} onChange={handleChange}>
                 <option value="Donation">Public Donation</option>
                 <option value="Grant">Government / NGO Grant</option>
@@ -213,10 +343,32 @@ export default function IncomeManagement() {
                 <option value="Other">Other Revenue</option>
               </select>
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Amount (LKR)</label>
-              <input type="number" style={inputStyle} name="amount" placeholder="Amount in LKR" value={form.amount} onChange={handleChange} required />
+              {form.category === 'Other' && (
+                <div style={{ marginTop: '12px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                    Specify Other Category <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    style={inputStyle}
+                    name="customCategory"
+                    placeholder="Specify other category details"
+                    value={form.customCategory || ''}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.customCategory && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.customCategory}</div>}
+                </div>
+              )}
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Payment Method</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Amount (LKR) <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input type="text" style={inputStyle} name="amount" placeholder="Amount in LKR (e.g. 10,000)" value={form.amount} onChange={handleChange} required />
+              {fieldErrors.amount && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.amount}</div>}
+
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Payment Method <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <select style={selectStyle} name="paymentMethod" value={form.paymentMethod} onChange={handleChange}>
                 <option value="bank_transfer">Bank Transfer</option>
                 <option value="cash">Cash In Hand</option>
@@ -224,13 +376,39 @@ export default function IncomeManagement() {
                 <option value="online">Online Checkout</option>
               </select>
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Donor / Source Name</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Donor / Source Name <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input style={inputStyle} name="donor" placeholder="Donor name or sponsoring entity" value={form.donor} onChange={handleChange} required />
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Receipt / Txn Reference</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>Receipt / Txn Reference</label>
               <input style={inputStyle} name="refReceipt" placeholder="Transaction or reference code" value={form.refReceipt} onChange={handleChange} />
+              {fieldErrors.refReceipt && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.refReceipt}</div>}
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Bank Account Destination</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Upload Proof of Receipt (Any Format)
+              </label>
+              <input
+                type="file"
+                style={{ ...inputStyle, padding: '8px' }}
+                onChange={handleFileChange}
+              />
+              {form.proofOfReceipt && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '6px', background: colors.primaryGlow, padding: '6px 10px', borderRadius: '6px' }}>
+                  <span>Selected: <strong>{form.proofOfReceipt.fileName}</strong></span>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontWeight: 'bold' }}
+                    onClick={() => setForm(f => ({ ...f, proofOfReceipt: null }))}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
+                Bank Account Destination <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <select style={selectStyle} name="bankAccountId" value={form.bankAccountId} onChange={handleChange}>
                 {bankAccounts.map((acc) => (
                   <option key={acc._id} value={acc._id}>
@@ -239,8 +417,8 @@ export default function IncomeManagement() {
                 ))}
               </select>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>Cancel</button>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
+                <button type="button" style={buttonSecondary} onClick={closeModal}>Cancel</button>
                 <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Save Record'}</button>
               </div>
             </form>

@@ -15,6 +15,7 @@ export default function StaffManagement() {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState('');
@@ -23,7 +24,7 @@ export default function StaffManagement() {
   const [saving, setSaving] = useState(false);
 
   // Field-level errors
-  const [fieldErrors, setFieldErrors] = useState({ name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' });
+  const [fieldErrors, setFieldErrors] = useState({ name: '', username: '', password: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' });
 
   // Password visibility
   const [showPassword, setShowPassword] = useState(false);
@@ -54,14 +55,17 @@ export default function StaffManagement() {
       return;
     }
 
-    // Phone Number: only digits, max 10
+    // Phone Number: only digits, must be exactly 10 digits
     if (name === 'contactDetails') {
       const filtered = value.replace(/\D/g, '');
       if (filtered.length > 10) {
         setFieldErrors((prev) => ({ ...prev, phone: 'Phone number cannot exceed 10 digits.' }));
         setForm({ ...form, contactDetails: filtered.slice(0, 10) });
       } else {
-        setFieldErrors((prev) => ({ ...prev, phone: filtered.length > 0 && filtered.length < 10 ? '' : '' }));
+        setFieldErrors((prev) => ({ 
+          ...prev, 
+          phone: filtered.length > 0 && filtered.length < 10 ? 'Phone number must be exactly 10 digits.' : '' 
+        }));
         setForm({ ...form, contactDetails: filtered });
         if (filtered.length === 10) {
           setFieldErrors((prev) => ({ ...prev, phone: '' }));
@@ -70,13 +74,21 @@ export default function StaffManagement() {
       return;
     }
 
-    // NIC: max 12 characters
+    // NIC: must be 10 or 12 characters
     if (name === 'nic') {
       if (value.length > 12) {
         setFieldErrors((prev) => ({ ...prev, nic: 'NIC cannot exceed 12 characters.' }));
         setForm({ ...form, nic: value.slice(0, 12) });
       } else {
-        setFieldErrors((prev) => ({ ...prev, nic: '' }));
+        let nicErr = '';
+        if (value.length > 0) {
+          if (value.length < 10) {
+            nicErr = 'NIC must be at least 10 characters.';
+          } else if (value.length === 11) {
+            nicErr = 'NIC must be either 10 characters (old format) or 12 characters (new format).';
+          }
+        }
+        setFieldErrors((prev) => ({ ...prev, nic: nicErr }));
         setForm({ ...form, nic: value });
       }
       return;
@@ -95,12 +107,29 @@ export default function StaffManagement() {
     // If password changes, re-validate confirmPassword
     if (name === 'password') {
       setForm({ ...form, password: value });
-      if (form.confirmPassword) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          confirmPassword: form.confirmPassword !== value ? 'Passwords do not match.' : '',
-        }));
-      }
+      setFieldErrors((prev) => ({
+        ...prev,
+        password: '',
+        confirmPassword: form.confirmPassword && form.confirmPassword !== value ? 'Passwords do not match.' : '',
+      }));
+      return;
+    }
+
+    if (name === 'username') {
+      setForm({ ...form, username: value });
+      setFieldErrors((prev) => ({ ...prev, username: '' }));
+      return;
+    }
+
+    if (name === 'jobRole') {
+      setForm({ ...form, jobRole: value });
+      setFieldErrors((prev) => ({ ...prev, jobRole: '' }));
+      return;
+    }
+
+    if (name === 'DOB') {
+      setForm({ ...form, DOB: value });
+      setFieldErrors((prev) => ({ ...prev, DOB: '' }));
       return;
     }
 
@@ -111,7 +140,7 @@ export default function StaffManagement() {
     e.preventDefault();
 
     // Validate before submit
-    const newErrors = { name: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' };
+    const newErrors = { name: '', username: '', password: '', phone: '', nic: '', confirmPassword: '', jobRole: '', DOB: '' };
     let hasError = false;
 
     if (!form.name.trim()) {
@@ -121,6 +150,21 @@ export default function StaffManagement() {
       newErrors.name = 'Full name must contain only letters.';
       hasError = true;
     }
+    if (!form.username.trim()) {
+      newErrors.username = 'Username is required.';
+      hasError = true;
+    }
+    if (!isEditing && !form.password) {
+      newErrors.password = 'Password is required.';
+      hasError = true;
+    } else if (form.password && form.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long.';
+      hasError = true;
+    }
+    if (isEditing && form.password && form.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long.';
+      hasError = true;
+    }
     if (!form.jobRole.trim()) {
       newErrors.jobRole = 'Job title is required.';
       hasError = true;
@@ -128,12 +172,21 @@ export default function StaffManagement() {
     if (!form.contactDetails.trim()) {
       newErrors.phone = 'Phone number is required.';
       hasError = true;
+    } else if (form.contactDetails.length < 10) {
+      newErrors.phone = 'Phone number must be exactly 10 digits.';
+      hasError = true;
     } else if (form.contactDetails.length > 10) {
       newErrors.phone = 'Phone number cannot exceed 10 digits.';
       hasError = true;
     }
     if (!form.nic.trim()) {
       newErrors.nic = 'NIC number is required.';
+      hasError = true;
+    } else if (form.nic.length < 10) {
+      newErrors.nic = 'NIC must be at least 10 characters.';
+      hasError = true;
+    } else if (form.nic.length === 11) {
+      newErrors.nic = 'NIC must be either 10 characters (old format) or 12 characters (new format).';
       hasError = true;
     } else if (form.nic.length > 12) {
       newErrors.nic = 'NIC cannot exceed 12 characters.';
@@ -166,15 +219,18 @@ export default function StaffManagement() {
           const res = await api.get(`/staff/${editingId}`);
           setSelectedStaff(res.data);
         }
+        setSuccess('Staff member updated successfully!');
         setShowModal(false);
         setIsEditing(false);
         setEditingId('');
         setForm(emptyForm);
       } else {
         await api.post('/auth/register', payload);
+        setSuccess('Staff member added successfully!');
         setShowModal(false);
         setForm(emptyForm);
       }
+      setTimeout(() => setSuccess(''), 5000);
       loadStaff();
     } catch (err) {
       setError(err.message);
@@ -307,6 +363,16 @@ export default function StaffManagement() {
         </div>
       )}
 
+      {success && (
+        <div style={{
+          padding: '12px 16px', backgroundColor: colors.successGlow,
+          border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px',
+          color: colors.success, fontSize: '13px', marginBottom: '16px',
+        }}>
+          ✅ {success}
+        </div>
+      )}
+
       {loading ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: '40px', color: colors.textMuted }}>
           <div style={{
@@ -378,7 +444,6 @@ export default function StaffManagement() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: colors.textSecondary }}>
                 <div>Job Title: <strong style={{ color: colors.text }}>{member.jobRole || 'Staff Member'}</strong></div>
-                <div>Phone: <strong style={{ color: colors.text }}>{member.contactDetails || 'N/A'}</strong></div>
               </div>
 
               {/* Action Buttons Row */}
@@ -466,7 +531,9 @@ export default function StaffManagement() {
             <form onSubmit={handleCreateOrUpdate}>
 
               {/* Full Name */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>Full Name</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
+                Full Name <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input
                 style={inputStyle}
                 name="name"
@@ -478,12 +545,15 @@ export default function StaffManagement() {
               {fieldErrors.name && <div style={errorMsgStyle}>⚠️ {fieldErrors.name}</div>}
 
               {/* Username */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Username</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>
+                Username <span style={{ color: '#ef4444' }}>*</span>
+              </label>
               <input style={inputStyle} name="username" placeholder="Username" value={form.username} onChange={handleChange} required />
+              {fieldErrors.username && <div style={errorMsgStyle}>⚠️ {fieldErrors.username}</div>}
 
               {/* Password */}
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>
-                {isEditing ? 'New Password (leave blank to keep current)' : 'Password'}
+                {isEditing ? 'New Password (leave blank to keep current)' : 'Password'} {!isEditing && <span style={{ color: '#ef4444' }}>*</span>}
               </label>
               <div style={pwWrapperStyle}>
                 <input
@@ -506,10 +576,11 @@ export default function StaffManagement() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {fieldErrors.password && <div style={errorMsgStyle}>⚠️ {fieldErrors.password}</div>}
 
               {/* Confirm Password */}
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>
-                {isEditing ? 'Confirm New Password' : 'Confirm Password'}
+                {isEditing ? 'Confirm New Password' : 'Confirm Password'} {!isEditing && <span style={{ color: '#ef4444' }}>*</span>}
               </label>
               <div style={pwWrapperStyle}>
                 <input

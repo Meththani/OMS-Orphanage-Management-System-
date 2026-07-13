@@ -99,9 +99,34 @@ exports.getAllIncome = async (req, res) => {
 // POST /api/finances/income
 exports.recordIncome = async (req, res) => {
   try {
-    const { category, amount, paymentMethod, donor, refReceipt, bankAccountId } = req.body;
+    const { category, amount, paymentMethod, donor, refReceipt, bankAccountId, proofOfReceipt } = req.body;
     if (!category || amount === undefined || !paymentMethod) {
       return res.status(400).json({ status: 'fail', message: 'Missing income fields.' });
+    }
+
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ status: 'fail', message: 'Amount must be greater than zero.' });
+    }
+
+    if (refReceipt) {
+      const refRegex = /^[a-zA-Z0-9\-_/]+$/;
+      if (!refRegex.test(refReceipt)) {
+        return res.status(400).json({ status: 'fail', message: 'Receipt reference can only contain alphanumeric characters, hyphens, underscores, or slashes.' });
+      }
+    }
+
+    // Duplicate detection within the last 5 minutes
+    const duplicate = await Income.findOne({
+      category,
+      amount: numericAmount,
+      paymentMethod,
+      donor: donor || 'Anonymous',
+      refReceipt: refReceipt || null,
+      date: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
+    });
+    if (duplicate) {
+      return res.status(409).json({ status: 'fail', message: 'A duplicate income record was recently submitted. Please wait or verify details.' });
     }
 
     let bankAccount = null;
@@ -114,15 +139,16 @@ exports.recordIncome = async (req, res) => {
 
     const income = await Income.create({
       category,
-      amount,
+      amount: numericAmount,
       paymentMethod,
       donor: donor || 'Anonymous',
       refReceipt,
       bankAccount: bankAccountId || null,
+      proofOfReceipt: proofOfReceipt || undefined,
     });
 
     if (bankAccount) {
-      bankAccount.balance += Number(amount);
+      bankAccount.balance += numericAmount;
       await bankAccount.save();
     }
 
@@ -145,9 +171,33 @@ exports.getAllExpenses = async (req, res) => {
 // POST /api/finances/expenses
 exports.recordExpense = async (req, res) => {
   try {
-    const { category, amount, referenceReceipt, description, bankAccountId } = req.body;
+    const { category, amount, referenceReceipt, description, bankAccountId, proofOfReceipt } = req.body;
     if (!category || amount === undefined || !description) {
       return res.status(400).json({ status: 'fail', message: 'Missing expense fields.' });
+    }
+
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ status: 'fail', message: 'Amount must be greater than zero.' });
+    }
+
+    if (referenceReceipt) {
+      const refRegex = /^[a-zA-Z0-9\-_/]+$/;
+      if (!refRegex.test(referenceReceipt)) {
+        return res.status(400).json({ status: 'fail', message: 'Receipt reference can only contain alphanumeric characters, hyphens, underscores, or slashes.' });
+      }
+    }
+
+    // Duplicate detection within the last 5 minutes
+    const duplicate = await Expense.findOne({
+      category,
+      amount: numericAmount,
+      description,
+      referenceReceipt: referenceReceipt || null,
+      date: { $gte: new Date(Date.now() - 5 * 60 * 1000) }
+    });
+    if (duplicate) {
+      return res.status(409).json({ status: 'fail', message: 'A duplicate expense record was recently submitted. Please wait or verify details.' });
     }
 
     let bankAccount = null;
@@ -156,7 +206,7 @@ exports.recordExpense = async (req, res) => {
       if (!bankAccount) {
         return res.status(404).json({ status: 'fail', message: 'Bank account not found.' });
       }
-      if (bankAccount.balance < amount) {
+      if (bankAccount.balance < numericAmount) {
         return res.status(400).json({ status: 'fail', message: 'Insufficient funds in bank account.' });
       }
     }
@@ -165,13 +215,14 @@ exports.recordExpense = async (req, res) => {
       category,
       staffName: req.user.name,
       referenceReceipt,
-      amount,
+      amount: numericAmount,
       description,
       bankAccount: bankAccountId || null,
+      proofOfReceipt: proofOfReceipt || undefined,
     });
 
     if (bankAccount) {
-      bankAccount.balance -= Number(amount);
+      bankAccount.balance -= numericAmount;
       await bankAccount.save();
     }
 

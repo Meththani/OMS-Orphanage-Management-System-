@@ -30,6 +30,23 @@ exports.updateStaff = async (req, res) => {
   try {
     const body = { ...req.body };
 
+    if (body.contactDetails !== undefined) {
+      if (!/^\d{10}$/.test(body.contactDetails)) {
+        return res.status(400).json({ status: 'fail', message: 'Phone number must be exactly 10 digits.' });
+      }
+    }
+
+    if (body.nic !== undefined) {
+      if (body.nic.length !== 10 && body.nic.length !== 12) {
+        return res.status(400).json({ status: 'fail', message: 'NIC must be either 10 characters (old format) or 12 characters (new format).' });
+      }
+      body.nic = body.nic.trim();
+      const existingNic = await User.findOne({ nic: body.nic, _id: { $ne: req.params.id } });
+      if (existingNic) {
+        return res.status(409).json({ status: 'fail', message: 'Staff member with this NIC already exists.' });
+      }
+    }
+
     // Format username if provided
     if (body.username) {
       body.username = body.username.toLowerCase().trim();

@@ -9,6 +9,11 @@ const incomeSchema = new mongoose.Schema(
     donor: { type: String, default: 'Anonymous' },
     refReceipt: { type: String }, // Receipt reference or transaction ID
     bankAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'BankAccount' },
+    proofOfReceipt: {
+      fileData: { type: String }, // Base64 data URI
+      fileName: { type: String },
+      fileType: { type: String },
+    },
   },
   { timestamps: true }
 );

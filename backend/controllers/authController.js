@@ -67,19 +67,36 @@ exports.register = async (req, res) => {
       return res.status(400).json({ status: 'fail', message: 'Invalid role.' });
     }
 
-    const existing = await User.findOne({ username });
+    if (role !== 'donor') {
+      if (!contactDetails || !/^\d{10}$/.test(contactDetails)) {
+        return res.status(400).json({ status: 'fail', message: 'Phone number must be exactly 10 digits.' });
+      }
+      if (!nic || (nic.length !== 10 && nic.length !== 12)) {
+        return res.status(400).json({ status: 'fail', message: 'NIC must be either 10 characters (old format) or 12 characters (new format).' });
+      }
+    }
+
+    const lowerUsername = username ? username.toLowerCase().trim() : '';
+    const existing = await User.findOne({ username: lowerUsername });
     if (existing) {
       return res.status(409).json({ status: 'fail', message: 'Username already exists.' });
+    }
+
+    if (role !== 'donor' && nic) {
+      const existingNic = await User.findOne({ nic: nic.trim() });
+      if (existingNic) {
+        return res.status(409).json({ status: 'fail', message: 'Staff member with this NIC already exists.' });
+      }
     }
 
     const newUser = await User.create({
       name,
       DOB,
-      username,
+      username: lowerUsername,
       password,
       role,
       contactDetails,
-      nic,
+      nic: nic ? nic.trim() : undefined,
       jobRole,
       department,
     });
