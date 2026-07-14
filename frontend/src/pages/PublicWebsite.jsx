@@ -311,10 +311,15 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   width: '380px', height: '380px', borderRadius: '30px',
                   background: 'linear-gradient(135deg, #1e293b, #0f172a)',
                   border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '120px', boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+                  boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
                   position: 'relative'
                 }}>
-                  👶
+                  <img src="/hero-child.jpg" alt="Child Care Support" style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '28px'
+                  }} />
                   <div style={{
                     position: 'absolute', bottom: '-20px', left: '-20px',
                     backgroundColor: colors.cardSolid, border: `1px solid ${colors.border}`,
