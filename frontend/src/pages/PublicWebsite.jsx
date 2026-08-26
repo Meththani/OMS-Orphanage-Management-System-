@@ -15,15 +15,57 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     setActiveTab(initialTab);
   }, [initialTab]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const amt = params.get('amount');
+    const sessionId = params.get('session_id');
+
+    if (status === 'success') {
+      setDonatedAmount(amt || '0');
+      setCashSuccess(true);
+      setShowCashModal(true);
+
+      // Verify and automatically log checkout session details to DB (works locally without webhooks)
+      if (sessionId) {
+        fetch('http://localhost:5000/api/public/confirm-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            console.log('Stripe checkout session verification result:', data);
+          })
+          .catch(err => {
+            console.error('Error verifying Stripe session:', err);
+          });
+      }
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (status === 'cancel') {
+      alert('Donation cancelled. You can try again whenever you are ready.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // Contact Form State
   const [contactForm, setContactForm] = useState({ firstName: '', lastName: '', email: '', phone: '', message: '' });
   const [contactSuccess, setContactSuccess] = useState(false);
   const [contactLoading, setContactLoading] = useState(false);
 
   // Cash Donation Form State
-  const [cashForm, setCashForm] = useState({ name: '', email: '', contactDetails: '', type: 'individual', amount: '50', paymentMethod: 'online' });
+  const [cashForm, setCashForm] = useState({ name: '', email: '', contactDetails: '', type: 'individual', amount: '1000', paymentMethod: 'online', proof: null, notes: '' });
   const [cashSuccess, setCashSuccess] = useState(false);
   const [cashLoading, setCashLoading] = useState(false);
+
+  // Stripe Card States
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardError, setCardError] = useState('');
+  const [donatedAmount, setDonatedAmount] = useState('0');
 
   // Meal Booking Form State
   const [mealForm, setMealForm] = useState({
@@ -153,21 +195,62 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     e.preventDefault();
     setCashLoading(true);
     try {
+      if (cashForm.paymentMethod === 'bank_transfer' && !cashForm.proof) {
+        alert('Please upload a bank transfer receipt as proof of payment.');
+        setCashLoading(false);
+        return;
+      }
+
+      if (cashForm.paymentMethod === 'online') {
+        // Call backend to create checkout session
+        const res = await fetch('http://localhost:5000/api/public/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: cashForm.amount,
+            name: cashForm.name,
+            email: cashForm.email,
+            contactDetails: cashForm.contactDetails,
+            notes: cashForm.notes
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          // Redirect user to Stripe Checkout page
+          window.location.href = data.url;
+          return;
+        } else {
+          alert(data.message || 'Failed to initialize Stripe checkout session.');
+          setCashLoading(false);
+          return;
+        }
+      }
+
       const res = await fetch('http://localhost:5000/api/public/donate-cash', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cashForm),
       });
+      const data = await res.json();
       if (res.ok) {
+        setDonatedAmount(cashForm.amount);
         setCashSuccess(true);
-        setCashForm({ name: '', email: '', contactDetails: '', type: 'individual', amount: '50', paymentMethod: 'online' });
+        setCashForm({ name: '', email: '', contactDetails: '', type: 'individual', amount: '1000', paymentMethod: 'online', proof: null, notes: '' });
+        setCardName('');
+        setCardNumber('');
+        setCardExpiry('');
+        setCardCvc('');
+        setCardError('');
         setTimeout(() => {
           setCashSuccess(false);
           setShowCashModal(false);
         }, 3000);
+      } else {
+        alert(data.message || 'Donation submission failed.');
       }
     } catch (err) {
       console.error(err);
+      alert('Network error. Failed to submit donation.');
     } finally {
       setCashLoading(false);
     }
@@ -260,7 +343,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               )}
             </button>
           ))}
-          
+
           <button
             onClick={() => navigate('/login')}
             style={{
@@ -276,7 +359,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
       {/* ─── Main Content Container ─── */}
       <main style={{ padding: '48px 40px', maxWidth: '1200px', margin: '0 auto' }}>
-        
+
         {/* ─── HOME TAB ─── */}
         {activeTab === 'home' && (
           <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
@@ -496,7 +579,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
               <div style={cardStyle}>
                 <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', fontFamily: "'Outfit', sans-serif" }}>Get In Touch / Send Us A Message</h3>
-                
+
                 {contactSuccess ? (
                   <div style={{
                     padding: '24px', textAlign: 'center', backgroundColor: colors.successGlow,
@@ -596,7 +679,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           <div style={{ ...modalBox, width: '500px' }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '6px' }}>Do Cash Donation</h2>
             <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>Support the orphanage general expenses fund.</p>
-            
+
             {cashSuccess ? (
               <div style={{
                 padding: '32px 24px', textAlign: 'center', backgroundColor: colors.successGlow,
@@ -604,7 +687,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               }}>
                 <Check size={48} style={{ margin: '0 auto 16px' }} />
                 <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px' }}>Donation Successful!</h3>
-                <p style={{ fontSize: '13px', color: colors.textSecondary }}>Thank you for your generous contribution of LKR {Number(cashForm.amount).toLocaleString()}. Your support is really powerful.</p>
+                <p style={{ fontSize: '13px', color: colors.textSecondary }}>Thank you for your generous contribution of LKR {Number(donatedAmount).toLocaleString()}. Your support is really powerful.</p>
               </div>
             ) : (
               <form onSubmit={handleCashSubmit}>
@@ -612,7 +695,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 <div style={{ marginBottom: '18px' }}>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '8px' }}>Select Donation Amount</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '10px' }}>
-                    {['10', '20', '50', '100', '250'].map((preset) => (
+                    {['1000', '2500', '5000', '10000', '25000'].map((preset) => (
                       <button
                         key={preset}
                         type="button"
@@ -621,17 +704,17 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           padding: '10px 0', borderRadius: '8px', border: `1px solid ${cashForm.amount === preset ? colors.primary : colors.border}`,
                           backgroundColor: cashForm.amount === preset ? colors.primaryGlow : colors.surface,
                           color: cashForm.amount === preset ? colors.primary : colors.text,
-                          fontWeight: 700, fontSize: '13px', cursor: 'pointer'
+                          fontWeight: 700, fontSize: '12px', cursor: 'pointer'
                         }}
                       >
-                        ${preset}
+                        Rs. {Number(preset).toLocaleString()}
                       </button>
                     ))}
                   </div>
                   <input
                     type="number"
                     style={inputStyle}
-                    placeholder="Custom amount (USD or equivalent LKR)"
+                    placeholder="Custom amount (LKR)"
                     value={cashForm.amount}
                     onChange={(e) => setCashForm({ ...cashForm, amount: e.target.value })}
                     required
@@ -642,8 +725,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '8px' }}>Payment Method</label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {[
-                      { id: 'online', label: '💳 Card Checkout' },
-                      { id: 'bank_transfer', label: '🏦 Online Bank' }
+                      { id: 'online', label: '💳 Card Payment' },
+                      { id: 'bank_transfer', label: '🏦 Bank Deposit / Transfer' }
                     ].map((method) => (
                       <button
                         key={method.id}
@@ -662,6 +745,93 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   </div>
                 </div>
 
+                {/* Stripe Secure Card Input Fields */}
+                {cashForm.paymentMethod === 'online' && (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '18px',
+                    borderRadius: '12px',
+                    backgroundColor: 'rgba(99,102,241,0.05)',
+                    border: `1px solid ${colors.primary}30`,
+                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                    animation: 'fadeIn 0.3s ease-out',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <Lock size={14} color={colors.primary} />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Secure Donation via Stripe</span>
+                    </div>
+                    <p style={{ fontSize: '13px', color: colors.textSecondary, margin: '0 0 12px' }}>
+                      You will be redirected to Stripe's secure hosted payment page to complete your transaction.
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', opacity: 0.8 }}>
+                      <span style={{ fontSize: '10px', color: colors.textMuted }}>Powered by</span>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: colors.text, letterSpacing: '-0.02em', display: 'inline-flex', alignItems: 'center' }}>
+                        stripe
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Transfer Proof of Payment upload fields */}
+                {cashForm.paymentMethod === 'bank_transfer' && (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '18px',
+                    borderRadius: '12px',
+                    backgroundColor: 'rgba(255,255,255,0.01)',
+                    border: `1px solid ${colors.border}`,
+                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)',
+                    animation: 'fadeIn 0.3s ease-out'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                      <Lock size={14} color={colors.primary} />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bank Transfer Proof</span>
+                    </div>
+
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ display: 'block', fontSize: '11px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>
+                        Upload Bank Slip / Deposit Receipt (Image/PDF) <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        type="file"
+                        style={{ ...inputStyle, padding: '8px', marginBottom: '6px' }}
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setCashForm(prev => ({
+                              ...prev,
+                              proof: {
+                                fileData: reader.result,
+                                fileName: file.name,
+                                fileType: file.type
+                              }
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        required={cashForm.paymentMethod === 'bank_transfer'}
+                      />
+                      {cashForm.proof && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '6px', background: colors.primaryGlow, padding: '6px 10px', borderRadius: '6px' }}>
+                          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px' }}>
+                            Selected: <strong>{cashForm.proof.fileName}</strong>
+                          </span>
+                          <button
+                            type="button"
+                            style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontWeight: 'bold' }}
+                            onClick={() => setCashForm(prev => ({ ...prev, proof: null }))}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Donor Details */}
                 <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '16px', marginTop: '16px' }}>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Full Name</label>
@@ -678,11 +848,23 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <option value="individual">Individual Donor</option>
                     <option value="organization">Corporate/Organization</option>
                   </select>
+
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Description / Message (Optional)</label>
+                  <textarea
+                    style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
+                    placeholder="E.g., In memory of my family, birthday donation, etc."
+                    value={cashForm.notes}
+                    onChange={(e) => setCashForm({ ...cashForm, notes: e.target.value })}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
                   <button type="button" style={buttonSecondary} onClick={() => setShowCashModal(false)}>Cancel</button>
-                  <button type="submit" style={buttonPrimary} disabled={cashLoading}>{cashLoading ? 'Processing...' : 'Donate Now'}</button>
+                  <button type="submit" style={buttonPrimary} disabled={cashLoading}>
+                    {cashLoading
+                      ? (cashForm.paymentMethod === 'online' ? 'Processing secure payment...' : 'Processing...')
+                      : 'Donate Now'}
+                  </button>
                 </div>
               </form>
             )}
@@ -709,7 +891,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             ) : (
               <form onSubmit={handleMealSubmit}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '24px', alignItems: 'start' }}>
-                  
+
                   {/* Left Column: Calendar */}
                   <div style={{ borderRight: `1px solid ${colors.border}`, paddingRight: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -748,7 +930,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                           const targetDate = new Date(currentYear, currentMonth, day);
                           const today = new Date();
-                          today.setHours(0,0,0,0);
+                          today.setHours(0, 0, 0, 0);
                           const isPast = targetDate < today;
                           const isSelected = mealForm.mealDate === dateKey;
                           const isToday = new Date().toDateString() === targetDate.toDateString();
@@ -1029,7 +1211,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         {/* Donor Info Header */}
                         <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '12px', marginTop: '12px' }}>
                           <h4 style={{ margin: '0 0 8px', fontSize: '13px', color: colors.text }}>Donor Contact Details</h4>
-                          
+
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
                             <div>
                               <input

@@ -88,26 +88,40 @@ exports.updateDonationStatus = async (req, res) => {
       return res.status(200).json({ status: 'success', data: donation });
     }
 
+    // Auto-generate receipt reference if cash donation is approved and lacks one
+    if (donation.type === 'cash' && status === 'received' && !donation.receiptRef) {
+      donation.receiptRef = `REC-${Date.now().toString().slice(-6)}`;
+    }
+
     donation.status = status;
     await donation.save();
 
-    // If a cash donation is marked as received, record income in bank
+    // If a cash donation is marked as received, record income in bank and update donor stats
     if (donation.type === 'cash' && status === 'received') {
       const existingIncome = await Income.findOne({ refReceipt: donation.receiptRef || donation.donationID });
       if (!existingIncome) {
         const defaultAccount = await BankAccount.findOne();
         if (defaultAccount) {
+          const populatedDonation = await donation.populate('donorID');
           await Income.create({
-            category: 'Direct Donation',
+            category: 'Public Donation',
             amount: donation.amount,
-            paymentMethod: donation.paymentMethod || 'cash',
-            donor: donation.donorID ? (await donation.populate('donorID')).donorID.name : 'Anonymous',
+            paymentMethod: donation.paymentMethod || 'bank_transfer',
+            donor: populatedDonation.donorID ? populatedDonation.donorID.name : 'Anonymous',
             refReceipt: donation.receiptRef || donation.donationID,
             bankAccount: defaultAccount._id,
           });
           defaultAccount.balance += donation.amount;
           await defaultAccount.save();
         }
+      }
+
+      // Update donor total
+      const Donor = require('../models/Donor');
+      const donor = await Donor.findById(donation.donorID);
+      if (donor) {
+        donor.totalDonated = (donor.totalDonated || 0) + donation.amount;
+        await donor.save();
       }
     }
 

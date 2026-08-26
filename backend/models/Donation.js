@@ -25,6 +25,11 @@ const donationSchema = new Schema(
     receiptRef: { type: String },
     notes: { type: String },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User' }, // staff/admin/accountant who logged it
+    proofOfPayment: {
+      fileData: { type: String }, // Base64 data URI
+      fileName: { type: String },
+      fileType: { type: String },
+    },
   },
   baseOptions
 );
@@ -35,7 +40,7 @@ const CashDonation = Donation.discriminator(
   'cash',
   new Schema({
     amount: { type: Number, required: true, min: 0 },
-    paymentMethod: { type: String, enum: ['cash', 'cheque', 'bank_transfer'] },
+    paymentMethod: { type: String, enum: ['cash', 'cheque', 'bank_transfer', 'online'] },
   })
 );
 

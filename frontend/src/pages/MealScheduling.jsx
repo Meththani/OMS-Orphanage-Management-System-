@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
 import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign } from 'lucide-react';
 
 export default function MealScheduling() {
+  const { t } = useLanguage();
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -283,7 +285,8 @@ export default function MealScheduling() {
                 {meals.map((meal) => {
                   const date = meal.mealDate ? new Date(meal.mealDate) : new Date(meal.date);
                   return (
-                    <tr key={meal._id} style={{ transition: 'background-color 0.15s ease' }}
+                    <tr key={meal._id} style={{ transition: 'background-color 0.15s ease', cursor: 'pointer' }}
+                      onClick={() => setSelectedMeal(meal)}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
@@ -348,7 +351,7 @@ export default function MealScheduling() {
                           {meal.status === 'received' ? 'Completed' : meal.status}
                         </span>
                       </td>
-                      <td style={tdStyle}>
+                      <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           {meal.status === 'pending' && (
                             <>
@@ -998,6 +1001,167 @@ export default function MealScheduling() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Meal Details Modal */}
+      {selectedMeal && (
+        <div style={modalOverlay} onClick={() => setSelectedMeal(null)}>
+          <div style={{ ...modalBox, width: '600px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Utensils size={20} color={colors.primary} />
+                {t("Meal Scheduling Details")}
+              </h2>
+              <span style={{
+                padding: '4px 10px', borderRadius: '6px',
+                background: selectedMeal.status === 'received' ? colors.successGlow : selectedMeal.status === 'pending' ? colors.warningGlow : colors.dangerGlow,
+                color: selectedMeal.status === 'received' ? colors.success : selectedMeal.status === 'pending' ? colors.warning : colors.danger,
+                fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}>
+                {selectedMeal.status === 'received' ? t('Completed') : t(selectedMeal.status)}
+              </span>
+            </div>
+
+            <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '4px' }}>
+              {/* Grid: Donor profile and Scheduling Info */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                
+                {/* Left Column: Sponsor / Donor details */}
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}` }}>
+                  <h3 style={{ margin: '0 0 12px', fontSize: '13px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{t("Sponsor Profile")}</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Name")}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text }}>{selectedMeal.donorID?.name || 'Unknown Sponsor'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Email")}</div>
+                      <div style={{ fontSize: '13px', color: colors.text }}>{selectedMeal.donorID?.email || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Contact Details")}</div>
+                      <div style={{ fontSize: '13px', color: colors.text }}>{selectedMeal.donorID?.contactDetails || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Donor Type")}</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, textTransform: 'capitalize' }}>{t(selectedMeal.donorID?.type || 'individual')}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Meal Reservation Info */}
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px', border: `1px solid ${colors.border}` }}>
+                  <h3 style={{ margin: '0 0 12px', fontSize: '13px', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{t("Meal Reservation")}</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Date Scheduled")}</div>
+                      <div style={{ fontSize: '13px', color: colors.text }}>
+                        {selectedMeal.mealDate ? new Date(selectedMeal.mealDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Meal Slot")}</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, textTransform: 'uppercase' }}>{t(selectedMeal.mealType)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Portions")}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{selectedMeal.quantity} {t("portions")}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Meal Type")}</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#a855f7', textTransform: 'capitalize' }}>
+                        {selectedMeal.mealDonationType === 'bringyourown' ? t("Self-Catered") : t("Sponsor package")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Menu Package info */}
+              {selectedMeal.mealDonationType !== 'bringyourown' && (
+                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(241,156,56,0.04)', border: `1px solid rgba(241,156,56,0.15)`, borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', color: colors.primary, fontWeight: 700, textTransform: 'uppercase' }}>{t("Menu Package")}</span>
+                    {selectedMeal.estimatedCost && (
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: colors.success }}>LKR {selectedMeal.estimatedCost.toLocaleString()}</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text, textTransform: 'capitalize' }}>
+                    🍴 {selectedMeal.menuPackage} {t("Menu")}
+                  </div>
+                </div>
+              )}
+
+              {/* Self Catered menu description */}
+              {selectedMeal.mealDonationType === 'bringyourown' && selectedMeal.donorCooksMenu && (
+                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(168,85,247,0.05)', border: `1px solid rgba(168,85,247,0.15)`, borderRadius: '8px' }}>
+                  <span style={{ fontSize: '11px', color: '#a855f7', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>{t("Menu Plan / Description")}</span>
+                  <div style={{ fontSize: '13px', color: colors.textSecondary }}>{selectedMeal.donorCooksMenu}</div>
+                </div>
+              )}
+
+              {/* Occasion / Celebration */}
+              {selectedMeal.occasion && (
+                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(59,130,246,0.05)', border: `1px solid rgba(59,130,246,0.15)`, borderRadius: '8px' }}>
+                  <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>{t("Occasion / Purpose")}</span>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text }}>🎉 {selectedMeal.occasion}</div>
+                </div>
+              )}
+
+              {/* Dietary Instructions */}
+              {selectedMeal.dietaryNotes && (
+                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(239,68,68,0.05)', border: `1px solid rgba(239,68,68,0.15)`, borderRadius: '8px' }}>
+                  <span style={{ fontSize: '11px', color: colors.danger, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>{t("Dietary Instructions")}</span>
+                  <div style={{ fontSize: '13px', color: colors.textSecondary }}>⚠️ {selectedMeal.dietaryNotes}</div>
+                </div>
+              )}
+
+              {/* Internal Notes */}
+              {selectedMeal.notes && (
+                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${colors.border}`, borderRadius: '8px' }}>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>{t("Sponsor Notes")}</span>
+                  <div style={{ fontSize: '13px', color: colors.textSecondary }}>{selectedMeal.notes}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
+              <div>
+                {selectedMeal.status === 'pending' && (
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)`, boxShadow: `0 4px 12px ${colors.successGlow}`, padding: '10px 20px', fontSize: '13px' }}
+                      onClick={async () => {
+                        await handleUpdateStatus(selectedMeal._id, 'received');
+                        setSelectedMeal(null);
+                      }}
+                    >
+                      ✓ {t("Mark Served")}
+                    </button>
+                    <button
+                      style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', padding: '10px 20px', fontSize: '13px' }}
+                      onClick={async () => {
+                        await handleUpdateStatus(selectedMeal._id, 'cancelled');
+                        setSelectedMeal(null);
+                      }}
+                    >
+                      ✗ {t("Cancel")}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                style={{ ...buttonSecondary, padding: '10px 20px', fontSize: '13px' }}
+                onClick={() => setSelectedMeal(null)}
+              >
+                {t("Close")}
+              </button>
+            </div>
           </div>
         </div>
       )}

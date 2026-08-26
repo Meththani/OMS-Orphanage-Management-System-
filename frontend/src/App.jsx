@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
@@ -65,6 +66,7 @@ function SidebarLink({ to, icon: Icon, label }) {
 /* ─── Main layout with sidebar ─── */
 function AppLayout() {
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
   if (!user) return <Navigate to="/login" replace />;
@@ -108,10 +110,10 @@ function AppLayout() {
                 lineHeight: '1.2'
               }}>
                 <span style={{ color: '#f19c38' }}>OMS</span>{' '}
-                <span style={{ color: '#ffffff' }}>Portal</span>
+                <span style={{ color: '#ffffff' }}>{language === 'si' ? 'ද්වාරය' : 'Portal'}</span>
               </div>
               <div style={{ fontSize: '12px', color: '#e2e8f0', textTransform: 'capitalize', marginTop: '2px', opacity: 0.8 }}>
-                {user.role} workspace
+                {t(`${user.role} workspace`)}
               </div>
             </div>
           </div>
@@ -123,38 +125,38 @@ function AppLayout() {
             fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase',
             letterSpacing: '0.08em', fontWeight: 700, padding: '0 16px', marginBottom: '10px',
           }}>
-            Main Menu
+            {t("Main Menu")}
           </div>
 
           {(user.role === 'admin' || user.role === 'staff') && (
             <>
-              <SidebarLink to="/portal/dashboard" icon={LayoutDashboard} label="Dashboard" />
-              <SidebarLink to="/portal/children" icon={Baby} label="Children" />
+              <SidebarLink to="/portal/dashboard" icon={LayoutDashboard} label={t("Dashboard")} />
+              <SidebarLink to="/portal/children" icon={Baby} label={t("Children")} />
               {user.role === 'admin' && (
                 <>
-                  <SidebarLink to="/portal/staff" icon={Users} label="Staff Management" />
-                  <SidebarLink to="/portal/reports" icon={FileText} label="Financial Reports" />
+                  <SidebarLink to="/portal/staff" icon={Users} label={t("Staff Management")} />
+                  <SidebarLink to="/portal/reports" icon={FileText} label={t("Financial Reports")} />
                 </>
               )}
-              <SidebarLink to="/portal/meals" icon={Calendar} label="Meal Scheduling" />
-              <SidebarLink to="/portal/inventory" icon={Package} label="View Inventory" />
-              <SidebarLink to="/portal/donations" icon={Heart} label="View Donation" />
+              <SidebarLink to="/portal/meals" icon={Calendar} label={t("Meal Scheduling")} />
+              <SidebarLink to="/portal/inventory" icon={Package} label={t("View Inventory")} />
+              <SidebarLink to="/portal/donations" icon={Heart} label={t("View Donation")} />
             </>
           )}
 
           {user.role === 'accountant' && (
             <>
-              <SidebarLink to="/portal/dashboard" icon={LayoutDashboard} label="Dashboard" />
-              <SidebarLink to="/portal/donations" icon={Heart} label="Donations" />
-              <SidebarLink to="/portal/income" icon={TrendingUp} label="Income" />
-              <SidebarLink to="/portal/expenses" icon={FileText} label="Expenses" />
-              <SidebarLink to="/portal/accounts" icon={Landmark} label="Bank Account" />
-              <SidebarLink to="/portal/reports" icon={FileText} label="Financial Reports" />
+              <SidebarLink to="/portal/dashboard" icon={LayoutDashboard} label={t("Dashboard")} />
+              <SidebarLink to="/portal/donations" icon={Heart} label={t("Donations")} />
+              <SidebarLink to="/portal/income" icon={TrendingUp} label={t("Income")} />
+              <SidebarLink to="/portal/expenses" icon={FileText} label={t("Expenses")} />
+              <SidebarLink to="/portal/accounts" icon={Landmark} label={t("Bank Account")} />
+              <SidebarLink to="/portal/reports" icon={FileText} label={t("Financial Reports")} />
             </>
           )}
 
           <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '16px', paddingTop: '16px' }} />
-          <SidebarLink to="/portal/settings" icon={Settings} label="Settings" />
+          <SidebarLink to="/portal/settings" icon={Settings} label={t("Settings")} />
         </nav>
 
         {/* User profile & logout */}
@@ -162,6 +164,56 @@ function AppLayout() {
           padding: '16px 14px',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
         }}>
+          {/* Language Switcher Toggle Row */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '8px 12px',
+            borderRadius: '10px',
+            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            marginBottom: '10px',
+          }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>🌐 {language === 'si' ? 'භාෂාව' : 'Language'}</span>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  backgroundColor: language === 'en' ? colors.primary : 'transparent',
+                  color: language === 'en' ? '#fff' : '#94a3b8',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('si')}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  backgroundColor: language === 'si' ? colors.primary : 'transparent',
+                  color: language === 'si' ? '#fff' : '#94a3b8',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                සිං
+              </button>
+            </div>
+          </div>
+
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             padding: '10px 12px', borderRadius: '10px',
@@ -188,7 +240,7 @@ function AppLayout() {
                 alignItems: 'center', gap: '4px',
               }}>
                 <Shield size={10} color="#fcd34d" />
-                <span style={{ textTransform: 'capitalize', color: '#fcd34d' }}>{user?.role}</span>
+                <span style={{ textTransform: 'capitalize', color: '#fcd34d' }}>{t(`${user?.role}`)}</span>
               </div>
             </div>
           </div>
@@ -224,7 +276,7 @@ function AppLayout() {
             }}
           >
             <LogOut size={16} />
-            Sign Out
+            {t("Sign Out")}
           </button>
         </div>
       </aside>
@@ -313,29 +365,31 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public Website Routes */}
-          <Route path="/" element={<PublicWebsite initialTab="home" />} />
-          <Route path="/facilities" element={<PublicWebsite initialTab="facilities" />} />
-          <Route path="/programs" element={<PublicWebsite initialTab="programs" />} />
-          <Route path="/contact" element={<PublicWebsite initialTab="contact" />} />
-          <Route path="/donate" element={<PublicWebsite initialTab="donate" />} />
+      <LanguageProvider>
+        <AuthProvider>
+          <Routes>
+            {/* Public Website Routes */}
+            <Route path="/" element={<PublicWebsite initialTab="home" />} />
+            <Route path="/facilities" element={<PublicWebsite initialTab="facilities" />} />
+            <Route path="/programs" element={<PublicWebsite initialTab="programs" />} />
+            <Route path="/contact" element={<PublicWebsite initialTab="contact" />} />
+            <Route path="/donate" element={<PublicWebsite initialTab="donate" />} />
 
-          {/* Authentication */}
-          <Route path="/login" element={<LoginPage />} />
+            {/* Authentication */}
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected Portal Space */}
-          <Route path="/portal/*" element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          } />
+            {/* Protected Portal Space */}
+            <Route path="/portal/*" element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            } />
 
-          {/* Catch-all redirects to Home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
+            {/* Catch-all redirects to Home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

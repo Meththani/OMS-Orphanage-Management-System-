@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonSecondary } from '../styles';
 import {
   Baby, Users, DollarSign, Heart, Activity, TrendingUp, Mail, Landmark, FileText, Calendar, Check, AlertCircle
@@ -52,6 +53,7 @@ function StatCard({ icon: Icon, label, value, color, glow, onClick }) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -158,7 +160,7 @@ export default function Dashboard() {
 
   const greeting = () => {
     const hr = new Date().getHours();
-    return hr < 12 ? 'Good Morning' : hr < 17 ? 'Good Afternoon' : 'Good Evening';
+    return hr < 12 ? t('Good Morning') : hr < 17 ? t('Good Afternoon') : t('Good Evening');
   };
 
   if (loading) {
@@ -193,23 +195,23 @@ export default function Dashboard() {
         <div>
           {/* Stats row */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '32px' }}>
-            <StatCard icon={Baby} label="Active Children" value={staffStats.totalChildren} color={colors.info} glow="rgba(14,165,233,0.12)" />
+            <StatCard icon={Baby} label={t("Active Children")} value={staffStats.totalChildren} color={colors.info} glow="rgba(14,165,233,0.12)" />
             {user?.role === 'admin' && (
-              <StatCard icon={Users} label="Active Staff" value={staffStats.activeStaff} color={colors.success} glow={colors.successGlow} />
+              <StatCard icon={Users} label={t("Active Staff")} value={staffStats.activeStaff} color={colors.success} glow={colors.successGlow} />
             )}
-            <StatCard icon={Heart} label="Pending Donations" value={staffStats.pendingDonations} color={colors.warning} glow={colors.warningGlow} />
-            <StatCard icon={Calendar} label="Meals Scheduled Today" value={staffStats.mealsToday} color={colors.primary} glow={colors.primaryGlow} />
+            <StatCard icon={Heart} label={t("Pending Donations")} value={staffStats.pendingDonations} color={colors.warning} glow={colors.warningGlow} />
+            <StatCard icon={Calendar} label={t("Meals Scheduled Today")} value={staffStats.mealsToday} color={colors.primary} glow={colors.primaryGlow} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
             {/* Contact messages inbox */}
             <div style={cardStyle}>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: colors.text, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
-                <Mail size={18} color={colors.primary} /> Public Website Inquiries
+                <Mail size={18} color={colors.primary} /> {t("Public Website Inquiries")}
               </h2>
 
               {messages.length === 0 ? (
-                <p style={{ color: colors.textMuted, fontSize: '14px' }}>No messages in inbox.</p>
+                <p style={{ color: colors.textMuted, fontSize: '14px' }}>{t("No messages in inbox.")}</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {messages.map((msg) => (
@@ -228,7 +230,7 @@ export default function Dashboard() {
                           background: msg.status === 'pending' ? colors.warningGlow : colors.successGlow,
                           color: msg.status === 'pending' ? colors.warning : colors.success,
                           textTransform: 'uppercase'
-                        }}>{msg.status}</span>
+                        }}>{t(msg.status)}</span>
                       </div>
                       <p style={{ fontSize: '13px', color: colors.textSecondary, lineHeight: 1.5, margin: '0 0 12px 0' }}>
                         &quot;{msg.message}&quot;
@@ -242,7 +244,7 @@ export default function Dashboard() {
                             padding: '4px 10px', fontSize: '11px', borderRadius: '6px'
                           }}
                         >
-                          <Check size={12} /> Mark Read
+                          <Check size={12} /> {t("Mark Read")}
                         </button>
                       )}
                     </div>
@@ -254,11 +256,11 @@ export default function Dashboard() {
             {/* Recent Donations list */}
             <div style={cardStyle}>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: colors.text, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
-                <Heart size={18} color={colors.warning} /> Recent Donations Log
+                <Heart size={18} color={colors.warning} /> {t("Recent Donations Log")}
               </h2>
 
               {recentDonations.length === 0 ? (
-                <p style={{ color: colors.textMuted, fontSize: '14px' }}>No donations registered.</p>
+                <p style={{ color: colors.textMuted, fontSize: '14px' }}>{t("No donations registered.")}</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   {recentDonations.map((d) => (
@@ -266,7 +268,7 @@ export default function Dashboard() {
                       <div>
                         <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{d.donorID?.name || 'Anonymous Donor'}</div>
                         <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px' }}>
-                          Type: <span style={{ textTransform: 'capitalize' }}>{d.type}</span> | {new Date(d.date || d.createdAt).toLocaleDateString()}
+                          {t("Type")}: <span style={{ textTransform: 'capitalize' }}>{t(d.type)}</span> | {new Date(d.date || d.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -274,7 +276,7 @@ export default function Dashboard() {
                           {d.type === 'cash' ? `LKR ${d.amount?.toLocaleString()}` : `${d.quantity} units`}
                         </div>
                         <span style={{ fontSize: '11px', color: d.status === 'received' ? colors.success : colors.warning, textTransform: 'capitalize' }}>
-                          {d.status}
+                          {t(d.status)}
                         </span>
                       </div>
                     </div>
@@ -291,24 +293,24 @@ export default function Dashboard() {
         <div>
           {/* Stats row */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '32px' }}>
-            <StatCard icon={Landmark} label="Total Bank Balance" value={`LKR ${financialStats.totalBalance.toLocaleString()}`} color={colors.success} glow={colors.successGlow} />
-            <StatCard icon={TrendingUp} label="Total Income" value={`LKR ${financialStats.totalIncome.toLocaleString()}`} color={colors.primary} glow={colors.primaryGlow} />
-            <StatCard icon={FileText} label="Total Expenses" value={`LKR ${financialStats.totalExpenses.toLocaleString()}`} color={colors.danger} glow={colors.dangerGlow} />
+            <StatCard icon={Landmark} label={t("Total Bank Balance")} value={`LKR ${financialStats.totalBalance.toLocaleString()}`} color={colors.success} glow={colors.successGlow} />
+            <StatCard icon={TrendingUp} label={t("Total Income")} value={`LKR ${financialStats.totalIncome.toLocaleString()}`} color={colors.primary} glow={colors.primaryGlow} />
+            <StatCard icon={FileText} label={t("Total Expenses")} value={`LKR ${financialStats.totalExpenses.toLocaleString()}`} color={colors.danger} glow={colors.dangerGlow} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '24px' }}>
             {/* Recent financial transactions */}
             <div style={cardStyle}>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: colors.text, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
-                <Activity size={18} color={colors.primary} /> Recent Transactions Ledger
+                <Activity size={18} color={colors.primary} /> {t("Recent Transactions Ledger")}
               </h2>
 
               {financialStats.recentTransactions.length === 0 ? (
-                <p style={{ color: colors.textMuted, fontSize: '14px' }}>No transaction records found.</p>
+                <p style={{ color: colors.textMuted, fontSize: '14px' }}>{t("No transaction records found.")}</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   {financialStats.recentTransactions.map((tx) => (
-                    <div key={tx._id} style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', padding: '14px 0', borderBottom: `1px solid ${colors.border}` }}>
+                    <div key={tx._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: `1px solid ${colors.border}` }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{
@@ -316,8 +318,8 @@ export default function Dashboard() {
                             background: tx.type === 'income' ? colors.successGlow : colors.dangerGlow,
                             color: tx.type === 'income' ? colors.success : colors.danger,
                             textTransform: 'uppercase'
-                          }}>{tx.type}</span>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{tx.category}</span>
+                          }}>{t(tx.type)}</span>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{t(tx.category)}</span>
                         </div>
                         <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '4px' }}>{tx.description}</div>
                       </div>
@@ -337,11 +339,11 @@ export default function Dashboard() {
             {/* Bank account summaries */}
             <div style={cardStyle}>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: colors.text, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
-                <Landmark size={18} color={colors.success} /> Active Accounts
+                <Landmark size={18} color={colors.success} /> {t("Active Accounts")}
               </h2>
 
               {bankAccounts.length === 0 ? (
-                <p style={{ color: colors.textMuted, fontSize: '14px' }}>No active bank accounts.</p>
+                <p style={{ color: colors.textMuted, fontSize: '14px' }}>{t("No active bank accounts.")}</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {bankAccounts.map((acc) => (
@@ -356,7 +358,7 @@ export default function Dashboard() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '16px', fontWeight: 800, color: colors.success }}>LKR {acc.balance.toLocaleString()}</div>
-                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px' }}>Available</div>
+                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '2px' }}>{t("Available")}</div>
                       </div>
                     </div>
                   ))}
