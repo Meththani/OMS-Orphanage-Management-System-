@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../styles';
 import { ArrowLeft } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -242,7 +243,7 @@ export default function LoginPage() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-        }} onClick={() => setShowForgotModal(false)}>
+        }}>
           <div style={{
             backgroundColor: '#ffffff',
             borderRadius: '16px',
@@ -252,9 +253,12 @@ export default function LoginPage() {
             border: `1px solid ${colors.border}`,
             boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.15)',
           }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              🔑 Reset Password
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🔑 Reset Password
+              </h2>
+              <ModalCloseButton onClick={() => setShowForgotModal(false)} />
+            </div>
             <p style={{ fontSize: '14px', color: colors.textSecondary, lineHeight: '1.5', marginTop: '12px', marginBottom: '20px' }}>
               For security reasons, your account credentials can only be reset by a <strong>System Administrator</strong>.
             </p>

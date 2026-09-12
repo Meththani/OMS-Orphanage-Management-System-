@@ -1,9 +1,46 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, modalOverlay, modalBox } from '../styles';
-import { Heart, Phone, Mail, MapPin, Calendar, Clock, Award, ShieldAlert, Check, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Heart, HandHeart, Phone, Mail, MapPin, Calendar, Clock, Check, Lock,
+  ChevronLeft, ChevronRight, BookOpen, FileText, Sparkles, Trophy, Apple, Palette,
+  HandCoins, UtensilsCrossed, Utensils, CreditCard, Landmark, Target, Compass,
+  ShieldCheck, Users, ArrowRight
+} from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
+import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 
-import { useEffect } from 'react';
+// Refined, human-centered charity design tokens
+const charityTheme = {
+  primary: '#1d70b8',        // Trustworthy humanitarian blue
+  primaryDark: '#134e80',
+  primaryLight: '#ebf4fc',
+  primaryGlow: 'rgba(29, 112, 184, 0.12)',
+
+  accentAmber: '#d97706',    // Warm golden amber (sunlight, warmth)
+  accentAmberLight: '#fef3c7',
+  accentGreen: '#059669',    // Healing emerald / nourishment
+  accentGreenLight: '#ecfdf5',
+  accentRose: '#e11d48',     // Heart & care
+  accentRoseLight: '#ffe4e6',
+
+  bgMain: '#fcfbf9',         // Warm paper off-white
+  bgCard: '#ffffff',
+  bgSurface: '#f8fafc',
+  bgSoft: '#f1f5f9',
+
+  textHeading: '#0f172a',    // Deep slate
+  textBody: '#334155',
+  textMuted: '#64748b',
+
+  border: '#e2e8f0',
+  borderWarm: '#e7e5e4',
+  borderHover: '#cbd5e1',
+
+  fontSerif: "'Lora', Georgia, serif",
+  fontSans: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  shadowCard: '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02)',
+  shadowHover: '0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03)',
+};
 
 export default function PublicWebsite({ initialTab = 'home' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -26,7 +63,6 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       setCashSuccess(true);
       setShowCashModal(true);
 
-      // Verify and automatically log checkout session details to DB (works locally without webhooks)
       if (sessionId) {
         fetch('http://localhost:5000/api/public/confirm-checkout-session', {
           method: 'POST',
@@ -55,16 +91,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   const [contactLoading, setContactLoading] = useState(false);
 
   // Cash Donation Form State
-  const [cashForm, setCashForm] = useState({ name: '', email: '', contactDetails: '', type: 'individual', amount: '1000', paymentMethod: 'online', proof: null, notes: '' });
+  const [cashForm, setCashForm] = useState({ name: '', email: '', contactDetails: '', type: 'individual', amount: '1,000', paymentMethod: 'online', proof: null, notes: '' });
   const [cashSuccess, setCashSuccess] = useState(false);
   const [cashLoading, setCashLoading] = useState(false);
-
-  // Stripe Card States
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvc, setCardCvc] = useState('');
-  const [cardError, setCardError] = useState('');
   const [donatedAmount, setDonatedAmount] = useState('0');
 
   // Meal Booking Form State
@@ -97,7 +126,6 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       if (json.status === 'success') {
         setBookings(json.data.bookings || []);
         setChildCount(json.data.activeChildCount || 50);
-        // Pre-fill quantity with child count
         setMealForm(prev => ({
           ...prev,
           quantity: String(json.data.activeChildCount || 50)
@@ -195,6 +223,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     e.preventDefault();
     setCashLoading(true);
     try {
+      const cleanAmount = stripCommas(cashForm.amount);
+      if (!cleanAmount || isNaN(Number(cleanAmount)) || Number(cleanAmount) <= 0) {
+        alert('Please enter a valid donation amount.');
+        setCashLoading(false);
+        return;
+      }
+
       if (cashForm.paymentMethod === 'bank_transfer' && !cashForm.proof) {
         alert('Please upload a bank transfer receipt as proof of payment.');
         setCashLoading(false);
@@ -202,12 +237,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       }
 
       if (cashForm.paymentMethod === 'online') {
-        // Call backend to create checkout session
         const res = await fetch('http://localhost:5000/api/public/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            amount: cashForm.amount,
+            amount: cleanAmount,
             name: cashForm.name,
             email: cashForm.email,
             contactDetails: cashForm.contactDetails,
@@ -216,7 +250,6 @@ export default function PublicWebsite({ initialTab = 'home' }) {
         });
         const data = await res.json();
         if (res.ok && data.url) {
-          // Redirect user to Stripe Checkout page
           window.location.href = data.url;
           return;
         } else {
@@ -229,18 +262,16 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       const res = await fetch('http://localhost:5000/api/public/donate-cash', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cashForm),
+        body: JSON.stringify({
+          ...cashForm,
+          amount: cleanAmount
+        }),
       });
       const data = await res.json();
       if (res.ok) {
-        setDonatedAmount(cashForm.amount);
+        setDonatedAmount(cleanAmount);
         setCashSuccess(true);
-        setCashForm({ name: '', email: '', contactDetails: '', type: 'individual', amount: '1000', paymentMethod: 'online', proof: null, notes: '' });
-        setCardName('');
-        setCardNumber('');
-        setCardExpiry('');
-        setCardCvc('');
-        setCardError('');
+        setCashForm({ name: '', email: '', contactDetails: '', type: 'individual', amount: '1,000', paymentMethod: 'online', proof: null, notes: '' });
         setTimeout(() => {
           setCashSuccess(false);
           setShowCashModal(false);
@@ -300,325 +331,1073 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', color: colors.text }}>
-      {/* ─── Premium Glassmorphism Navbar ─── */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 1000,
-        backdropFilter: 'blur(16px)', backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        borderBottom: `1px solid ${colors.border}`,
-        padding: '0 40px', height: '80px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: charityTheme.bgMain,
+      color: charityTheme.textBody,
+      fontFamily: charityTheme.fontSans,
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+
+      {/* ─── Top Trust & Accreditation Bar ─── */}
+      <div style={{
+        backgroundColor: '#0c2d48',
+        color: '#cbd5e1',
+        fontSize: '12px',
+        padding: '9px 32px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '10px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => setActiveTab('home')}>
-          <img src="/logo-icon.png" alt="OMS Logo" style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '50%',
-            boxShadow: `0 4px 14px ${colors.primaryGlow}`,
-          }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ShieldCheck size={14} color="#f59e0b" />
+          <span>Registered Child Development Center & Sanctuary &bull; National Registration No. <strong>CDC/WP/2014-088</strong></span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <a href="tel:+94112345678" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', textDecoration: 'none' }}>
+            <Phone size={13} color="#f59e0b" />
+            <span>+94 11 234 5678</span>
+          </a>
+          <a href="mailto:info@oms-orphanage.org" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', textDecoration: 'none' }}>
+            <Mail size={13} color="#f59e0b" />
+            <span>info@oms-orphanage.org</span>
+          </a>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
+            <MapPin size={13} />
+            <span>Colombo 03, Sri Lanka</span>
+          </span>
+        </div>
+      </div>
+
+      {/* ─── Main Charity Navigation Header ─── */}
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        backdropFilter: 'blur(12px)',
+        backgroundColor: 'rgba(255, 255, 255, 0.94)',
+        borderBottom: `1px solid ${charityTheme.border}`,
+        padding: '0 32px',
+        height: '76px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.03)'
+      }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}
+          onClick={() => setActiveTab('home')}
+        >
+          <img
+            src="/logo-icon.png"
+            alt="Senehasa Dari Sewana Logo"
+            style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '50%',
+              border: `2px solid ${charityTheme.primaryLight}`,
+              boxShadow: '0 2px 8px rgba(29, 112, 184, 0.15)'
+            }}
+          />
           <div>
-            <div style={{ fontSize: '18px', fontWeight: 800, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.02em' }}>Senehasa</div>
-            <div style={{ fontSize: '11px', color: colors.textMuted }}>Child Development Center</div>
+            <div style={{
+              fontSize: '20px',
+              fontWeight: 700,
+              fontFamily: charityTheme.fontSerif,
+              color: charityTheme.textHeading,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.1
+            }}>
+              Senehasa Dari Sewana
+            </div>
+            <div style={{
+              fontSize: '11px',
+              color: charityTheme.textMuted,
+              letterSpacing: '0.04em',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              marginTop: '3px'
+            }}>
+              Child Development Center & Sanctuary
+            </div>
           </div>
         </div>
 
-        <nav style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
-          {['home', 'facilities', 'programs', 'contact', 'donate'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                background: 'none', border: 'none', color: activeTab === tab ? colors.primary : colors.textSecondary,
-                fontSize: '14px', fontWeight: activeTab === tab ? 700 : 500, cursor: 'pointer',
-                padding: '8px 4px', position: 'relative', transition: 'color 0.2s ease',
-                fontFamily: "'Plus Jakarta Sans', sans-serif"
-              }}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              {activeTab === tab && (
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
-                  borderRadius: '2px', background: `linear-gradient(90deg, ${colors.primary}, #a855f7)`
-                }} />
-              )}
-            </button>
-          ))}
+        <nav style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {[
+            { id: 'home', label: 'Home' },
+            { id: 'facilities', label: 'Facilities' },
+            { id: 'programs', label: 'Programs' },
+            { id: 'contact', label: 'Contact Us' },
+            { id: 'donate', label: 'Support Us' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  background: isActive ? charityTheme.primaryLight : 'transparent',
+                  border: 'none',
+                  color: isActive ? charityTheme.primary : charityTheme.textBody,
+                  fontSize: '14px',
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: 'pointer',
+                  padding: '9px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.18s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {tab.id === 'donate' && <Heart size={14} fill={isActive ? charityTheme.primary : 'none'} color={isActive ? charityTheme.primary : charityTheme.accentAmber} />}
+                {tab.label}
+              </button>
+            );
+          })}
+
+          <div style={{ width: '1px', height: '24px', backgroundColor: charityTheme.border, margin: '0 8px' }} />
+
+          <button
+            onClick={() => setActiveTab('donate')}
+            style={{
+              backgroundColor: charityTheme.primary,
+              color: '#ffffff',
+              border: 'none',
+              padding: '10px 20px',
+              fontSize: '13px',
+              fontWeight: 700,
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(29, 112, 184, 0.25)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = charityTheme.primaryDark}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.primary}
+          >
+            <HandHeart size={15} />
+            <span>Donate Now</span>
+          </button>
 
           <button
             onClick={() => navigate('/login')}
             style={{
-              ...buttonSecondary,
-              padding: '8px 18px', fontSize: '13px', borderRadius: '8px',
-              marginLeft: '12px'
+              backgroundColor: 'transparent',
+              color: charityTheme.textMuted,
+              border: `1px solid ${charityTheme.border}`,
+              padding: '9px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = charityTheme.borderHover;
+              e.currentTarget.style.color = charityTheme.textHeading;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = charityTheme.border;
+              e.currentTarget.style.color = charityTheme.textMuted;
             }}
           >
-            Portal Login
+            <Lock size={13} />
+            <span>Staff Portal</span>
           </button>
         </nav>
       </header>
 
-      {/* ─── Main Content Container ─── */}
-      <main style={{ padding: '48px 40px', maxWidth: '1200px', margin: '0 auto' }}>
+      {/* ─── Main Page Content ─── */}
+      <main style={{ flex: 1, padding: '40px 32px 64px', maxWidth: '1240px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
 
-        {/* ─── HOME TAB ─── */}
+        {/* ═══════════════════════════════════════════════════════
+            HOME TAB
+           ═══════════════════════════════════════════════════════ */}
         {activeTab === 'home' && (
-          <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-            {/* Hero Section */}
+          <div style={{ animation: 'fadeIn 0.35s ease-out' }}>
+
+            {/* Authentic Hero Section */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '48px', marginBottom: '80px',
-              padding: '60px 48px', borderRadius: '24px',
-              background: `linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(168,85,247,0.03) 50%, rgba(9,13,22,0.8) 100%)`,
-              border: `1px solid ${colors.border}`, position: 'relative', overflow: 'hidden'
+              display: 'grid',
+              gridTemplateColumns: '1.15fr 0.95fr',
+              gap: '48px',
+              alignItems: 'center',
+              marginBottom: '64px',
+              padding: '48px 44px',
+              borderRadius: '24px',
+              backgroundColor: '#ffffff',
+              border: `1px solid ${charityTheme.borderWarm}`,
+              boxShadow: charityTheme.shadowCard
             }}>
-              <div style={{ flex: 1, zIndex: 1 }}>
+              <div>
+                {/* Non-Profit Badge */}
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  padding: '6px 14px', borderRadius: '30px', background: 'rgba(99, 102, 241, 0.1)',
-                  color: colors.primary, fontSize: '12px', fontWeight: 700, marginBottom: '20px'
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '7px 16px',
+                  borderRadius: '30px',
+                  backgroundColor: charityTheme.primaryLight,
+                  color: charityTheme.primary,
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em',
+                  marginBottom: '20px'
                 }}>
-                  <Heart size={12} fill={colors.primary} /> Welcome to Charity
+                  <HandHeart size={15} />
+                  <span>Caring for Vulnerable Children in Sri Lanka</span>
                 </div>
-                <h1 style={{ fontSize: '48px', fontWeight: 800, lineHeight: 1.15, marginBottom: '24px', fontFamily: "'Outfit', sans-serif" }}>
-                  Helping Each Other <br />Can Make <span style={{ background: `linear-gradient(135deg, ${colors.primary}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>World Better</span>
+
+                <h1 style={{
+                  fontSize: '44px',
+                  fontWeight: 700,
+                  fontFamily: charityTheme.fontSerif,
+                  color: charityTheme.textHeading,
+                  lineHeight: 1.2,
+                  marginBottom: '20px',
+                  letterSpacing: '-0.02em'
+                }}>
+                  Every Child Deserves a Safe Home, Wholesome Food, and a Brighter Tomorrow.
                 </h1>
-                <p style={{ color: colors.textSecondary, fontSize: '16px', lineHeight: 1.6, marginBottom: '32px', maxWidth: '520px' }}>
-                  Every child deserves a secure home, quality education, proper nutrition, and a chance to build a brighter future. Join our community in giving care, hope, and love.
+
+                <p style={{
+                  color: charityTheme.textBody,
+                  fontSize: '16px',
+                  lineHeight: 1.7,
+                  marginBottom: '32px',
+                  maxWidth: '540px'
+                }}>
+                  At Senehasa Dari Sewana, we provide loving shelter, complete educational support, nutritional meals, and healthcare to orphaned and underprivileged children. Together, we can empower them toward an independent, dignity-filled future.
                 </p>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <button style={buttonPrimary} onClick={() => setActiveTab('donate')}>Donate Now</button>
-                  <button style={buttonSecondary} onClick={() => setActiveTab('contact')}>Get In Touch</button>
+
+                <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    onClick={() => setActiveTab('donate')}
+                    style={{
+                      backgroundColor: charityTheme.primary,
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '14px 28px',
+                      borderRadius: '10px',
+                      fontWeight: 700,
+                      fontSize: '15px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      boxShadow: '0 6px 16px rgba(29, 112, 184, 0.28)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = charityTheme.primaryDark}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.primary}
+                  >
+                    <Heart size={18} fill="#ffffff" />
+                    <span>Make a Donation</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowMealModal(true)}
+                    style={{
+                      backgroundColor: charityTheme.accentGreenLight,
+                      color: charityTheme.accentGreen,
+                      border: `1px solid rgba(5, 150, 105, 0.3)`,
+                      padding: '14px 24px',
+                      borderRadius: '10px',
+                      fontWeight: 700,
+                      fontSize: '15px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d1fae5'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.accentGreenLight}
+                  >
+                    <UtensilsCrossed size={16} />
+                    <span>Sponsor a Child's Meal</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('contact')}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: charityTheme.textBody,
+                      border: 'none',
+                      padding: '14px 16px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>Get In Touch</span>
+                    <ArrowRight size={14} />
+                  </button>
                 </div>
               </div>
-              <div style={{ flex: 1, display: 'flex', justifyContent: 'center', position: 'relative' }}>
+
+              {/* Hero Visual Presentation */}
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
                 <div style={{
-                  width: '380px', height: '380px', borderRadius: '30px',
-                  background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                  border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
-                  position: 'relative'
+                  width: '100%',
+                  maxWidth: '430px',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  border: `1px solid ${charityTheme.borderWarm}`,
+                  boxShadow: '0 20px 40px -10px rgba(15, 23, 42, 0.12)',
+                  position: 'relative',
+                  backgroundColor: '#ffffff'
                 }}>
-                  <img src="/hero-child.jpg" alt="Child Care Support" style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '28px'
-                  }} />
+                  <img
+                    src="/hero-child.jpg"
+                    alt="Children learning at Senehasa sanctuary"
+                    style={{
+                      width: '100%',
+                      height: '380px',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+
+                  {/* Impact Float Badge 1: 50+ Children */}
                   <div style={{
-                    position: 'absolute', bottom: '-20px', left: '-20px',
-                    backgroundColor: colors.cardSolid, border: `1px solid ${colors.border}`,
-                    borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+                    position: 'absolute',
+                    bottom: '16px',
+                    left: '16px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                    backdropFilter: 'blur(8px)',
+                    border: `1px solid ${charityTheme.border}`,
+                    borderRadius: '14px',
+                    padding: '12px 18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    boxShadow: '0 8px 24px rgba(15, 23, 42, 0.1)'
                   }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.successGlow, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>❤️</div>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '10px',
+                      backgroundColor: charityTheme.primaryLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Users size={20} color={charityTheme.primary} />
+                    </div>
                     <div>
-                      <div style={{ fontSize: '16px', fontWeight: 700 }}>50+ Children</div>
-                      <div style={{ fontSize: '11px', color: colors.textMuted }}>Supported and Cared For</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: charityTheme.textHeading, lineHeight: 1.1 }}>50+ Children</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, marginTop: '2px' }}>Supported &amp; Cared For</div>
                     </div>
                   </div>
+
+                  {/* Trust Float Badge 2: Verified Sanctuary */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(8px)',
+                    border: `1px solid rgba(5, 150, 105, 0.25)`,
+                    borderRadius: '30px',
+                    padding: '6px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: charityTheme.accentGreen,
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
+                  }}>
+                    <ShieldCheck size={14} />
+                    <span>Government Approved Sanctuary</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* About Us section */}
-            <div style={{ display: 'flex', gap: '60px', marginBottom: '80px' }}>
-              <div style={{ flex: 1 }}>
-                <h2 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '20px', fontFamily: "'Outfit', sans-serif" }}>
-                  Your Support Is <span style={{ color: colors.primary }}>Really Powerful</span>
+            {/* Impact Metric Strip */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '20px',
+              marginBottom: '64px'
+            }}>
+              {[
+                { number: '50+', label: 'Active Children in Residence', icon: Users, color: charityTheme.primary, bg: charityTheme.primaryLight },
+                { number: '100%', label: 'School & Tuition Enrollment', icon: BookOpen, color: charityTheme.accentGreen, bg: charityTheme.accentGreenLight },
+                { number: '3 Meals', label: 'Fresh Daily Balanced Nutrition', icon: Utensils, color: charityTheme.accentAmber, bg: charityTheme.accentAmberLight },
+                { number: '24 / 7', label: 'Dedicated Caregiver Support', icon: Heart, color: charityTheme.accentRose, bg: charityTheme.accentRoseLight },
+              ].map((item, i) => {
+                const IconComponent = item.icon;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      padding: '24px',
+                      borderRadius: '16px',
+                      border: `1px solid ${charityTheme.borderWarm}`,
+                      boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px'
+                    }}
+                  >
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      backgroundColor: item.bg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <IconComponent size={22} color={item.color} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '26px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading, lineHeight: 1.1 }}>
+                        {item.number}
+                      </div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 500 }}>
+                        {item.label}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* About Us / Mission & Vision Section */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '24px',
+              padding: '48px',
+              border: `1px solid ${charityTheme.borderWarm}`,
+              boxShadow: charityTheme.shadowCard,
+              marginBottom: '40px'
+            }}>
+              <div style={{ maxWidth: '780px', marginBottom: '36px' }}>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: charityTheme.primary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginBottom: '8px'
+                }}>
+                  About Senehasa Dari Sewana
+                </div>
+                <h2 style={{
+                  fontSize: '34px',
+                  fontWeight: 700,
+                  fontFamily: charityTheme.fontSerif,
+                  color: charityTheme.textHeading,
+                  lineHeight: 1.25,
+                  marginBottom: '16px'
+                }}>
+                  Your Support Truly Changes Young Lives
                 </h2>
-                <p style={{ color: colors.textSecondary, fontSize: '15px', lineHeight: 1.7, marginBottom: '20px' }}>
+                <p style={{ color: charityTheme.textBody, fontSize: '15px', lineHeight: 1.75 }}>
                   Our facility serves as a refuge for orphaned, abandoned, or underprivileged children, providing them with a safe, caring, and nurturing environment. Through comprehensive childhood support plans, we guide their physical, social, cognitive, and creative development.
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '30px' }}>
-                  <div style={{ ...cardStyle, padding: '20px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                    <div style={{ color: colors.info, fontSize: '24px', marginBottom: '8px' }}>🎯</div>
-                    <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '4px' }}>Our Mission</div>
-                    <div style={{ fontSize: '13px', color: colors.textMuted }}>To offer children safe sanctuary, quality health, tailored learning, and life coaching.</div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                {/* Mission Card */}
+                <div style={{
+                  padding: '28px',
+                  borderRadius: '16px',
+                  backgroundColor: charityTheme.bgSurface,
+                  border: `1px solid ${charityTheme.border}`
+                }}>
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '10px',
+                    backgroundColor: charityTheme.primaryLight,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <Target size={22} color={charityTheme.primary} />
                   </div>
-                  <div style={{ ...cardStyle, padding: '20px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                    <div style={{ color: colors.success, fontSize: '24px', marginBottom: '8px' }}>✨</div>
-                    <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '4px' }}>Our Vision</div>
-                    <div style={{ fontSize: '13px', color: colors.textMuted }}>A world where every orphaned child becomes an empowered, successful member of society.</div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontSerif }}>
+                    Our Mission
+                  </h3>
+                  <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
+                    To offer children safe sanctuary, quality health, tailored learning, and life coaching so they may build confident futures.
+                  </p>
+                </div>
+
+                {/* Vision Card */}
+                <div style={{
+                  padding: '28px',
+                  borderRadius: '16px',
+                  backgroundColor: charityTheme.bgSurface,
+                  border: `1px solid ${charityTheme.border}`
+                }}>
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '10px',
+                    backgroundColor: charityTheme.accentGreenLight,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <Compass size={22} color={charityTheme.accentGreen} />
                   </div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontSerif }}>
+                    Our Vision
+                  </h3>
+                  <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
+                    A world where every orphaned child becomes an empowered, educated, and successful contributing member of society.
+                  </p>
+                </div>
+
+                {/* Transparency Card */}
+                <div style={{
+                  padding: '28px',
+                  borderRadius: '16px',
+                  backgroundColor: charityTheme.bgSurface,
+                  border: `1px solid ${charityTheme.border}`
+                }}>
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '10px',
+                    backgroundColor: charityTheme.accentAmberLight,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px'
+                  }}>
+                    <ShieldCheck size={22} color={charityTheme.accentAmber} />
+                  </div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontSerif }}>
+                    Full Transparency
+                  </h3>
+                  <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
+                    100% of contributions are managed systematically with digital accounting, official receipt issuance, and regular audit inspections.
+                  </p>
                 </div>
               </div>
             </div>
+
           </div>
         )}
 
-        {/* ─── FACILITIES TAB ─── */}
+        {/* ═══════════════════════════════════════════════════════
+            FACILITIES TAB
+           ═══════════════════════════════════════════════════════ */}
         {activeTab === 'facilities' && (
-          <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 style={{ fontSize: '36px', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                FACILITIES - Six Pillars of Child Development
+          <div style={{ animation: 'fadeIn 0.35s ease-out' }}>
+            <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 48px' }}>
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: charityTheme.primary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: '8px'
+              }}>
+                Holistic Child Development
+              </div>
+              <h2 style={{ fontSize: '38px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading, marginBottom: '12px' }}>
+                Six Pillars of Child Development
               </h2>
-              <p style={{ color: colors.textMuted, marginTop: '8px', fontSize: '16px', maxWidth: '600px', margin: '8px auto 0' }}>
-                We structure child care across six developmental areas, offering tailored spaces and equipment.
+              <p style={{ color: charityTheme.textMuted, fontSize: '16px', lineHeight: 1.6 }}>
+                We structure child care across six developmental areas, offering tailored spaces, modern equipment, and qualified staff supervision.
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
               {[
-                { title: 'Education', icon: '📚', desc: 'Formal schooling support, classroom setups, textbook distributions, and homework tutoring panels.', color: '#3b82f6' },
-                { title: 'Tuition Classes', icon: '📝', desc: 'Supplemental academic coaching in Math, Science, and Languages to reinforce school performance.', color: '#10b981' },
-                { title: 'Extra-curricular Activities', icon: '🎭', desc: 'Debating societies, chess clubs, leadership circles, and scout groups to build life-readiness.', color: '#f59e0b' },
-                { title: 'Sport Activities', icon: '⚽', desc: 'Physical coordination, outdoor games, track sports, and matches to build teamwork and healthy habits.', color: '#ef4444' },
-                { title: 'Health & Nutrition', icon: '🍎', desc: 'Balanced diet planning, fresh daily milk, pediatric checkups, and routine medicine distributions.', color: '#0ea5e9' },
-                { title: 'Creative Arts', icon: '🎨', desc: 'Drama classes, traditional dancing, watercolor painting, and musical instrument lessons.', color: '#8b5cf6' },
-              ].map((fac, idx) => (
-                <div key={idx} style={{ ...cardStyle, borderTop: `4px solid ${fac.color}`, position: 'relative' }}>
-                  <div style={{ fontSize: '36px', marginBottom: '16px' }}>{fac.icon}</div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: colors.text, marginBottom: '8px' }}>{fac.title}</h3>
-                  <p style={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 }}>{fac.desc}</p>
-                </div>
-              ))}
+                { title: 'Education', icon: BookOpen, desc: 'Formal schooling support, classroom setups, textbook distributions, and homework tutoring panels.', color: '#1d70b8', bg: '#ebf4fc' },
+                { title: 'Tuition Classes', icon: FileText, desc: 'Supplemental academic coaching in Math, Science, and Languages to reinforce school performance.', color: '#059669', bg: '#ecfdf5' },
+                { title: 'Extra-curricular Activities', icon: Sparkles, desc: 'Debating societies, chess clubs, leadership circles, and scout groups to build life-readiness.', color: '#d97706', bg: '#fef3c7' },
+                { title: 'Sport Activities', icon: Trophy, desc: 'Physical coordination, outdoor games, track sports, and matches to build teamwork and healthy habits.', color: '#e11d48', bg: '#ffe4e6' },
+                { title: 'Health & Nutrition', icon: Apple, desc: 'Balanced diet planning, fresh daily milk, pediatric checkups, and routine medicine distributions.', color: '#0284c7', bg: '#e0f2fe' },
+                { title: 'Creative Arts', icon: Palette, desc: 'Drama classes, traditional dancing, watercolor painting, and musical instrument lessons.', color: '#7c3aed', bg: '#ede9fe' },
+              ].map((fac, idx) => {
+                const IconComponent = fac.icon;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '30px',
+                      border: `1px solid ${charityTheme.borderWarm}`,
+                      boxShadow: '0 2px 8px rgba(15, 23, 42, 0.03)',
+                      transition: 'all 0.2s ease',
+                      position: 'relative'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = charityTheme.shadowHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(15, 23, 42, 0.03)';
+                    }}
+                  >
+                    <div style={{
+                      width: '52px',
+                      height: '52px',
+                      borderRadius: '14px',
+                      backgroundColor: fac.bg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '20px'
+                    }}>
+                      <IconComponent size={26} color={fac.color} />
+                    </div>
+                    <h3 style={{ fontSize: '19px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontSerif }}>
+                      {fac.title}
+                    </h3>
+                    <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.65 }}>
+                      {fac.desc}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{
-              marginTop: '56px', padding: '40px', borderRadius: '16px', backgroundColor: colors.card,
-              border: `1px solid ${colors.border}`, display: 'flex', justifyContent: 'space-around', textAlign: 'center'
+              marginTop: '56px',
+              padding: '36px',
+              borderRadius: '20px',
+              backgroundColor: '#ffffff',
+              border: `1px solid ${charityTheme.borderWarm}`,
+              display: 'flex',
+              justifyContent: 'space-around',
+              textAlign: 'center',
+              boxShadow: charityTheme.shadowCard
             }}>
               <div>
-                <div style={{ fontSize: '36px', fontWeight: 800, color: colors.primary, fontFamily: "'Outfit', sans-serif" }}>100%</div>
-                <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '4px' }}>Enrolment Rate</div>
+                <div style={{ fontSize: '40px', fontWeight: 700, color: charityTheme.primary, fontFamily: charityTheme.fontSerif }}>100%</div>
+                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>Enrolment Rate</div>
               </div>
-              <div style={{ width: '1px', backgroundColor: colors.border }} />
+              <div style={{ width: '1px', backgroundColor: charityTheme.border }} />
               <div>
-                <div style={{ fontSize: '36px', fontWeight: 800, color: colors.success, fontFamily: "'Outfit', sans-serif" }}>6 Pillars</div>
-                <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '4px' }}>Development Structure</div>
+                <div style={{ fontSize: '40px', fontWeight: 700, color: charityTheme.accentGreen, fontFamily: charityTheme.fontSerif }}>6 Pillars</div>
+                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>Development Structure</div>
               </div>
-              <div style={{ width: '1px', backgroundColor: colors.border }} />
+              <div style={{ width: '1px', backgroundColor: charityTheme.border }} />
               <div>
-                <div style={{ fontSize: '36px', fontWeight: 800, color: colors.info, fontFamily: "'Outfit', sans-serif" }}>24/7</div>
-                <div style={{ fontSize: '13px', color: colors.textMuted, marginTop: '4px' }}>Care & Support</div>
+                <div style={{ fontSize: '40px', fontWeight: 700, color: charityTheme.accentAmber, fontFamily: charityTheme.fontSerif }}>24 / 7</div>
+                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>Continuous Care</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ─── PROGRAMS TAB ─── */}
+        {/* ═══════════════════════════════════════════════════════
+            PROGRAMS TAB
+           ═══════════════════════════════════════════════════════ */}
         {activeTab === 'programs' && (
-          <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+          <div style={{ animation: 'fadeIn 0.35s ease-out' }}>
             <div style={{ marginBottom: '40px' }}>
-              <h2 style={{ fontSize: '36px', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>All Programs</h2>
-              <p style={{ color: colors.textMuted, marginTop: '4px' }}>Special initiatives that connect sponsors and donors directly to kids.</p>
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: charityTheme.primary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: '6px'
+              }}>
+                Community Initiatives
+              </div>
+              <h2 style={{ fontSize: '38px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading }}>All Programs</h2>
+              <p style={{ color: charityTheme.textMuted, marginTop: '6px', fontSize: '16px' }}>
+                Special initiatives that connect sponsors and donors directly to the children.
+              </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {[
-                { title: 'Full Plates, Bright Futures Program', desc: 'Covers breakfast, lunch, and dinner bookings. Ensuring that children get high-protein nutritious meals every single day to support healthy development.', category: 'Nutrition' },
-                { title: 'Sinhala & Tamil New Year Celebration Program', desc: 'Organizes traditional games, sweetmeat distributions, and new clothes gifting for the kids during the national cultural new year festivity.', category: 'Cultural' },
-                { title: 'Children\'s Day Celebration Program', desc: 'A dedicated day of magic shows, talent displays, carnival food, and specialized gifts to let the kids feel special and appreciated.', category: 'Social Event' },
-                { title: 'Scholarship & School Supplies Support Program', desc: 'Distributes textbooks, backpacks, stationery kits, and school uniforms prior to the start of the academic semesters.', category: 'Education' },
-                { title: 'Child Health & Wellness Programme', desc: 'Annual comprehensive pediatric and dental health screenings, eye tests, vitamin updates, and general wellness follow-ups.', category: 'Medical' },
+                { title: 'Full Plates, Bright Futures Program', desc: 'Covers breakfast, lunch, and dinner bookings. Ensuring that children get high-protein nutritious meals every single day to support healthy development.', category: 'Nutrition', color: '#059669', bg: '#ecfdf5' },
+                { title: 'Sinhala & Tamil New Year Celebration Program', desc: 'Organizes traditional games, sweetmeat distributions, and new clothes gifting for the kids during the national cultural new year festivity.', category: 'Cultural', color: '#d97706', bg: '#fef3c7' },
+                { title: 'Children\'s Day Celebration Program', desc: 'A dedicated day of magic shows, talent displays, carnival food, and specialized gifts to let the kids feel special and appreciated.', category: 'Social Event', color: '#7c3aed', bg: '#ede9fe' },
+                { title: 'Scholarship & School Supplies Support Program', desc: 'Distributes textbooks, backpacks, stationery kits, and school uniforms prior to the start of the academic semesters.', category: 'Education', color: '#1d70b8', bg: '#ebf4fc' },
+                { title: 'Child Health & Wellness Programme', desc: 'Annual comprehensive pediatric and dental health screenings, eye tests, vitamin updates, and general wellness follow-ups.', category: 'Medical', color: '#e11d48', bg: '#ffe4e6' },
               ].map((prog, idx) => (
-                <div key={idx} style={{
-                  ...cardStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.015)', transition: 'background-color 0.2s ease'
-                }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.015)'}
+                <div
+                  key={idx}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    padding: '28px 32px',
+                    border: `1px solid ${charityTheme.borderWarm}`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '28px',
+                    boxShadow: '0 2px 6px rgba(15, 23, 42, 0.02)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = charityTheme.borderHover;
+                    e.currentTarget.style.boxShadow = '0 6px 18px rgba(15, 23, 42, 0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = charityTheme.borderWarm;
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(15, 23, 42, 0.02)';
+                  }}
                 >
                   <div style={{ flex: 1 }}>
                     <span style={{
-                      padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700,
-                      background: colors.primaryGlow, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.05em'
-                    }}>{prog.category}</span>
-                    <h3 style={{ fontSize: '20px', fontWeight: 700, color: colors.text, marginTop: '10px', marginBottom: '8px', fontFamily: "'Outfit', sans-serif" }}>{prog.title}</h3>
-                    <p style={{ fontSize: '14px', color: colors.textSecondary, lineHeight: 1.6 }}>{prog.desc}</p>
+                      padding: '4px 12px',
+                      borderRadius: '30px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backgroundColor: prog.bg,
+                      color: prog.color,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      display: 'inline-block'
+                    }}>
+                      {prog.category}
+                    </span>
+                    <h3 style={{
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      color: charityTheme.textHeading,
+                      marginTop: '10px',
+                      marginBottom: '8px',
+                      fontFamily: charityTheme.fontSerif
+                    }}>
+                      {prog.title}
+                    </h3>
+                    <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.65 }}>
+                      {prog.desc}
+                    </p>
                   </div>
-                  <button style={{ ...buttonSecondary, flexShrink: 0 }} onClick={() => setActiveTab('donate')}>Support Program</button>
+                  <button
+                    onClick={() => setActiveTab('donate')}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      color: charityTheme.primary,
+                      border: `1px solid ${charityTheme.primary}`,
+                      borderRadius: '8px',
+                      padding: '10px 20px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      flexShrink: 0,
+                      transition: 'all 0.18s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = charityTheme.primaryLight;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                    }}
+                  >
+                    <span>Support Program</span>
+                    <ArrowRight size={14} />
+                  </button>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ─── CONTACT TAB ─── */}
+        {/* ═══════════════════════════════════════════════════════
+            CONTACT TAB
+           ═══════════════════════════════════════════════════════ */}
         {activeTab === 'contact' && (
-          <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '48px' }}>
+          <div style={{ animation: 'fadeIn 0.35s ease-out' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '48px', alignItems: 'start' }}>
               <div>
-                <h2 style={{ fontSize: '36px', fontWeight: 800, fontFamily: "'Outfit', sans-serif", marginBottom: '20px' }}>Contact Us</h2>
-                <p style={{ color: colors.textSecondary, fontSize: '15px', lineHeight: 1.6, marginBottom: '32px' }}>
+                <div style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: charityTheme.primary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  marginBottom: '6px'
+                }}>
+                  Direct Assistance
+                </div>
+                <h2 style={{ fontSize: '38px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading, marginBottom: '16px' }}>
+                  Contact Us
+                </h2>
+                <p style={{ color: charityTheme.textBody, fontSize: '15px', lineHeight: 1.7, marginBottom: '32px' }}>
                   Have questions about donations, volunteering, or meal sponsorships? Send us a message and our coordinator team will respond within 24 hours.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: colors.primaryGlow, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <MapPin size={20} color={colors.primary} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {/* Address */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '16px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: `1px solid ${charityTheme.borderWarm}`
+                  }}>
+                    <div style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '10px',
+                      backgroundColor: charityTheme.primaryLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <MapPin size={20} color={charityTheme.primary} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '13px', color: colors.textMuted }}>Address</div>
-                      <div style={{ fontSize: '15px', fontWeight: 600 }}>102 Temple Road, Colombo 03, Sri Lanka</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Sanctuary Address</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>102 Temple Road, Colombo 03, Sri Lanka</div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: colors.successGlow, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Phone size={20} color={colors.success} />
+                  {/* Phone */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '16px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: `1px solid ${charityTheme.borderWarm}`
+                  }}>
+                    <div style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '10px',
+                      backgroundColor: charityTheme.accentGreenLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Phone size={20} color={charityTheme.accentGreen} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '13px', color: colors.textMuted }}>Phone</div>
-                      <div style={{ fontSize: '15px', fontWeight: 600 }}>+94 11 234 5678</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Phone Lines (Mon - Sun)</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>+94 11 234 5678</div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(14,165,233,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Mail size={20} color={colors.info} />
+                  {/* Email */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '16px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: `1px solid ${charityTheme.borderWarm}`
+                  }}>
+                    <div style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '10px',
+                      backgroundColor: charityTheme.accentAmberLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Mail size={20} color={charityTheme.accentAmber} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '13px', color: colors.textMuted }}>Email</div>
-                      <div style={{ fontSize: '15px', fontWeight: 600 }}>info@oms-orphanage.org</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Official Email</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>info@oms-orphanage.org</div>
+                    </div>
+                  </div>
+
+                  {/* Visiting Hours */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center',
+                    padding: '16px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: `1px solid ${charityTheme.borderWarm}`
+                  }}>
+                    <div style={{
+                      width: '46px',
+                      height: '46px',
+                      borderRadius: '10px',
+                      backgroundColor: charityTheme.primaryLight,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Clock size={20} color={charityTheme.primary} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Sponsor Visiting Hours</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>09:00 AM - 05:00 PM (Prior Appointment)</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div style={cardStyle}>
-                <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', fontFamily: "'Outfit', sans-serif" }}>Get In Touch / Send Us A Message</h3>
+              {/* Form Card */}
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '20px',
+                padding: '36px',
+                border: `1px solid ${charityTheme.borderWarm}`,
+                boxShadow: charityTheme.shadowCard
+              }}>
+                <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading }}>
+                  Send Us a Message
+                </h3>
+                <p style={{ fontSize: '13px', color: charityTheme.textMuted, marginBottom: '24px' }}>
+                  Fill in the details below and our coordinator team will be in touch shortly.
+                </p>
 
                 {contactSuccess ? (
                   <div style={{
-                    padding: '24px', textAlign: 'center', backgroundColor: colors.successGlow,
-                    border: `1px solid rgba(16,185,129,0.3)`, borderRadius: '12px', color: colors.success
+                    padding: '28px',
+                    textAlign: 'center',
+                    backgroundColor: charityTheme.accentGreenLight,
+                    border: `1px solid rgba(5, 150, 105, 0.3)`,
+                    borderRadius: '12px',
+                    color: charityTheme.accentGreen
                   }}>
-                    <Check size={40} style={{ margin: '0 auto 12px' }} />
-                    <h4 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>Message Sent!</h4>
-                    <p style={{ fontSize: '13px', color: colors.textSecondary }}>Thank you for your message. Our staff will review and get back to you shortly.</p>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      backgroundColor: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 12px',
+                      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)'
+                    }}>
+                      <Check size={26} color={charityTheme.accentGreen} />
+                    </div>
+                    <h4 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>Message Received!</h4>
+                    <p style={{ fontSize: '13px', color: charityTheme.textBody }}>Thank you for reaching out. Our coordinator will review your note and respond promptly.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleContactSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>First Name</label>
-                        <input style={inputStyle} value={contactForm.firstName} onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })} required />
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>First Name *</label>
+                        <input
+                          style={{
+                            width: '100%', padding: '11px 14px', borderRadius: '8px',
+                            border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                            color: charityTheme.textHeading, fontSize: '14px', boxSizing: 'border-box'
+                          }}
+                          value={contactForm.firstName}
+                          onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
+                          required
+                        />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Last Name</label>
-                        <input style={inputStyle} value={contactForm.lastName} onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })} required />
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Last Name *</label>
+                        <input
+                          style={{
+                            width: '100%', padding: '11px 14px', borderRadius: '8px',
+                            border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                            color: charityTheme.textHeading, fontSize: '14px', boxSizing: 'border-box'
+                          }}
+                          value={contactForm.lastName}
+                          onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
+                          required
+                        />
                       </div>
                     </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Email Address</label>
-                      <input type="email" style={inputStyle} value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} required />
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Email Address *</label>
+                      <input
+                        type="email"
+                        style={{
+                          width: '100%', padding: '11px 14px', borderRadius: '8px',
+                          border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                          color: charityTheme.textHeading, fontSize: '14px', boxSizing: 'border-box'
+                        }}
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                        required
+                      />
                     </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Phone Number (Optional)</label>
-                      <input style={inputStyle} value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} />
+                    <div style={{ marginBottom: '14px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Phone Number (Optional)</label>
+                      <input
+                        style={{
+                          width: '100%', padding: '11px 14px', borderRadius: '8px',
+                          border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                          color: charityTheme.textHeading, fontSize: '14px', boxSizing: 'border-box'
+                        }}
+                        value={contactForm.phone}
+                        onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                      />
                     </div>
 
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Message</label>
-                      <textarea style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} required />
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Message *</label>
+                      <textarea
+                        style={{
+                          width: '100%', padding: '11px 14px', borderRadius: '8px',
+                          border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                          color: charityTheme.textHeading, fontSize: '14px', minHeight: '110px',
+                          resize: 'vertical', boxSizing: 'border-box'
+                        }}
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                        required
+                      />
                     </div>
 
-                    <button type="submit" style={{ ...buttonPrimary, width: '100%' }} disabled={contactLoading}>
-                      {contactLoading ? 'Sending...' : 'Send Message'}
+                    <button
+                      type="submit"
+                      style={{
+                        width: '100%',
+                        backgroundColor: charityTheme.primary,
+                        color: '#ffffff',
+                        border: 'none',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                      disabled={contactLoading}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = charityTheme.primaryDark}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.primary}
+                    >
+                      {contactLoading ? 'Submitting Message...' : 'Send Message'}
                     </button>
                   </form>
                 )}
@@ -627,243 +1406,689 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           </div>
         )}
 
-        {/* ─── DONATE TAB ─── */}
+        {/* ═══════════════════════════════════════════════════════
+            DONATE / SUPPORT US TAB
+           ═══════════════════════════════════════════════════════ */}
         {activeTab === 'donate' && (
-          <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-            <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-              <h2 style={{ fontSize: '36px', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>Choose How You Want To Help</h2>
-              <p style={{ color: colors.textMuted, marginTop: '8px', fontSize: '16px' }}>Make a difference by direct monetary donations or sponsoring healthy meals for the children.</p>
+          <div style={{ animation: 'fadeIn 0.35s ease-out' }}>
+            <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 48px' }}>
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: charityTheme.primary,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                marginBottom: '8px'
+              }}>
+                Ways to Make an Impact
+              </div>
+              <h2 style={{ fontSize: '38px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading, marginBottom: '12px' }}>
+                Choose How You Wish to Support
+              </h2>
+              <p style={{ color: charityTheme.textMuted, fontSize: '16px', lineHeight: 1.6 }}>
+                Make a tangible difference through direct financial contributions or sponsoring warm, nutritious daily meals for our 50+ children.
+              </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              {/* Cash donation card */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '32px', maxWidth: '1000px', margin: '0 auto 48px' }}>
+              {/* Option 1: Cash Donation */}
               <div style={{
-                ...cardStyle, flex: '1 1 380px', maxWidth: '460px', padding: '36px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                backgroundColor: 'rgba(99,102,241,0.03)', border: `1px solid ${colors.primary}30`
+                backgroundColor: '#ffffff',
+                borderRadius: '20px',
+                padding: '36px',
+                border: `1px solid ${charityTheme.borderWarm}`,
+                boxShadow: charityTheme.shadowCard,
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative'
               }}>
-                <div style={{ fontSize: '64px', marginBottom: '20px' }}>💵</div>
-                <h3 style={{ fontSize: '24px', fontWeight: 700, fontFamily: "'Outfit', sans-serif", marginBottom: '12px' }}>Donate Cash</h3>
-                <p style={{ color: colors.textSecondary, fontSize: '14px', lineHeight: 1.6, marginBottom: '32px' }}>
-                  Support operations, healthcare, stationery kits, caregiver payouts, and recreational activities. You can choose card checkout or online bank transfer receipts upload.
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  backgroundColor: charityTheme.primaryLight,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <HandCoins size={28} color={charityTheme.primary} />
+                </div>
+
+                <h3 style={{ fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading, marginBottom: '10px' }}>
+                  Donate Funds
+                </h3>
+
+                <p style={{ color: charityTheme.textBody, fontSize: '14px', lineHeight: 1.65, marginBottom: '24px', flex: 1 }}>
+                  Support general sanctuary operations, healthcare checkups, textbooks, uniform kits, caregiver stipends, and children's recreational activities. Choose instant card checkout or direct bank deposit.
                 </p>
-                <button style={{ ...buttonPrimary, width: '100%', padding: '12px' }} onClick={() => setShowCashModal(true)}>
-                  Proceed to Cash Donation
+
+                <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '20px', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: charityTheme.textBody }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Check size={16} color={charityTheme.accentGreen} />
+                      <span>Instant official digital receipt</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Check size={16} color={charityTheme.accentGreen} />
+                      <span>Secure card checkout via Stripe or bank transfer</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Check size={16} color={charityTheme.accentGreen} />
+                      <span>100% directly allocated to child welfare</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowCashModal(true)}
+                  style={{
+                    backgroundColor: charityTheme.primary,
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '14px',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(29, 112, 184, 0.25)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = charityTheme.primaryDark}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.primary}
+                >
+                  <HandCoins size={18} />
+                  <span>Proceed to Cash Donation</span>
                 </button>
               </div>
 
-              {/* Meal booking card */}
+              {/* Option 2: Meal Booking */}
               <div style={{
-                ...cardStyle, flex: '1 1 380px', maxWidth: '460px', padding: '36px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                backgroundColor: 'rgba(16,185,129,0.03)', border: `1px solid ${colors.success}30`
+                backgroundColor: '#ffffff',
+                borderRadius: '20px',
+                padding: '36px',
+                border: `1px solid rgba(5, 150, 105, 0.25)`,
+                boxShadow: charityTheme.shadowCard,
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative'
               }}>
-                <div style={{ fontSize: '64px', marginBottom: '20px' }}>🍽️</div>
-                <h3 style={{ fontSize: '24px', fontWeight: 700, fontFamily: "'Outfit', sans-serif", marginBottom: '12px' }}>Donate / Book Meal</h3>
-                <p style={{ color: colors.textSecondary, fontSize: '14px', lineHeight: 1.6, marginBottom: '32px' }}>
-                  Celebrate birthdays or memory milestones by booking a full warm nutritious meal (Breakfast, Lunch, or Dinner) for all the kids. Select date, meal count, and type.
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  backgroundColor: charityTheme.accentGreenLight,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <UtensilsCrossed size={28} color={charityTheme.accentGreen} />
+                </div>
+
+                <h3 style={{ fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading, marginBottom: '10px' }}>
+                  Sponsor a Meal
+                </h3>
+
+                <p style={{ color: charityTheme.textBody, fontSize: '14px', lineHeight: 1.65, marginBottom: '24px', flex: 1 }}>
+                  Celebrate birthdays, family anniversaries, or memorial days by sponsoring a full warm nutritious meal (Breakfast, Lunch, or Dinner) for all 50+ children residing at the sanctuary.
                 </p>
-                <button style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)`, width: '100%', padding: '12px', boxShadow: `0 4px 14px ${colors.successGlow}` }} onClick={() => setShowMealModal(true)}>
-                  Proceed to Book Meal
+
+                <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '20px', marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: charityTheme.textBody }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Check size={16} color={charityTheme.accentGreen} />
+                      <span>Live interactive booking calendar</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Check size={16} color={charityTheme.accentGreen} />
+                      <span>Choice of Standard, Special, or Feast menus</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Check size={16} color={charityTheme.accentGreen} />
+                      <span>Dedicated child portion allocations</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowMealModal(true)}
+                  style={{
+                    backgroundColor: charityTheme.accentGreen,
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '14px',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#047857'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.accentGreen}
+                >
+                  <UtensilsCrossed size={18} />
+                  <span>Open Meal Booking Calendar</span>
                 </button>
               </div>
+            </div>
+
+            {/* Direct Bank Wire Transparency Reference */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              padding: '28px',
+              border: `1px solid ${charityTheme.borderWarm}`,
+              maxWidth: '1000px',
+              margin: '0 auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '24px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  backgroundColor: charityTheme.accentAmberLight,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Landmark size={22} color={charityTheme.accentAmber} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: charityTheme.textHeading }}>Direct Bank Transfer Details</div>
+                  <div style={{ fontSize: '13px', color: charityTheme.textMuted }}>Commercial Bank of Ceylon &bull; A/C: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya</div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setCashForm(prev => ({ ...prev, paymentMethod: 'bank_transfer' }));
+                  setShowCashModal(true);
+                }}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: charityTheme.textHeading,
+                  border: `1px solid ${charityTheme.border}`,
+                  padding: '9px 16px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Upload Bank Slip
+              </button>
             </div>
           </div>
         )}
 
       </main>
 
-      {/* ─── CASH DONATION MODAL ─── */}
+      {/* ─── Comprehensive Authentic Charity Footer ─── */}
+      <footer style={{
+        backgroundColor: '#0c2d48',
+        color: '#94a3b8',
+        borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+        paddingTop: '56px',
+        paddingBottom: '32px',
+        marginTop: 'auto'
+      }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1.2fr', gap: '40px', marginBottom: '48px' }}>
+            {/* Column 1: Organization */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <img src="/logo-icon.png" alt="Logo" style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+                <span style={{ fontSize: '18px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: '#ffffff' }}>
+                  Senehasa Dari Sewana
+                </span>
+              </div>
+              <p style={{ fontSize: '13px', lineHeight: 1.7, color: '#cbd5e1', marginBottom: '16px' }}>
+                A registered residential sanctuary providing shelter, education, medical care, and daily nourishment to over 50 orphaned and vulnerable children in Sri Lanka.
+              </p>
+              <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                Government Registered: <strong>CDC/WP/2014-088</strong>
+              </div>
+            </div>
+
+            {/* Column 2: Quick Links */}
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>Quick Navigation</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                <span onClick={() => setActiveTab('home')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>About Our Sanctuary</span>
+                <span onClick={() => setActiveTab('facilities')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Six Developmental Pillars</span>
+                <span onClick={() => setActiveTab('programs')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Welfare Programs</span>
+                <span onClick={() => setActiveTab('donate')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Donate &amp; Support</span>
+                <span onClick={() => setActiveTab('contact')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Contact Coordinators</span>
+              </div>
+            </div>
+
+            {/* Column 3: Giving Programs */}
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>Ways to Help</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                <span onClick={() => setShowCashModal(true)} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Direct Monetary Gift</span>
+                <span onClick={() => setShowMealModal(true)} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Sponsor a Daily Meal</span>
+                <span onClick={() => setActiveTab('programs')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Scholarship &amp; Books Fund</span>
+                <span onClick={() => setActiveTab('programs')} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Health &amp; Pediatric Care</span>
+              </div>
+            </div>
+
+            {/* Column 4: Contact & Visiting */}
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>Contact &amp; Sanctuary</div>
+              <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div>102 Temple Road, Colombo 03, Sri Lanka</div>
+                <div>Phone: +94 11 234 5678</div>
+                <div>Email: info@oms-orphanage.org</div>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#f59e0b' }}>
+                  Visiting hours: 09:00 AM - 05:00 PM (Appointment required)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            paddingTop: '24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '12px',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div>
+              &copy; {new Date().getFullYear()} Senehasa Dari Sewana Child Development Center. All rights reserved.
+            </div>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              <span style={{ color: '#64748b' }}>Non-Profit Child Protection Organization</span>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <Lock size={11} />
+                <span>Authorized Staff Login</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ═══════════════════════════════════════════════════════
+          CASH DONATION MODAL (Refined Charity UX)
+         ═══════════════════════════════════════════════════════ */}
       {showCashModal && (
-        <div style={modalOverlay} onClick={() => setShowCashModal(false)}>
-          <div style={{ ...modalBox, width: '500px' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '6px' }}>Do Cash Donation</h2>
-            <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>Support the orphanage general expenses fund.</p>
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 2000,
+          backgroundColor: 'rgba(15, 23, 42, 0.55)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px'
+        }} onClick={() => setShowCashModal(false)}>
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              padding: '32px',
+              width: '520px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
+              border: `1px solid ${charityTheme.border}`
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading }}>
+                  Make a Donation
+                </h2>
+                <p style={{ fontSize: '13px', color: charityTheme.textMuted, margin: '4px 0 0' }}>
+                  Support operations, health, and schooling at Senehasa sanctuary.
+                </p>
+              </div>
+              <ModalCloseButton onClick={() => setShowCashModal(false)} />
+            </div>
 
             {cashSuccess ? (
               <div style={{
-                padding: '32px 24px', textAlign: 'center', backgroundColor: colors.successGlow,
-                border: `1px solid rgba(16,185,129,0.3)`, borderRadius: '12px', color: colors.success
+                padding: '36px 24px',
+                textAlign: 'center',
+                backgroundColor: charityTheme.accentGreenLight,
+                border: `1px solid rgba(5, 150, 105, 0.3)`,
+                borderRadius: '16px',
+                color: charityTheme.accentGreen
               }}>
-                <Check size={48} style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px' }}>Donation Successful!</h3>
-                <p style={{ fontSize: '13px', color: colors.textSecondary }}>Thank you for your generous contribution of LKR {Number(donatedAmount).toLocaleString()}. Your support is really powerful.</p>
+                <div style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)'
+                }}>
+                  <Check size={28} color={charityTheme.accentGreen} />
+                </div>
+                <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px', color: charityTheme.textHeading }}>
+                  Thank You for Your Generosity!
+                </h3>
+                <p style={{ fontSize: '14px', color: charityTheme.textBody }}>
+                  Your contribution of <strong>LKR {Number(donatedAmount).toLocaleString()}</strong> provides vital support to the children. An official digital receipt is recorded in the system.
+                </p>
               </div>
             ) : (
               <form onSubmit={handleCashSubmit}>
                 {/* Amount presets */}
-                <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '8px' }}>Select Donation Amount</label>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '8px' }}>
+                    Select Donation Amount
+                  </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '10px' }}>
-                    {['1000', '2500', '5000', '10000', '25000'].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setCashForm({ ...cashForm, amount: preset })}
-                        style={{
-                          padding: '10px 0', borderRadius: '8px', border: `1px solid ${cashForm.amount === preset ? colors.primary : colors.border}`,
-                          backgroundColor: cashForm.amount === preset ? colors.primaryGlow : colors.surface,
-                          color: cashForm.amount === preset ? colors.primary : colors.text,
-                          fontWeight: 700, fontSize: '12px', cursor: 'pointer'
-                        }}
-                      >
-                        Rs. {Number(preset).toLocaleString()}
-                      </button>
-                    ))}
+                    {['1000', '2500', '5000', '10000', '25000'].map((preset) => {
+                      const isSelected = stripCommas(cashForm.amount) === preset;
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setCashForm({ ...cashForm, amount: formatWithCommas(preset) })}
+                          style={{
+                            padding: '10px 4px',
+                            borderRadius: '8px',
+                            border: `1px solid ${isSelected ? charityTheme.primary : charityTheme.border}`,
+                            backgroundColor: isSelected ? charityTheme.primaryLight : '#ffffff',
+                            color: isSelected ? charityTheme.primary : charityTheme.textBody,
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          Rs. {Number(preset).toLocaleString()}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <input
-                    type="number"
-                    style={inputStyle}
-                    placeholder="Custom amount (LKR)"
-                    value={cashForm.amount}
-                    onChange={(e) => setCashForm({ ...cashForm, amount: e.target.value })}
-                    required
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '12px', top: '11px', fontSize: '13px', fontWeight: 600, color: charityTheme.textMuted }}>
+                      LKR
+                    </span>
+                    <input
+                      type="text"
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px 10px 48px',
+                        borderRadius: '8px',
+                        border: `1px solid ${charityTheme.border}`,
+                        backgroundColor: '#ffffff',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: charityTheme.textHeading,
+                        boxSizing: 'border-box'
+                      }}
+                      placeholder="Custom amount (e.g. 10,000)"
+                      value={cashForm.amount}
+                      onChange={(e) => setCashForm({ ...cashForm, amount: formatWithCommas(e.target.value) })}
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '8px' }}>Payment Method</label>
+                {/* Payment Method Selector */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '8px' }}>
+                    Payment Method
+                  </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {[
-                      { id: 'online', label: '💳 Card Payment' },
-                      { id: 'bank_transfer', label: '🏦 Bank Deposit / Transfer' }
-                    ].map((method) => (
-                      <button
-                        key={method.id}
-                        type="button"
-                        onClick={() => setCashForm({ ...cashForm, paymentMethod: method.id })}
-                        style={{
-                          padding: '12px', borderRadius: '8px', border: `1px solid ${cashForm.paymentMethod === method.id ? colors.primary : colors.border}`,
-                          backgroundColor: cashForm.paymentMethod === method.id ? colors.primaryGlow : colors.surface,
-                          color: cashForm.paymentMethod === method.id ? colors.primary : colors.text,
-                          fontWeight: 600, fontSize: '13px', cursor: 'pointer'
-                        }}
-                      >
-                        {method.label}
-                      </button>
-                    ))}
+                      { id: 'online', label: 'Card Payment (Stripe)', icon: CreditCard },
+                      { id: 'bank_transfer', label: 'Bank Transfer Slip', icon: Landmark }
+                    ].map((method) => {
+                      const isSelected = cashForm.paymentMethod === method.id;
+                      const MethodIcon = method.icon;
+                      return (
+                        <button
+                          key={method.id}
+                          type="button"
+                          onClick={() => setCashForm({ ...cashForm, paymentMethod: method.id })}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '10px',
+                            border: `1px solid ${isSelected ? charityTheme.primary : charityTheme.border}`,
+                            backgroundColor: isSelected ? charityTheme.primaryLight : '#ffffff',
+                            color: isSelected ? charityTheme.primary : charityTheme.textBody,
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <MethodIcon size={16} />
+                          <span>{method.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Stripe Secure Card Input Fields */}
+                {/* Stripe Secure Info Box */}
                 {cashForm.paymentMethod === 'online' && (
                   <div style={{
-                    marginTop: '16px',
-                    padding: '18px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(99,102,241,0.05)',
-                    border: `1px solid ${colors.primary}30`,
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-                    animation: 'fadeIn 0.3s ease-out',
-                    textAlign: 'center'
+                    padding: '16px',
+                    borderRadius: '10px',
+                    backgroundColor: charityTheme.bgSurface,
+                    border: `1px solid ${charityTheme.border}`,
+                    marginBottom: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <Lock size={14} color={colors.primary} />
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Secure Donation via Stripe</span>
-                    </div>
-                    <p style={{ fontSize: '13px', color: colors.textSecondary, margin: '0 0 12px' }}>
-                      You will be redirected to Stripe's secure hosted payment page to complete your transaction.
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', opacity: 0.8 }}>
-                      <span style={{ fontSize: '10px', color: colors.textMuted }}>Powered by</span>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: colors.text, letterSpacing: '-0.02em', display: 'inline-flex', alignItems: 'center' }}>
-                        stripe
-                      </span>
+                    <Lock size={18} color={charityTheme.primary} />
+                    <div style={{ fontSize: '12px', color: charityTheme.textBody, lineHeight: 1.5 }}>
+                      You will be seamlessly redirected to Stripe's SSL 256-bit encrypted checkout to complete your transaction safely.
                     </div>
                   </div>
                 )}
 
-                {/* Bank Transfer Proof of Payment upload fields */}
+                {/* Bank Transfer Upload Box */}
                 {cashForm.paymentMethod === 'bank_transfer' && (
                   <div style={{
-                    marginTop: '16px',
-                    padding: '18px',
-                    borderRadius: '12px',
-                    backgroundColor: 'rgba(255,255,255,0.01)',
-                    border: `1px solid ${colors.border}`,
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)',
-                    animation: 'fadeIn 0.3s ease-out'
+                    padding: '16px',
+                    borderRadius: '10px',
+                    backgroundColor: charityTheme.bgSurface,
+                    border: `1px solid ${charityTheme.border}`,
+                    marginBottom: '18px'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                      <Lock size={14} color={colors.primary} />
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bank Transfer Proof</span>
+                    <div style={{ fontSize: '12px', color: charityTheme.textHeading, fontWeight: 600, marginBottom: '6px' }}>
+                      Bank Account Details for Wire Deposit:
+                    </div>
+                    <div style={{ fontSize: '12px', color: charityTheme.textMuted, lineHeight: 1.6, marginBottom: '12px' }}>
+                      Bank: <strong>Commercial Bank of Ceylon</strong><br />
+                      Account Name: <strong>Senehasa Dari Sewana Foundation</strong><br />
+                      Account Number: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya
                     </div>
 
-                    <div style={{ marginBottom: '14px' }}>
-                      <label style={{ display: 'block', fontSize: '11px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>
-                        Upload Bank Slip / Deposit Receipt (Image/PDF) <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <input
-                        type="file"
-                        style={{ ...inputStyle, padding: '8px', marginBottom: '6px' }}
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onload = () => {
-                            setCashForm(prev => ({
-                              ...prev,
-                              proof: {
-                                fileData: reader.result,
-                                fileName: file.name,
-                                fileType: file.type
-                              }
-                            }));
-                          };
-                          reader.readAsDataURL(file);
-                        }}
-                        required={cashForm.paymentMethod === 'bank_transfer'}
-                      />
-                      {cashForm.proof && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '6px', background: colors.primaryGlow, padding: '6px 10px', borderRadius: '6px' }}>
-                          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '300px' }}>
-                            Selected: <strong>{cashForm.proof.fileName}</strong>
-                          </span>
-                          <button
-                            type="button"
-                            style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontWeight: 'bold' }}
-                            onClick={() => setCashForm(prev => ({ ...prev, proof: null }))}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>
+                      Upload Deposit Receipt (Image or PDF) *
+                    </label>
+                    <input
+                      type="file"
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        borderRadius: '6px',
+                        border: `1px solid ${charityTheme.border}`,
+                        backgroundColor: '#ffffff',
+                        fontSize: '12px',
+                        boxSizing: 'border-box'
+                      }}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          setCashForm(prev => ({
+                            ...prev,
+                            proof: {
+                              fileData: reader.result,
+                              fileName: file.name,
+                              fileType: file.type
+                            }
+                          }));
+                        };
+                        reader.readAsDataURL(file);
+                      }}
+                      required={cashForm.paymentMethod === 'bank_transfer'}
+                    />
+                    {cashForm.proof && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '8px', background: charityTheme.primaryLight, padding: '6px 10px', borderRadius: '6px' }}>
+                        <span>File: <strong>{cashForm.proof.fileName}</strong></span>
+                        <button
+                          type="button"
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
+                          onClick={() => setCashForm(prev => ({ ...prev, proof: null }))}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Donor Details */}
-                <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '16px', marginTop: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Full Name</label>
-                  <input style={inputStyle} placeholder="Your full name" value={cashForm.name} onChange={(e) => setCashForm({ ...cashForm, name: e.target.value })} required />
+                {/* Donor Contact Details */}
+                <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '16px' }}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Full Name *</label>
+                    <input
+                      style={{
+                        width: '100%', padding: '10px 12px', borderRadius: '8px',
+                        border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                        fontSize: '13px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                      }}
+                      placeholder="e.g. Priyantha Silva"
+                      value={cashForm.name}
+                      onChange={(e) => setCashForm({ ...cashForm, name: e.target.value })}
+                      required
+                    />
+                  </div>
 
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Email Address</label>
-                  <input type="email" style={inputStyle} placeholder="your.email@example.com" value={cashForm.email} onChange={(e) => setCashForm({ ...cashForm, email: e.target.value })} required />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Email Address *</label>
+                      <input
+                        type="email"
+                        style={{
+                          width: '100%', padding: '10px 12px', borderRadius: '8px',
+                          border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                          fontSize: '13px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                        }}
+                        placeholder="your.email@example.com"
+                        value={cashForm.email}
+                        onChange={(e) => setCashForm({ ...cashForm, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Contact Number</label>
+                      <input
+                        style={{
+                          width: '100%', padding: '10px 12px', borderRadius: '8px',
+                          border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                          fontSize: '13px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                        }}
+                        placeholder="+94 77 123 4567"
+                        value={cashForm.contactDetails}
+                        onChange={(e) => setCashForm({ ...cashForm, contactDetails: e.target.value })}
+                      />
+                    </div>
+                  </div>
 
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Contact Number (Optional)</label>
-                  <input style={inputStyle} placeholder="+94 77 123 4567" value={cashForm.contactDetails} onChange={(e) => setCashForm({ ...cashForm, contactDetails: e.target.value })} />
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Donor Type</label>
+                    <select
+                      style={{
+                        width: '100%', padding: '10px 12px', borderRadius: '8px',
+                        border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                        fontSize: '13px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                      }}
+                      value={cashForm.type}
+                      onChange={(e) => setCashForm({ ...cashForm, type: e.target.value })}
+                    >
+                      <option value="individual">Individual Donor</option>
+                      <option value="organization">Corporate / NGO Partner</option>
+                    </select>
+                  </div>
 
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px' }}>Donor Type</label>
-                  <select style={selectStyle} value={cashForm.type} onChange={(e) => setCashForm({ ...cashForm, type: e.target.value })}>
-                    <option value="individual">Individual Donor</option>
-                    <option value="organization">Corporate/Organization</option>
-                  </select>
-
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Description / Message (Optional)</label>
-                  <textarea
-                    style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
-                    placeholder="E.g., In memory of my family, birthday donation, etc."
-                    value={cashForm.notes}
-                    onChange={(e) => setCashForm({ ...cashForm, notes: e.target.value })}
-                  />
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Dedication or Notes (Optional)</label>
+                    <textarea
+                      style={{
+                        width: '100%', padding: '8px 12px', borderRadius: '8px',
+                        border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                        fontSize: '13px', color: charityTheme.textHeading, minHeight: '60px',
+                        resize: 'vertical', boxSizing: 'border-box'
+                      }}
+                      placeholder="e.g. In memory of family, birthday celebration, etc."
+                      value={cashForm.notes}
+                      onChange={(e) => setCashForm({ ...cashForm, notes: e.target.value })}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                  <button type="button" style={buttonSecondary} onClick={() => setShowCashModal(false)}>Cancel</button>
-                  <button type="submit" style={buttonPrimary} disabled={cashLoading}>
-                    {cashLoading
-                      ? (cashForm.paymentMethod === 'online' ? 'Processing secure payment...' : 'Processing...')
-                      : 'Donate Now'}
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowCashModal(false)}
+                    style={{
+                      padding: '10px 18px', borderRadius: '8px',
+                      border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                      color: charityTheme.textMuted, fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={cashLoading}
+                    style={{
+                      padding: '10px 24px', borderRadius: '8px',
+                      backgroundColor: charityTheme.primary, color: '#ffffff',
+                      border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                  >
+                    {cashLoading ? 'Processing Contribution...' : 'Confirm Donation'}
                   </button>
                 </div>
               </form>
@@ -872,53 +2097,117 @@ export default function PublicWebsite({ initialTab = 'home' }) {
         </div>
       )}
 
-      {/* ─── BOOK MEAL MODAL ─── */}
+      {/* ═══════════════════════════════════════════════════════
+          BOOK MEAL MODAL (Refined Charity UX)
+         ═══════════════════════════════════════════════════════ */}
       {showMealModal && (
-        <div style={modalOverlay} onClick={() => setShowMealModal(false)}>
-          <div style={{ ...modalBox, width: '850px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '6px' }}>Book / Sponsor a Meal</h2>
-            <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>Select an available slot on the calendar and fill out the sponsorship details.</p>
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 2000,
+          backgroundColor: 'rgba(15, 23, 42, 0.55)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px'
+        }} onClick={() => setShowMealModal(false)}>
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              padding: '28px 32px',
+              width: '880px',
+              maxWidth: '96vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.25)',
+              border: `1px solid ${charityTheme.border}`
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontSerif, color: charityTheme.textHeading }}>
+                  Sponsor a Nutritious Meal
+                </h2>
+                <p style={{ fontSize: '13px', color: charityTheme.textMuted, margin: '4px 0 0' }}>
+                  Select an open date on the calendar to reserve Breakfast, Lunch, or Dinner for our 50+ children.
+                </p>
+              </div>
+              <ModalCloseButton onClick={() => setShowMealModal(false)} />
+            </div>
 
             {mealSuccess ? (
               <div style={{
-                padding: '32px 24px', textAlign: 'center', backgroundColor: colors.successGlow,
-                border: `1px solid rgba(16,185,129,0.3)`, borderRadius: '12px', color: colors.success
+                padding: '40px 24px',
+                textAlign: 'center',
+                backgroundColor: charityTheme.accentGreenLight,
+                border: `1px solid rgba(5, 150, 105, 0.3)`,
+                borderRadius: '16px',
+                color: charityTheme.accentGreen
               }}>
-                <Check size={48} style={{ margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px' }}>Meal Reservation Confirmed!</h3>
-                <p style={{ fontSize: '13px', color: colors.textSecondary }}>Thank you for booking a {mealForm.mealType} meal on {mealForm.mealDate} for {mealForm.quantity} portions.</p>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)'
+                }}>
+                  <Check size={30} color={charityTheme.accentGreen} />
+                </div>
+                <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', color: charityTheme.textHeading }}>
+                  Meal Sponsorship Scheduled!
+                </h3>
+                <p style={{ fontSize: '14px', color: charityTheme.textBody }}>
+                  Thank you for sponsoring a <strong>{mealForm.mealType}</strong> meal on <strong>{mealForm.mealDate}</strong> ({mealForm.quantity} portions). Our kitchen supervisor and coordinator will prepare everything according to your reservation.
+                </p>
               </div>
             ) : (
               <form onSubmit={handleMealSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '24px', alignItems: 'start' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '28px', alignItems: 'start' }}>
 
-                  {/* Left Column: Calendar */}
-                  <div style={{ borderRight: `1px solid ${colors.border}`, paddingRight: '24px' }}>
+                  {/* Left Column: Interactive Calendar */}
+                  <div style={{ borderRight: `1px solid ${charityTheme.border}`, paddingRight: '28px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                      <button type="button" onClick={handlePrevMonth} style={{ ...buttonSecondary, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={handlePrevMonth}
+                        style={{
+                          padding: '6px 10px', borderRadius: '8px', border: `1px solid ${charityTheme.border}`,
+                          backgroundColor: '#ffffff', color: charityTheme.textHeading, cursor: 'pointer'
+                        }}
+                      >
                         <ChevronLeft size={16} />
                       </button>
-                      <span style={{ fontWeight: 700, fontSize: '15px', color: colors.text }}>
+                      <span style={{ fontWeight: 700, fontSize: '15px', color: charityTheme.textHeading, fontFamily: charityTheme.fontSerif }}>
                         {monthNames[currentMonth]} {currentYear}
                       </span>
-                      <button type="button" onClick={handleNextMonth} style={{ ...buttonSecondary, padding: '6px 10px', display: 'flex', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={handleNextMonth}
+                        style={{
+                          padding: '6px 10px', borderRadius: '8px', border: `1px solid ${charityTheme.border}`,
+                          backgroundColor: '#ffffff', color: charityTheme.textHeading, cursor: 'pointer'
+                        }}
+                      >
                         <ChevronRight size={16} />
                       </button>
                     </div>
 
-                    {/* Weekdays header */}
+                    {/* Weekday Labels */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '8px' }}>
                       {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                        <div key={day} style={{ fontSize: '11px', fontWeight: 600, color: colors.textMuted, textTransform: 'uppercase' }}>
+                        <div key={day} style={{ fontSize: '11px', fontWeight: 700, color: charityTheme.textMuted, textTransform: 'uppercase' }}>
                           {day}
                         </div>
                       ))}
                     </div>
 
-                    {/* Calendar days grid */}
+                    {/* Calendar Grid */}
                     {calendarLoading ? (
-                      <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.textMuted, fontSize: '13px' }}>
-                        Loading calendar...
+                      <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: charityTheme.textMuted, fontSize: '13px' }}>
+                        Checking meal slot availability...
                       </div>
                     ) : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
@@ -941,26 +2230,26 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           const dinnerBooked = dayBookings.some(b => b.mealType === 'dinner');
                           const allBooked = breakfastBooked && lunchBooked && dinnerBooked;
 
-                          let bg = 'transparent';
-                          let txtColor = colors.text;
-                          let borderStyle = '1px solid transparent';
+                          let bg = '#ffffff';
+                          let txtColor = charityTheme.textHeading;
+                          let borderStyle = `1px solid ${charityTheme.border}`;
                           let opacityVal = 1;
                           let cursorVal = 'pointer';
 
                           if (isPast) {
-                            opacityVal = 0.4;
+                            opacityVal = 0.35;
                             cursorVal = 'not-allowed';
+                            bg = charityTheme.bgSurface;
                           } else if (isSelected) {
-                            bg = colors.primary;
-                            txtColor = '#fff';
+                            bg = charityTheme.primary;
+                            txtColor = '#ffffff';
+                            borderStyle = `1px solid ${charityTheme.primary}`;
                           } else if (allBooked) {
-                            bg = colors.dangerGlow;
-                            txtColor = colors.danger;
+                            bg = '#fee2e2';
+                            txtColor = '#dc2626';
+                            borderStyle = '1px solid #fca5a5';
                           } else if (isToday) {
-                            borderStyle = `1px solid ${colors.primary}`;
-                            txtColor = colors.primary;
-                          } else {
-                            bg = colors.surface;
+                            borderStyle = `2px solid ${charityTheme.accentAmber}`;
                           }
 
                           return (
@@ -976,7 +2265,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
-                                padding: '8px 4px',
+                                padding: '6px 2px',
                                 borderRadius: '8px',
                                 height: '42px',
                                 backgroundColor: bg,
@@ -984,25 +2273,18 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                 border: borderStyle,
                                 opacity: opacityVal,
                                 cursor: cursorVal,
-                                transition: 'all 0.15s ease',
-                                fontWeight: (isSelected || isToday) ? 'bold' : 'normal',
+                                fontWeight: (isSelected || isToday) ? 700 : 500,
                                 fontSize: '13px',
-                              }}
-                              onMouseEnter={(e) => {
-                                if (!isPast && !isSelected) {
-                                  e.currentTarget.style.filter = 'brightness(0.95)';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.filter = 'none';
+                                transition: 'all 0.15s ease',
+                                boxSizing: 'border-box'
                               }}
                             >
                               <span>{day}</span>
                               {!isPast && (
                                 <div style={{ display: 'flex', gap: '3px', marginTop: '2px' }}>
-                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: breakfastBooked ? colors.danger : colors.success }} title="Breakfast" />
-                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: lunchBooked ? colors.danger : colors.success }} title="Lunch" />
-                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: dinnerBooked ? colors.danger : colors.success }} title="Dinner" />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: breakfastBooked ? '#ef4444' : '#10b981' }} title="Breakfast" />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: lunchBooked ? '#ef4444' : '#10b981' }} title="Lunch" />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: dinnerBooked ? '#ef4444' : '#10b981' }} title="Dinner" />
                                 </div>
                               )}
                             </div>
@@ -1012,45 +2294,52 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     )}
 
                     {/* Calendar Legend */}
-                    <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: colors.textSecondary }}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors.success }} /> Available
+                    <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: charityTheme.textMuted }}>
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981' }} /> Slot Available
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors.danger }} /> Sponsored
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> Already Sponsored
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <div style={{ width: '10px', height: '10px', borderRadius: '3px', backgroundColor: colors.primary }} /> Selected
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <div style={{ width: '9px', height: '9px', borderRadius: '2px', backgroundColor: charityTheme.primary }} /> Selected
                         </div>
                       </div>
-                      <p style={{ margin: '4px 0 0', fontStyle: 'italic', fontSize: '10px', color: colors.textMuted }}>
-                        * Note: To prevent food waste or scheduling gaps, only 1 sponsor is assigned to each slot per day.
-                      </p>
+                      <div style={{ fontSize: '10px', color: charityTheme.textMuted, marginTop: '2px' }}>
+                        * To avoid kitchen surplus, each meal slot (Breakfast, Lunch, Dinner) is assigned to a single sponsor.
+                      </div>
                     </div>
                   </div>
 
                   {/* Right Column: Slot Selection & Form */}
                   <div>
                     {!mealForm.mealDate ? (
-                      <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
-                        <Calendar size={48} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-                        <h4 style={{ margin: '0 0 6px', color: colors.text }}>No Date Selected</h4>
-                        <p style={{ margin: 0, fontSize: '12px' }}>Please select a date from the calendar to view slot availability and book your sponsorship.</p>
+                      <div style={{ textAlign: 'center', padding: '48px 20px', color: charityTheme.textMuted }}>
+                        <Calendar size={44} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+                        <h4 style={{ margin: '0 0 6px', color: charityTheme.textHeading, fontFamily: charityTheme.fontSerif }}>No Date Selected</h4>
+                        <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>
+                          Please click an available date on the calendar to view meal slot availability.
+                        </p>
                       </div>
                     ) : (
                       <div>
+                        {/* Selected Date Header */}
                         <div style={{ marginBottom: '14px' }}>
-                          <h4 style={{ margin: '0 0 4px', fontSize: '13px', color: colors.textMuted }}>Selected Date</h4>
-                          <div style={{ fontWeight: 700, fontSize: '15px', color: colors.primary, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ fontSize: '11px', color: charityTheme.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                            Selected Date
+                          </div>
+                          <div style={{ fontWeight: 700, fontSize: '15px', color: charityTheme.primary, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                             <Calendar size={15} />
                             {new Date(mealForm.mealDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                           </div>
                         </div>
 
-                        {/* Slots Selector */}
-                        <div style={{ marginBottom: '16px' }}>
-                          <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Available Meal Slots</label>
+                        {/* Meal Slot Selector */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '6px' }}>
+                            Choose Meal Slot
+                          </label>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                             {['breakfast', 'lunch', 'dinner'].map(slotType => {
                               const dayBookings = getSlotsForDate(mealForm.mealDate);
@@ -1061,26 +2350,23 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                   <div
                                     key={slotType}
                                     style={{
-                                      padding: '10px 4px',
+                                      padding: '10px 6px',
                                       borderRadius: '8px',
-                                      border: `1px solid ${colors.border}`,
-                                      backgroundColor: colors.surface,
-                                      color: colors.textMuted,
+                                      border: `1px solid ${charityTheme.border}`,
+                                      backgroundColor: charityTheme.bgSurface,
                                       textAlign: 'center',
                                       fontSize: '11px',
                                       display: 'flex',
                                       flexDirection: 'column',
                                       alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '4px',
-                                      cursor: 'not-allowed',
-                                      opacity: 0.85
+                                      gap: '3px',
+                                      opacity: 0.8
                                     }}
                                   >
-                                    <Lock size={12} color={colors.danger} />
-                                    <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{slotType}</span>
-                                    <span style={{ fontSize: '9px', color: colors.danger, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', padding: '0 4px' }} title={existingSponsor.donorName}>
-                                      {existingSponsor.donorName}
+                                    <Lock size={12} color="#ef4444" />
+                                    <span style={{ textTransform: 'capitalize', fontWeight: 600, color: charityTheme.textMuted }}>{slotType}</span>
+                                    <span style={{ fontSize: '10px', color: '#ef4444', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%' }} title={existingSponsor.donorName}>
+                                      Sponsored
                                     </span>
                                   </div>
                                 );
@@ -1093,49 +2379,40 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                   type="button"
                                   onClick={() => setMealForm(prev => ({ ...prev, mealType: slotType }))}
                                   style={{
-                                    padding: '10px 4px',
+                                    padding: '10px 6px',
                                     borderRadius: '8px',
-                                    border: `2px solid ${isSelectedSlot ? colors.success : colors.border}`,
-                                    backgroundColor: isSelectedSlot ? colors.successGlow : '#fff',
-                                    color: isSelectedSlot ? colors.success : colors.text,
+                                    border: `2px solid ${isSelectedSlot ? charityTheme.accentGreen : charityTheme.border}`,
+                                    backgroundColor: isSelectedSlot ? charityTheme.accentGreenLight : '#ffffff',
+                                    color: isSelectedSlot ? charityTheme.accentGreen : charityTheme.textHeading,
                                     cursor: 'pointer',
                                     textAlign: 'center',
                                     fontSize: '12px',
-                                    fontWeight: 600,
+                                    fontWeight: 700,
                                     textTransform: 'capitalize',
-                                    transition: 'all 0.15s',
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '4px'
+                                    gap: '3px'
                                   }}
                                 >
-                                  {isSelectedSlot ? <Check size={12} /> : <Clock size={12} color={colors.textMuted} />}
-                                  {slotType}
+                                  {isSelectedSlot ? <Check size={12} /> : <Clock size={12} color={charityTheme.textMuted} />}
+                                  <span>{slotType}</span>
                                 </button>
                               );
                             })}
                           </div>
                         </div>
 
-                        {/* Occasion */}
-                        <div style={{ marginBottom: '12px' }}>
-                          <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Occasion / Purpose (Optional)</label>
-                          <input
-                            style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
-                            placeholder="e.g. Birthday, Anniversary, Memorial"
-                            value={mealForm.occasion}
-                            onChange={(e) => setMealForm(prev => ({ ...prev, occasion: e.target.value }))}
-                          />
-                        </div>
-
                         {/* Menu Package Selection */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', marginBottom: '12px', alignItems: 'start' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', marginBottom: '12px' }}>
                           <div>
-                            <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Menu Package</label>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Menu Package</label>
                             <select
-                              style={{ ...selectStyle, marginBottom: 0, padding: '8px 12px' }}
+                              style={{
+                                width: '100%', padding: '9px 10px', borderRadius: '8px',
+                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                              }}
                               value={mealForm.menuPackage}
                               onChange={(e) => setMealForm(prev => ({ ...prev, menuPackage: e.target.value }))}
                             >
@@ -1145,11 +2422,15 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                             </select>
                           </div>
                           <div>
-                            <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Portions count</label>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Portions Count</label>
                             <input
                               type="number"
                               min="10"
-                              style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
+                              style={{
+                                width: '100%', padding: '9px 10px', borderRadius: '8px',
+                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                              }}
                               value={mealForm.quantity}
                               onChange={(e) => setMealForm(prev => ({ ...prev, quantity: e.target.value }))}
                               required
@@ -1157,102 +2438,123 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           </div>
                         </div>
 
-                        {/* Menu descriptions */}
+                        {/* Menu Details Description */}
                         <div style={{
                           padding: '10px 12px',
                           borderRadius: '8px',
-                          backgroundColor: colors.surface,
+                          backgroundColor: charityTheme.bgSurface,
                           fontSize: '11px',
-                          color: colors.textSecondary,
-                          lineHeight: '1.4',
+                          color: charityTheme.textBody,
+                          lineHeight: '1.45',
                           marginBottom: '12px',
-                          border: `1px solid ${colors.border}`
+                          border: `1px solid ${charityTheme.border}`
                         }}>
                           {mealForm.menuPackage === 'standard' && (
-                            <span>🍚 <strong>Standard Package:</strong> White rice, tempered dhal, mixed vegetable curry, coconut sambol, and papadum. A simple, wholesome meal.</span>
+                            <span><strong>Standard Package:</strong> White rice, tempered dhal, mixed seasonal vegetable curry, fresh coconut sambol, and crispy papadum.</span>
                           )}
                           {mealForm.menuPackage === 'special' && (
-                            <span>🍗 <strong>Special Package:</strong> Fragrant ghee rice, chicken/paneer curry, dhal gravy, fresh fruit salad, and caramel pudding for dessert.</span>
+                            <span><strong>Special Package:</strong> Fragrant ghee rice, chicken or fresh paneer curry, dhal gravy, fresh fruit salad, and caramel pudding dessert.</span>
                           )}
                           {mealForm.menuPackage === 'feast' && (
-                            <span>🍲 <strong>Grand Feast:</strong> Premium basmati biryani (chicken/paneer), eggs, onion raita, traditional watalappam dessert, ice cream, and juice.</span>
+                            <span><strong>Grand Feast:</strong> Premium basmati biryani (chicken/paneer), eggs, raita, traditional watalappam dessert, ice cream, and chilled fruit juice.</span>
                           )}
                         </div>
 
-                        {/* Dietary Notes */}
-                        <div style={{ marginBottom: '12px' }}>
-                          <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '4px' }}>Dietary Requests / Instructions (Optional)</label>
-                          <textarea
-                            style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px', minHeight: '40px', resize: 'vertical' }}
-                            placeholder="e.g. Vegetarian only, mild spices, no nuts"
-                            value={mealForm.dietaryNotes}
-                            onChange={(e) => setMealForm(prev => ({ ...prev, dietaryNotes: e.target.value }))}
+                        {/* Occasion & Dietary notes */}
+                        <div style={{ marginBottom: '10px' }}>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '3px' }}>Occasion / In Honor of (Optional)</label>
+                          <input
+                            style={{
+                              width: '100%', padding: '8px 10px', borderRadius: '8px',
+                              border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                              fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                            }}
+                            placeholder="e.g. In memory of mother, child's 7th birthday"
+                            value={mealForm.occasion}
+                            onChange={(e) => setMealForm(prev => ({ ...prev, occasion: e.target.value }))}
                           />
                         </div>
 
-                        {/* Cost Callout */}
+                        {/* Estimated Contribution Summary */}
                         <div style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
                           padding: '10px 14px',
-                          backgroundColor: colors.successGlow,
-                          border: `1px solid rgba(16, 185, 129, 0.2)`,
+                          backgroundColor: charityTheme.accentGreenLight,
+                          border: `1px solid rgba(5, 150, 105, 0.25)`,
                           borderRadius: '8px',
-                          color: colors.success,
-                          marginBottom: '16px'
+                          color: charityTheme.accentGreen,
+                          marginBottom: '14px'
                         }}>
-                          <span style={{ fontSize: '11px', fontWeight: 600 }}>Estimated Contribution:</span>
-                          <span style={{ fontWeight: 800, fontSize: '15px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600 }}>Total Contribution:</span>
+                          <span style={{ fontWeight: 800, fontSize: '16px' }}>
                             LKR {(Number(mealForm.quantity || childCount) * getPackagePrice(mealForm.menuPackage)).toLocaleString()}
                           </span>
                         </div>
 
-                        {/* Donor Info Header */}
-                        <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '12px', marginTop: '12px' }}>
-                          <h4 style={{ margin: '0 0 8px', fontSize: '13px', color: colors.text }}>Donor Contact Details</h4>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
-                            <div>
-                              <input
-                                style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
-                                placeholder="Your full name"
-                                value={mealForm.name}
-                                onChange={(e) => setMealForm(prev => ({ ...prev, name: e.target.value }))}
-                                required
-                              />
-                            </div>
-                            <div>
-                              <input
-                                type="email"
-                                style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
-                                placeholder="email@example.com"
-                                value={mealForm.email}
-                                onChange={(e) => setMealForm(prev => ({ ...prev, email: e.target.value }))}
-                                required
-                              />
-                            </div>
+                        {/* Donor Contact Details */}
+                        <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '10px', marginBottom: '10px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
+                            <input
+                              style={{
+                                width: '100%', padding: '8px 10px', borderRadius: '8px',
+                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                              }}
+                              placeholder="Your full name *"
+                              value={mealForm.name}
+                              onChange={(e) => setMealForm(prev => ({ ...prev, name: e.target.value }))}
+                              required
+                            />
+                            <input
+                              type="email"
+                              style={{
+                                width: '100%', padding: '8px 10px', borderRadius: '8px',
+                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                              }}
+                              placeholder="Email address *"
+                              value={mealForm.email}
+                              onChange={(e) => setMealForm(prev => ({ ...prev, email: e.target.value }))}
+                              required
+                            />
                           </div>
                           <input
-                            style={{ ...inputStyle, marginBottom: 0, padding: '8px 12px' }}
-                            placeholder="Contact number (optional)"
+                            style={{
+                              width: '100%', padding: '8px 10px', borderRadius: '8px',
+                              border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                              fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                            }}
+                            placeholder="Contact phone number (optional)"
                             value={mealForm.contactDetails}
                             onChange={(e) => setMealForm(prev => ({ ...prev, contactDetails: e.target.value }))}
                           />
                         </div>
 
-                        {/* Agreement */}
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px', marginBottom: '14px' }}>
-                          <input type="checkbox" id="agree" required style={{ marginTop: '3px' }} />
-                          <label htmlFor="agree" style={{ fontSize: '10px', color: colors.textSecondary, cursor: 'pointer' }}>
-                            I agree to coordinate details with the orphanage coordinator if scheduling conflicts occur.
-                          </label>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                          <button type="button" style={buttonSecondary} onClick={() => setShowMealModal(false)}>Cancel</button>
-                          <button type="submit" style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)` }} disabled={mealLoading}>
-                            {mealLoading ? 'Scheduling...' : 'Confirm Booking'}
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowMealModal(false)}
+                            style={{
+                              padding: '8px 16px', borderRadius: '8px',
+                              border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                              color: charityTheme.textMuted, fontSize: '12px', fontWeight: 600, cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={mealLoading}
+                            style={{
+                              padding: '8px 20px', borderRadius: '8px',
+                              backgroundColor: charityTheme.accentGreen, color: '#ffffff',
+                              border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', gap: '6px'
+                            }}
+                          >
+                            {mealLoading ? 'Confirming...' : 'Reserve Meal Slot'}
                           </button>
                         </div>
                       </div>

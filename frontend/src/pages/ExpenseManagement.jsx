@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
 import { Plus, Calendar } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
+import { formatWithCommas } from '../utils/numberFormat';
 
 const emptyForm = { category: 'Food & Nutrition', customCategory: '', amount: '', referenceReceipt: '', description: '', bankAccountId: '', proofOfReceipt: null };
 
@@ -58,10 +60,13 @@ export default function ExpenseManagement() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
     if (name === 'amount') {
+      const formatted = formatWithCommas(value);
+      setForm({ ...form, amount: formatted });
       setFieldErrors((prev) => ({ ...prev, amount: '' }));
+      return;
     }
+    setForm({ ...form, [name]: value });
     if (name === 'referenceReceipt') {
       setFieldErrors((prev) => ({ ...prev, referenceReceipt: '' }));
     }
@@ -338,9 +343,12 @@ export default function ExpenseManagement() {
 
       {/* Record Expense Modal */}
       {showModal && (
-        <div style={modalOverlay} onClick={closeModal}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Record Expense</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Record Expense</h2>
+              <ModalCloseButton onClick={closeModal} />
+            </div>
             <form onSubmit={handleCreate}>
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
                 Category <span style={{ color: '#ef4444' }}>*</span>

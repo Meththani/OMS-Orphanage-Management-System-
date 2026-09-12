@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
 import { Package, Plus, Edit2, Check } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
 
 const emptyForm = { name: '', category: 'Food', quantity: '0', unit: 'pcs' };
 
@@ -185,9 +186,12 @@ export default function InventoryManagement() {
 
       {/* Add Item Modal */}
       {showModal && (
-        <div style={modalOverlay} onClick={() => setShowModal(false)}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Add Inventory Item</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Add Inventory Item</h2>
+              <ModalCloseButton onClick={() => setShowModal(false)} />
+            </div>
             <form onSubmit={handleCreate}>
               <input style={inputStyle} name="name" placeholder="Item name (e.g. Paracetamol, Rice)" value={form.name} onChange={handleChange} required />
               
@@ -222,9 +226,12 @@ export default function InventoryManagement() {
 
       {/* Edit Stock Modal */}
       {editingItem && (
-        <div style={modalOverlay} onClick={() => setEditingItem(null)}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Update Stock</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Update Stock</h2>
+              <ModalCloseButton onClick={() => setEditingItem(null)} />
+            </div>
             <p style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '16px' }}>Item: <strong>{editingItem.name}</strong></p>
             <form onSubmit={handleUpdateStock}>
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity ({editingItem.unit})</label>

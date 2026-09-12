@@ -6,6 +6,7 @@ import {
   inputStyle, selectStyle, modalOverlay, modalBox,
 } from '../styles';
 import { Edit2, Trash2, ShieldAlert, Heart, Calendar, Plus, X } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
 
 const emptyForm = {
   childID: '', name: '', DOB: '', gender: 'male', admissionDate: '',
@@ -32,6 +33,8 @@ export default function ChildrenManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [dobError, setDobError] = useState('');
   
   // Selected detail modal
   const [selectedChild, setSelectedChild] = useState(null);
@@ -62,6 +65,24 @@ export default function ChildrenManagement() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'DOB') {
+      if (value) {
+        const birthYear = new Date(value).getFullYear();
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - birthYear;
+        if (age > 18) {
+          const msg = `Cannot register children older than 18 years (calculated age: ${age} years based on birth year ${birthYear}).`;
+          setDobError(msg);
+          setModalError(msg);
+        } else {
+          setDobError('');
+          setModalError('');
+        }
+      } else {
+        setDobError('');
+        setModalError('');
+      }
+    }
     if (name.startsWith('guardian.')) {
       const field = name.split('.')[1];
       setForm({ ...form, guardianInfo: { ...form.guardianInfo, [field]: value } });
@@ -74,20 +95,39 @@ export default function ChildrenManagement() {
     e.preventDefault();
     setSaving(true);
     setError('');
+    setModalError('');
+
+    if (form.DOB) {
+      const birthYear = new Date(form.DOB).getFullYear();
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - birthYear;
+      if (age > 18) {
+        const msg = `Cannot register child: Child is older than 18 years (calculated age: ${age} years based on birth year ${birthYear}).`;
+        setModalError(msg);
+        setDobError(msg);
+        setSaving(false);
+        return;
+      }
+    }
+
     try {
       if (isEditing) {
         await api.patch(`/children/${form._id}`, form);
         setShowModal(false);
         setIsEditing(false);
         setForm(emptyForm);
+        setModalError('');
+        setDobError('');
       } else {
         await api.post('/children', form);
         setShowModal(false);
         setForm(emptyForm);
+        setModalError('');
+        setDobError('');
       }
       loadChildren();
     } catch (err) {
-      setError(err.message);
+      setModalError(err.message);
     } finally {
       setSaving(false);
     }
@@ -119,6 +159,8 @@ export default function ChildrenManagement() {
       _id: child._id
     });
     setIsEditing(true);
+    setModalError('');
+    setDobError('');
     setShowModal(true);
     setSelectedChild(null);
   };
@@ -232,6 +274,8 @@ export default function ChildrenManagement() {
         <button style={buttonPrimary} onClick={() => {
           setIsEditing(false);
           setForm(emptyForm);
+          setModalError('');
+          setDobError('');
           setShowModal(true);
         }}>
           + Add Child
@@ -327,14 +371,32 @@ export default function ChildrenManagement() {
 
       {/* ─── Add/Edit Child Modal ─── */}
       {showModal && (
-        <div style={modalOverlay} onClick={() => {
-          setShowModal(false);
-          setIsEditing(false);
-        }}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
-              {isEditing ? 'Edit Child Profile' : 'Add New Child'}
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
+                {isEditing ? 'Edit Child Profile' : 'Add New Child'}
+              </h2>
+              <ModalCloseButton onClick={() => {
+                setShowModal(false);
+                setIsEditing(false);
+                setModalError('');
+                setDobError('');
+              }} />
+            </div>
+
+            {modalError && (
+              <div style={{
+                padding: '10px 14px', backgroundColor: colors.dangerGlow,
+                border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px',
+                color: colors.danger, fontSize: '13px', marginBottom: '16px',
+                display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500
+              }}>
+                <ShieldAlert size={16} color={colors.danger} />
+                <span>{modalError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleCreateOrUpdate}>
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>Registration ID</label>
               <input style={inputStyle} name="childID" placeholder="Registration ID (e.g. Stu-0054)" value={form.childID} onChange={handleChange} required disabled={isEditing} />
@@ -342,8 +404,26 @@ export default function ChildrenManagement() {
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>Full Name</label>
               <input style={inputStyle} name="name" placeholder="Full name" value={form.name} onChange={handleChange} required />
               
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>Date of Birth</label>
-              <input style={inputStyle} name="DOB" type="date" value={form.DOB} onChange={handleChange} required />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>
+                Date of Birth <span style={{ color: '#ef4444' }}>* (Age must be 18 or below)</span>
+              </label>
+              <input
+                style={{
+                  ...inputStyle,
+                  borderColor: dobError ? colors.danger : colors.border,
+                  marginBottom: dobError ? '6px' : '14px'
+                }}
+                name="DOB"
+                type="date"
+                value={form.DOB}
+                onChange={handleChange}
+                required
+              />
+              {dobError && (
+                <div style={{ color: colors.danger, fontSize: '12px', marginBottom: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ⚠️ {dobError}
+                </div>
+              )}
               
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>Gender</label>
               <select style={selectStyle} name="gender" value={form.gender} onChange={handleChange}>
@@ -381,6 +461,8 @@ export default function ChildrenManagement() {
                 <button type="button" style={buttonSecondary} onClick={() => {
                   setShowModal(false);
                   setIsEditing(false);
+                  setModalError('');
+                  setDobError('');
                 }}>
                   Cancel
                 </button>
@@ -391,9 +473,10 @@ export default function ChildrenManagement() {
         </div>
       )}
 
+
       {/* ─── View Child Detail Modal ─── */}
       {selectedChild && (
-        <div style={modalOverlay} onClick={() => setSelectedChild(null)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '580px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div>
@@ -402,12 +485,15 @@ export default function ChildrenManagement() {
                 </h2>
                 <span style={{ fontSize: '12px', color: colors.textMuted }}>Profile & Health Files</span>
               </div>
-              <button 
-                onClick={() => startEdit(selectedChild.child)}
-                style={{ ...buttonSecondary, padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Edit2 size={13} /> Edit Profile
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button 
+                  onClick={() => startEdit(selectedChild.child)}
+                  style={{ ...buttonSecondary, padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Edit2 size={13} /> Edit Profile
+                </button>
+                <ModalCloseButton onClick={() => setSelectedChild(null)} />
+              </div>
             </div>
 
             {error && (
@@ -655,7 +741,7 @@ export default function ChildrenManagement() {
                 )}
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button style={buttonSecondary} onClick={() => setSelectedChild(null)}>Close</button>
+                <button style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', fontWeight: 600 }} onClick={() => setSelectedChild(null)}>Close</button>
                 {user?.role === 'admin' && (
                   <button
                     style={{ ...buttonSecondary, color: colors.warning, borderColor: 'rgba(241,156,56,0.2)' }}

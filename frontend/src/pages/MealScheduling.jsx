@@ -3,6 +3,8 @@ import { api } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
 import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
+import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 
 export default function MealScheduling() {
   const { t } = useLanguage();
@@ -75,7 +77,7 @@ export default function MealScheduling() {
         occasion: meal.occasion || '',
         mealDonationType: meal.mealDonationType || 'sponsor',
         menuPackage: meal.menuPackage || 'standard',
-        estimatedCost: meal.estimatedCost ? String(meal.estimatedCost) : '',
+        estimatedCost: meal.estimatedCost ? formatWithCommas(meal.estimatedCost) : '',
         donorCooksMenu: meal.donorCooksMenu || '',
         dietaryNotes: meal.dietaryNotes || '',
         status: meal.status || 'pending'
@@ -107,6 +109,7 @@ export default function MealScheduling() {
       const payload = {
         ...form,
         quantity: Number(form.quantity),
+        estimatedCost: form.estimatedCost ? Number(stripCommas(form.estimatedCost)) : 0,
       };
 
       if (editingMealId) {
@@ -541,15 +544,13 @@ export default function MealScheduling() {
 
       {/* ─── DETAILED PREVIEW MODAL ─── */}
       {selectedMeal && (
-        <div style={modalOverlay} onClick={() => setSelectedMeal(null)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
               <h3 style={{ margin: 0, color: colors.text, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
                 <Sparkles size={18} color={colors.primary} /> Sponsor Meal Details
               </h3>
-              <button onClick={() => setSelectedMeal(null)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: colors.textMuted }}>
-                <X size={20} />
-              </button>
+              <ModalCloseButton onClick={() => setSelectedMeal(null)} />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -725,14 +726,19 @@ export default function MealScheduling() {
 
       {/* ─── SCHEDULING / EDITING FORM MODAL ─── */}
       {showFormModal && (
-        <div style={modalOverlay} onClick={() => setShowFormModal(false)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '560px', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '4px' }}>
-              {editingMealId ? '✏️ Edit Meal Donation' : '🍽️ Schedule Meal Donation'}
-            </h2>
-            <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '20px' }}>
-              {editingMealId ? 'Update the meal donation reservation details.' : 'Choose how the donor would like to contribute a meal.'}
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <div>
+                <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", marginBottom: '4px' }}>
+                  {editingMealId ? '✏️ Edit Meal Donation' : '🍽️ Schedule Meal Donation'}
+                </h2>
+                <p style={{ fontSize: '13px', color: colors.textMuted, margin: 0 }}>
+                  {editingMealId ? 'Update the meal donation reservation details.' : 'Choose how the donor would like to contribute a meal.'}
+                </p>
+              </div>
+              <ModalCloseButton onClick={() => setShowFormModal(false)} />
+            </div>
 
             {formError && (
               <div style={{
@@ -900,12 +906,11 @@ export default function MealScheduling() {
                     <div>
                       <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Estimated Cost (LKR)</label>
                       <input
-                        type="number"
-                        min="0"
+                        type="text"
                         style={inputStyle}
-                        placeholder="e.g. 15000"
+                        placeholder="e.g. 15,000"
                         value={form.estimatedCost}
-                        onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })}
+                        onChange={(e) => setForm({ ...form, estimatedCost: formatWithCommas(e.target.value) })}
                       />
                     </div>
                   </div>
@@ -1007,21 +1012,24 @@ export default function MealScheduling() {
 
       {/* Meal Details Modal */}
       {selectedMeal && (
-        <div style={modalOverlay} onClick={() => setSelectedMeal(null)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '600px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
               <h2 style={{ margin: 0, fontSize: '20px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Utensils size={20} color={colors.primary} />
                 {t("Meal Scheduling Details")}
               </h2>
-              <span style={{
-                padding: '4px 10px', borderRadius: '6px',
-                background: selectedMeal.status === 'received' ? colors.successGlow : selectedMeal.status === 'pending' ? colors.warningGlow : colors.dangerGlow,
-                color: selectedMeal.status === 'received' ? colors.success : selectedMeal.status === 'pending' ? colors.warning : colors.danger,
-                fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}>
-                {selectedMeal.status === 'received' ? t('Completed') : t(selectedMeal.status)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{
+                  padding: '4px 10px', borderRadius: '6px',
+                  background: selectedMeal.status === 'received' ? colors.successGlow : selectedMeal.status === 'pending' ? colors.warningGlow : colors.dangerGlow,
+                  color: selectedMeal.status === 'received' ? colors.success : selectedMeal.status === 'pending' ? colors.warning : colors.danger,
+                  fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em'
+                }}>
+                  {selectedMeal.status === 'received' ? t('Completed') : t(selectedMeal.status)}
+                </span>
+                <ModalCloseButton onClick={() => setSelectedMeal(null)} />
+              </div>
             </div>
 
             <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '4px' }}>
@@ -1156,7 +1164,7 @@ export default function MealScheduling() {
               </div>
               <button
                 type="button"
-                style={{ ...buttonSecondary, padding: '10px 20px', fontSize: '13px' }}
+                style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', padding: '10px 20px', fontSize: '13px', fontWeight: 600 }}
                 onClick={() => setSelectedMeal(null)}
               >
                 {t("Close")}

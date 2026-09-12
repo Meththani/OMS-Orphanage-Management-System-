@@ -141,3 +141,20 @@ export const modalBox = {
   border: `1px solid ${colors.border}`,
   boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.15)',
 };
+
+export const closeButtonRed = {
+  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+  color: '#ffffff',
+  border: 'none',
+  borderRadius: '8px',
+  width: '32px',
+  height: '32px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  boxShadow: '0 2px 8px rgba(239, 68, 68, 0.35)',
+  flexShrink: 0,
+};
+

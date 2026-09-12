@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, modalOverlay, modalBox } from '../styles';
 import { Landmark, Plus, RefreshCw, CheckCircle2 } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
+import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 
 const emptyForm = { accountName: '', bankName: '', accountNumber: '', initialBalance: '0' };
 
@@ -30,7 +32,14 @@ export default function BankAccountManagement() {
     loadAccounts();
   }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'initialBalance') {
+      setForm({ ...form, initialBalance: formatWithCommas(value) });
+      return;
+    }
+    setForm({ ...form, [name]: value });
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -39,7 +48,7 @@ export default function BankAccountManagement() {
     try {
       await api.post('/finances/bank-accounts', {
         ...form,
-        initialBalance: Number(form.initialBalance),
+        initialBalance: Number(stripCommas(form.initialBalance)),
       });
       setShowModal(false);
       setForm(emptyForm);
@@ -167,16 +176,19 @@ export default function BankAccountManagement() {
 
       {/* Add Bank Account Modal */}
       {showModal && (
-        <div style={modalOverlay} onClick={() => setShowModal(false)}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Add Bank Account</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Add Bank Account</h2>
+              <ModalCloseButton onClick={() => setShowModal(false)} />
+            </div>
             <form onSubmit={handleCreate}>
               <input style={inputStyle} name="accountName" placeholder="Account Name (e.g. Donation Fund, Savings)" value={form.accountName} onChange={handleChange} required />
               <input style={inputStyle} name="bankName" placeholder="Bank Name (e.g. Ceylon National Bank)" value={form.bankName} onChange={handleChange} required />
               <input style={inputStyle} name="accountNumber" placeholder="Account Number" value={form.accountNumber} onChange={handleChange} required />
               
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Initial Balance (LKR)</label>
-              <input type="number" style={inputStyle} name="initialBalance" placeholder="Initial balance" value={form.initialBalance} onChange={handleChange} required />
+              <input type="text" style={inputStyle} name="initialBalance" placeholder="Initial balance (e.g. 100,000)" value={form.initialBalance} onChange={handleChange} required />
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
                 <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>Cancel</button>

@@ -5,6 +5,7 @@ import {
   inputStyle, selectStyle, modalOverlay, modalBox,
 } from '../styles';
 import { Eye, EyeOff, Edit2, Trash2, X, Phone, User, Calendar, Hash, Briefcase, Award } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
 
 const emptyForm = {
   name: '', username: '', password: '', confirmPassword: '', role: 'staff',
@@ -523,11 +524,14 @@ export default function StaffManagement() {
 
       {/* ─── Add/Edit Staff Modal ─── */}
       {showModal && (
-        <div style={modalOverlay} onClick={closeModal}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
-              {isEditing ? 'Edit Staff Member' : 'Add Staff Member'}
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
+                {isEditing ? 'Edit Staff Member' : 'Add Staff Member'}
+              </h2>
+              <ModalCloseButton onClick={closeModal} />
+            </div>
             <form onSubmit={handleCreateOrUpdate}>
 
               {/* Full Name */}
@@ -660,7 +664,7 @@ export default function StaffManagement() {
 
       {/* ─── Staff Details Popup Modal ─── */}
       {selectedStaff && (
-        <div style={modalOverlay} onClick={() => setSelectedStaff(null)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '540px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -695,18 +699,7 @@ export default function StaffManagement() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedStaff(null)}
-                style={{
-                  background: 'none', border: 'none', color: colors.textMuted, cursor: 'pointer',
-                  padding: '6px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.05)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                <X size={20} />
-              </button>
+              <ModalCloseButton onClick={() => setSelectedStaff(null)} />
             </div>
 
             <div style={{
@@ -742,7 +735,13 @@ export default function StaffManagement() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <button
+                style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', fontWeight: 600 }}
+                onClick={() => setSelectedStaff(null)}
+              >
+                Close
+              </button>
               <button
                 style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
                 onClick={() => {

@@ -84,7 +84,7 @@ router.post('/create-checkout-session', async (req, res) => {
               name: 'Orphanage Cash Donation',
               description: 'General Expenses Fund Donation',
             },
-            unit_amount: Number(amount) * 100, // Stripe expects amount in cents
+            unit_amount: Math.round(Number(amount) * 100), // Stripe expects amount in cents
           },
           quantity: 1,
         },
@@ -103,6 +103,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
     res.status(200).json({ status: 'success', url: session.url });
   } catch (err) {
+    console.error('Stripe Checkout session error:', err);
     res.status(500).json({ status: 'error', message: err.message });
   }
 });

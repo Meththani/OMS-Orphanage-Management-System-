@@ -5,6 +5,17 @@ const EducationRecord = require('../models/EducationRecord');
 // POST /api/children
 exports.createChild = async (req, res) => {
   try {
+    if (req.body.DOB) {
+      const birthYear = new Date(req.body.DOB).getFullYear();
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - birthYear;
+      if (age > 18) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Cannot register child older than 18 years (calculated age is ${age} years based on birth year ${birthYear}).`,
+        });
+      }
+    }
     const child = await Child.create(req.body);
     res.status(201).json({ status: 'success', data: child });
   } catch (err) {
@@ -45,6 +56,17 @@ exports.getChild = async (req, res) => {
 // PATCH /api/children/:id
 exports.updateChild = async (req, res) => {
   try {
+    if (req.body.DOB) {
+      const birthYear = new Date(req.body.DOB).getFullYear();
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - birthYear;
+      if (age > 18) {
+        return res.status(400).json({
+          status: 'error',
+          message: `Cannot register child older than 18 years (calculated age is ${age} years based on birth year ${birthYear}).`,
+        });
+      }
+    }
     const child = await Child.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

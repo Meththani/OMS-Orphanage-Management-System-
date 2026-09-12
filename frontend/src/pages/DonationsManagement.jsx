@@ -6,6 +6,8 @@ import {
   inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox,
 } from '../styles';
 import { Heart, Plus, Calendar, Filter } from 'lucide-react';
+import ModalCloseButton from '../components/ModalCloseButton';
+import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 
 const emptyForm = {
   type: 'cash', donorID: '', amount: '', itemType: '', quantity: '',
@@ -51,7 +53,14 @@ export default function DonationsManagement() {
     loadData();
   }, [filter]);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'amount') {
+      setForm({ ...form, amount: formatWithCommas(value) });
+      return;
+    }
+    setForm({ ...form, [name]: value });
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -60,7 +69,7 @@ export default function DonationsManagement() {
     try {
       const payload = { ...form };
       if (form.type === 'cash') {
-        payload.amount = Number(form.amount);
+        payload.amount = Number(stripCommas(form.amount));
       } else if (form.type === 'goods') {
         payload.quantity = Number(form.quantity);
       } else if (form.type === 'meal') {
@@ -343,11 +352,14 @@ export default function DonationsManagement() {
 
       {/* Record Donation Modal */}
       {showModal && (
-        <div style={modalOverlay} onClick={() => setShowModal(false)}>
+        <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
-              Record Donation
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
+                Record Donation
+              </h2>
+              <ModalCloseButton onClick={() => setShowModal(false)} />
+            </div>
             <form onSubmit={handleCreate}>
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Select Donor Profile</label>
               <select style={selectStyle} name="donorID" value={form.donorID} onChange={handleChange} required>
@@ -368,7 +380,7 @@ export default function DonationsManagement() {
               {form.type === 'cash' && (
                 <>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Amount (LKR)</label>
-                  <input style={inputStyle} name="amount" type="number" placeholder="e.g. 50000" value={form.amount} onChange={handleChange} required />
+                  <input style={inputStyle} name="amount" type="text" placeholder="e.g. 50,000" value={form.amount} onChange={handleChange} required />
                 </>
               )}
 
@@ -423,13 +435,16 @@ export default function DonationsManagement() {
 
       {/* Receipt Preview Modal */}
       {previewFile && (
-        <div style={modalOverlay} onClick={() => setPreviewFile(null)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '650px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
               <h2 style={{ margin: 0, fontSize: '18px', color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
                 📄 Receipt Preview
               </h2>
-              <span style={{ fontSize: '12px', color: colors.textMuted }}>{previewFile.fileName}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '12px', color: colors.textMuted }}>{previewFile.fileName}</span>
+                <ModalCloseButton onClick={() => setPreviewFile(null)} />
+              </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface, padding: '16px', borderRadius: '12px', minHeight: '200px', overflow: 'hidden' }}>
@@ -475,7 +490,7 @@ export default function DonationsManagement() {
               >
                 📥 Download
               </a>
-              <button type="button" style={buttonPrimary} onClick={() => setPreviewFile(null)}>Close</button>
+              <button type="button" style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', fontWeight: 600 }} onClick={() => setPreviewFile(null)}>Close</button>
             </div>
           </div>
         </div>
@@ -483,21 +498,24 @@ export default function DonationsManagement() {
 
       {/* Donation Details Modal */}
       {selectedDonation && (
-        <div style={modalOverlay} onClick={() => setSelectedDonation(null)}>
+        <div style={modalOverlay}>
           <div style={{ ...modalBox, width: '650px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
               <h2 style={{ margin: 0, fontSize: '20px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Heart size={20} color={colors.primary} />
                 {t("Donation Details")}
               </h2>
-              <span style={{
-                padding: '4px 10px', borderRadius: '6px',
-                background: statusGlow(selectedDonation.status),
-                color: statusColor(selectedDonation.status),
-                fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em'
-              }}>
-                {t(selectedDonation.status)}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{
+                  padding: '4px 10px', borderRadius: '6px',
+                  background: statusGlow(selectedDonation.status),
+                  color: statusColor(selectedDonation.status),
+                  fontWeight: 600, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em'
+                }}>
+                  {t(selectedDonation.status)}
+                </span>
+                <ModalCloseButton onClick={() => setSelectedDonation(null)} />
+              </div>
             </div>
 
             <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '4px' }}>
@@ -694,7 +712,7 @@ export default function DonationsManagement() {
               </div>
               <button
                 type="button"
-                style={{ ...buttonSecondary, padding: '10px 20px', fontSize: '13px' }}
+                style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', padding: '10px 20px', fontSize: '13px', fontWeight: 600 }}
                 onClick={() => setSelectedDonation(null)}
               >
                 {t("Close")}
