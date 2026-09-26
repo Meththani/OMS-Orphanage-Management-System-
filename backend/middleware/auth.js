@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'oms_jwt_secret_dev_key_change_in_production_2026';
+
 // Verifies JWT, attaches the live user document to req.user.
 // Rejects deactivated accounts even if the token itself is still valid —
 // without this check, deactivating a staff account does nothing until
@@ -16,7 +18,7 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ status: 'fail', message: 'Not authenticated. Please log in.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     const currentUser = await User.findById(decoded.id);
 
     if (!currentUser) {
