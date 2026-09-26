@@ -12,6 +12,8 @@ const financialRoutes = require('./routes/financialRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 
+const { initReminderScheduler } = require('./services/reminderScheduler');
+
 const app = express();
 app.use(cors());
 app.use(express.json({ 
@@ -24,7 +26,11 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-connectDB();
+connectDB().then(() => {
+  initReminderScheduler();
+}).catch(() => {
+  initReminderScheduler();
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);

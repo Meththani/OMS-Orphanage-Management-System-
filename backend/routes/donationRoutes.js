@@ -6,6 +6,7 @@ const {
   updateDonationStatus,
   getMyDonations,
   updateDonation,
+  sendMealSmsReminder,
 } = require('../controllers/donationController');
 const { protect, restrictTo } = require('../middleware/auth');
 
@@ -35,5 +36,7 @@ router.route('/').get(getAllDonations).post(createDonation);
 router.route('/:id').get(getDonation).put(updateDonation);
 
 router.patch('/:id/status', updateDonationStatus);
+
+router.post('/:id/send-sms', sendMealSmsReminder);
 
 module.exports = router;

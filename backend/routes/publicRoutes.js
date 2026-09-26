@@ -5,6 +5,7 @@ const Message = require('../models/Message');
 const BankAccount = require('../models/BankAccount');
 const Income = require('../models/Income');
 const Child = require('../models/Child');
+const { sendSMS, buildMealSmsText } = require('../services/smsService');
 
 const router = express.Router();
 
@@ -403,6 +404,9 @@ router.post('/book-meal', async (req, res) => {
         type: 'individual',
         preference: 'meal',
       });
+    } else if (contactDetails && contactDetails !== donor.contactDetails) {
+      donor.contactDetails = contactDetails;
+      await donor.save();
     }
 
     // Create Meal Donation record
@@ -418,6 +422,34 @@ router.post('/book-meal', async (req, res) => {
       dietaryNotes,
       notes: occasion ? `Sponsorship for occasion: ${occasion}` : 'Booked via public website meal portal.',
     });
+
+    // Send instant SMS confirmation to donor
+    if (contactDetails && contactDetails !== 'N/A') {
+      const mealDateFormatted = new Date(donation.mealDate).toLocaleDateString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+      });
+      const smsText = buildMealSmsText({
+        donorName: name,
+        mealDateFormatted,
+        mealType,
+        quantity: Number(quantity),
+        isReminder: false,
+      });
+      const smsResult = await sendSMS({ to: contactDetails, message: smsText });
+
+      donation.smsSent = smsResult.success;
+      donation.lastSmsSentAt = new Date();
+      donation.smsLogs = [{
+        sentAt: new Date(),
+        type: 'booking_confirmation',
+        phone: contactDetails,
+        message: smsText,
+        provider: smsResult.provider,
+        status: smsResult.success ? 'success' : 'failed',
+        messageId: smsResult.messageId || null,
+      }];
+      await donation.save();
+    }
 
     res.status(201).json({ status: 'success', data: donation });
   } catch (err) {

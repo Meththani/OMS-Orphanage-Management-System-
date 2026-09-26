@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, modalOverlay, modalBox } from '../styles';
 import { Landmark, Plus, RefreshCw, CheckCircle2 } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
@@ -8,6 +9,7 @@ import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 const emptyForm = { accountName: '', bankName: '', accountNumber: '', initialBalance: '0' };
 
 export default function BankAccountManagement() {
+  const { t } = useLanguage();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,14 +67,14 @@ export default function BankAccountManagement() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
-            Bank Accounts
+            {t("Bank Accounts")}
           </h1>
           <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Manage organizational bank accounts, checking balances and ledger connections
+            {t("Manage bank accounts, deposits, and balances")}
           </p>
         </div>
         <button style={buttonPrimary} onClick={() => setShowModal(true)}>
-          <Plus size={16} style={{ marginRight: '6px' }} /> Add Bank Account
+          <Plus size={16} style={{ marginRight: '6px' }} /> {t("Add Bank Account")}
         </button>
       </div>
 

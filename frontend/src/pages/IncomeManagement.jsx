@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
 import { Plus, Calendar } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
@@ -8,6 +9,7 @@ import { formatWithCommas } from '../utils/numberFormat';
 const emptyForm = { category: 'Donation', customCategory: '', amount: '', paymentMethod: 'bank_transfer', donor: '', refReceipt: '', bankAccountId: '', proofOfReceipt: null };
 
 export default function IncomeManagement() {
+  const { t } = useLanguage();
   const [incomes, setIncomes] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
@@ -189,14 +191,14 @@ export default function IncomeManagement() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
-            Income Management
+            {t("Income Records")}
           </h1>
           <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Record donor support, grants, and fundraising funds
+            {t("Manage and track organizational income")}
           </p>
         </div>
         <button style={buttonPrimary} onClick={openModal}>
-          <Plus size={16} style={{ marginRight: '6px' }} /> Record Income
+          <Plus size={16} style={{ marginRight: '6px' }} /> {t("Record Income")}
         </button>
       </div>
 

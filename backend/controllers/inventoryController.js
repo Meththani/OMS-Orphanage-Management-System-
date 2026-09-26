@@ -10,10 +10,29 @@ exports.getInventory = async (req, res) => {
   }
 };
 
+// GET /api/inventory/barcode/:barcode
+exports.getInventoryByBarcode = async (req, res) => {
+  try {
+    const barcode = req.params.barcode ? req.params.barcode.trim() : '';
+    if (!barcode) {
+      return res.status(400).json({ status: 'fail', message: 'Barcode parameter is required.' });
+    }
+
+    const item = await InventoryItem.findOne({ barcode });
+    if (!item) {
+      return res.status(404).json({ status: 'fail', message: `No inventory item found for barcode "${barcode}".` });
+    }
+
+    res.status(200).json({ status: 'success', data: item });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+};
+
 // POST /api/inventory
 exports.createInventoryItem = async (req, res) => {
   try {
-    const { name, category, quantity, unit } = req.body;
+    const { name, category, quantity, unit, barcode } = req.body;
     if (!name || !category || quantity === undefined || !unit) {
       return res.status(400).json({ status: 'fail', message: 'Missing inventory fields.' });
     }
@@ -23,6 +42,7 @@ exports.createInventoryItem = async (req, res) => {
       category,
       quantity,
       unit,
+      barcode: barcode ? barcode.trim() : '',
     });
 
     res.status(201).json({ status: 'success', data: newItem });
@@ -34,17 +54,24 @@ exports.createInventoryItem = async (req, res) => {
 // PATCH /api/inventory/:id
 exports.updateInventoryItem = async (req, res) => {
   try {
-    const { quantity } = req.body;
-    if (quantity === undefined) {
-      return res.status(400).json({ status: 'fail', message: 'Quantity is required for update.' });
-    }
+    const { quantity, addQuantity, name, category, unit, barcode } = req.body;
 
     const item = await InventoryItem.findById(req.params.id);
     if (!item) {
       return res.status(404).json({ status: 'fail', message: 'Inventory item not found.' });
     }
 
-    item.quantity = quantity;
+    if (addQuantity !== undefined) {
+      item.quantity = Math.max(0, item.quantity + Number(addQuantity));
+    } else if (quantity !== undefined) {
+      item.quantity = Number(quantity);
+    }
+
+    if (name) item.name = name;
+    if (category) item.category = category;
+    if (unit) item.unit = unit;
+    if (barcode !== undefined) item.barcode = barcode.trim();
+
     await item.save();
 
     res.status(200).json({ status: 'success', data: item });

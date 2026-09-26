@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 import {
   colors, cardStyle, buttonPrimary, buttonSecondary, buttonDanger,
   inputStyle, selectStyle, modalOverlay, modalBox,
@@ -13,6 +14,7 @@ const emptyForm = {
 };
 
 export default function StaffManagement() {
+  const { t } = useLanguage();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -348,10 +350,10 @@ export default function StaffManagement() {
             margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700,
             fontFamily: "'Outfit', sans-serif",
           }}>
-            Staff
+            {t("Staff Management")}
           </h1>
         </div>
-        <button style={buttonPrimary} onClick={openAddModal}>+ Add Staff Member</button>
+        <button style={buttonPrimary} onClick={openAddModal}>+ {t("Register Staff Member")}</button>
       </div>
 
       {error && (

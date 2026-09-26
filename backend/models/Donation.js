@@ -65,6 +65,20 @@ const MealDonation = Donation.discriminator(
     estimatedCost: { type: Number, min: 0 },      // used when mealDonationType = 'sponsor'
     donorCooksMenu: { type: String },              // used when mealDonationType = 'bringyourown'
     dietaryNotes: { type: String },
+    smsSent: { type: Boolean, default: false },
+    lastSmsSentAt: { type: Date },
+    smsLogs: [
+      {
+        sentAt: { type: Date, default: Date.now },
+        type: { type: String, enum: ['booking_confirmation', 'automated_reminder', 'manual_reminder'] },
+        phone: String,
+        message: String,
+        provider: String,
+        status: String,
+        messageId: String,
+        error: String,
+      }
+    ],
   })
 );
 

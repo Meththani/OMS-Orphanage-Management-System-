@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
-import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign } from 'lucide-react';
+import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 
@@ -17,6 +17,28 @@ export default function MealScheduling() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedMeal, setSelectedMeal] = useState(null);
+
+  // SMS States
+  const [sendingSmsId, setSendingSmsId] = useState(null);
+  const [smsAlert, setSmsAlert] = useState(null);
+
+  const handleSendSmsReminder = async (mealId, e) => {
+    if (e) e.stopPropagation();
+    setSendingSmsId(mealId);
+    setSmsAlert(null);
+    try {
+      const res = await api.post(`/donations/${mealId}/send-sms`);
+      setSmsAlert({ type: 'success', text: res.data.message || 'SMS reminder sent successfully!' });
+      await loadMeals();
+      if (selectedMeal && selectedMeal._id === mealId) {
+        setSelectedMeal(res.data.data);
+      }
+    } catch (err) {
+      setSmsAlert({ type: 'error', text: err.message || 'Failed to send SMS reminder.' });
+    } finally {
+      setSendingSmsId(null);
+    }
+  };
 
   // Scheduling Form States
   const [donors, setDonors] = useState([]);
@@ -188,7 +210,7 @@ export default function MealScheduling() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
-            Meal Scheduling
+            {t("Meal Scheduling")}
           </h1>
         </div>
 
@@ -206,7 +228,7 @@ export default function MealScheduling() {
               boxShadow: `0 4px 14px ${colors.successGlow}`,
             }}
           >
-            <Plus size={16} /> Schedule Meal Donation
+            <Plus size={16} /> {t("Schedule Meal Donation")}
           </button>
 
           <button
@@ -222,7 +244,7 @@ export default function MealScheduling() {
               padding: '8px 16px',
             }}
           >
-            <List size={16} /> List View
+            <List size={16} /> {t("List View")}
           </button>
           <button
             onClick={() => setViewMode('calendar')}
@@ -249,6 +271,24 @@ export default function MealScheduling() {
           color: colors.danger, fontSize: '13px', marginBottom: '16px',
         }}>
           ⚠️ {error}
+        </div>
+      )}
+
+      {smsAlert && (
+        <div style={{
+          padding: '12px 16px',
+          backgroundColor: smsAlert.type === 'success' ? colors.successGlow : colors.dangerGlow,
+          border: `1px solid ${smsAlert.type === 'success' ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+          borderRadius: '10px',
+          color: smsAlert.type === 'success' ? colors.success : colors.danger,
+          fontSize: '13px',
+          marginBottom: '16px',
+          display: 'flex',
+          justify: 'space-between',
+          alignItems: 'center',
+        }}>
+          <span>{smsAlert.type === 'success' ? '📱' : '⚠️'} {smsAlert.text}</span>
+          <button onClick={() => setSmsAlert(null)} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
         </div>
       )}
 
@@ -302,7 +342,7 @@ export default function MealScheduling() {
                       <td style={tdStyle}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textTransform: 'capitalize', fontWeight: 600, color: meal.mealType === 'breakfast' ? colors.warning : meal.mealType === 'lunch' ? colors.info : colors.primary }}>
                           <Clock size={12} />
-                          {meal.mealType}
+                          {t(meal.mealType)}
                         </div>
                       </td>
                       <td style={tdStyle}>
@@ -323,7 +363,7 @@ export default function MealScheduling() {
                             backgroundColor: 'rgba(168,85,247,0.12)', color: '#a855f7',
                             fontWeight: 600, fontSize: '11px'
                           }}>
-                            <ShoppingBag size={10} /> Self-Catered
+                            <ShoppingBag size={10} /> {t("Self-Catered")}
                           </span>
                         ) : (
                           <span style={{
@@ -332,11 +372,11 @@ export default function MealScheduling() {
                             color: meal.menuPackage === 'feast' ? colors.warning : meal.menuPackage === 'special' ? colors.success : colors.primary,
                             fontWeight: 600, fontSize: '11px', textTransform: 'capitalize'
                           }}>
-                            <Utensils size={10} /> {meal.menuPackage || 'standard'}
+                            <Utensils size={10} /> {t(meal.menuPackage || 'standard')}
                           </span>
                         )}
                       </td>
-                      <td style={tdStyle}>{meal.quantity} Kids portions</td>
+                      <td style={tdStyle}>{meal.quantity} {t("portions")}</td>
                       <td style={{ ...tdStyle, fontSize: '12px', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meal.dietaryNotes}>
                         {meal.dietaryNotes ? (
                           <span style={{ color: colors.danger }}>⚠️ {meal.dietaryNotes}</span>
@@ -386,6 +426,18 @@ export default function MealScheduling() {
                             }}
                           >
                             <Edit2 size={12} /> Edit
+                          </button>
+
+                          <button
+                            onClick={(e) => handleSendSmsReminder(meal._id, e)}
+                            disabled={sendingSmsId === meal._id}
+                            style={{
+                              ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
+                              padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(59,130,246,0.3)', color: '#3b82f6'
+                            }}
+                            title="Send SMS reminder to donor phone"
+                          >
+                            <MessageSquare size={12} /> {sendingSmsId === meal._id ? 'Sending...' : 'Send SMS'}
                           </button>
                         </div>
                       </td>
@@ -548,7 +600,7 @@ export default function MealScheduling() {
           <div style={{ ...modalBox, width: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
               <h3 style={{ margin: 0, color: colors.text, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
-                <Sparkles size={18} color={colors.primary} /> Sponsor Meal Details
+                <Utensils size={18} color={colors.primary} /> Sponsor Meal Details
               </h3>
               <ModalCloseButton onClick={() => setSelectedMeal(null)} />
             </div>
@@ -1134,6 +1186,40 @@ export default function MealScheduling() {
                   <div style={{ fontSize: '13px', color: colors.textSecondary }}>{selectedMeal.notes}</div>
                 </div>
               )}
+
+              {/* SMS Notification Details */}
+              <div style={{ marginBottom: '20px', padding: '14px 16px', backgroundColor: 'rgba(59,130,246,0.04)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Smartphone size={13} /> {t("SMS Reminder Status")}
+                  </span>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700,
+                    backgroundColor: selectedMeal.smsSent ? colors.successGlow : colors.warningGlow,
+                    color: selectedMeal.smsSent ? colors.success : colors.warning,
+                  }}>
+                    {selectedMeal.smsSent ? '✓ SMS Sent' : '⏳ Pending'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '12px', color: colors.textSecondary, marginBottom: '10px' }}>
+                  {selectedMeal.lastSmsSentAt
+                    ? `Last SMS sent on ${new Date(selectedMeal.lastSmsSentAt).toLocaleString()}`
+                    : 'No SMS reminder has been sent yet.'}
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => handleSendSmsReminder(selectedMeal._id, e)}
+                  disabled={sendingSmsId === selectedMeal._id}
+                  style={{
+                    ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 14px', fontSize: '12px', borderColor: 'rgba(59,130,246,0.4)', color: '#3b82f6',
+                    backgroundColor: '#fff'
+                  }}
+                >
+                  <MessageSquare size={13} />
+                  {sendingSmsId === selectedMeal._id ? 'Sending SMS...' : 'Send SMS Reminder Now'}
+                </button>
+              </div>
             </div>
 
             {/* Actions */}

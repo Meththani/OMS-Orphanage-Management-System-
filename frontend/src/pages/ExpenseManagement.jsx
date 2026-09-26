@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
 import { Plus, Calendar } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
@@ -8,6 +9,7 @@ import { formatWithCommas } from '../utils/numberFormat';
 const emptyForm = { category: 'Food & Nutrition', customCategory: '', amount: '', referenceReceipt: '', description: '', bankAccountId: '', proofOfReceipt: null };
 
 export default function ExpenseManagement() {
+  const { t } = useLanguage();
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
@@ -194,14 +196,14 @@ export default function ExpenseManagement() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
-            Expense Management
+            {t("Expense Records")}
           </h1>
           <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-            Record operational spending, salaries, medical costs, and supplies
+            {t("Manage operational expenses and ledger")}
           </p>
         </div>
         <button style={buttonPrimary} onClick={openModal}>
-          <Plus size={16} style={{ marginRight: '6px' }} /> Record Expense
+          <Plus size={16} style={{ marginRight: '6px' }} /> {t("Record Expense")}
         </button>
       </div>
 

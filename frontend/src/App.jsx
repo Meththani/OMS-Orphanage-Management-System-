@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate, useNavigate } from 're
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import GlobalPortalSearch from './components/GlobalPortalSearch';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import ChildrenManagement from './pages/ChildrenManagement';
@@ -285,10 +286,22 @@ function AppLayout() {
       <main style={{
         flex: 1,
         marginLeft: '260px',
-        padding: '32px 40px',
+        padding: '24px 40px 40px',
         backgroundColor: 'transparent',
         minHeight: '100vh',
       }}>
+        {/* Top Header Bar with Global Search */}
+        <header style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '28px',
+          paddingBottom: '16px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          width: '100%',
+        }}>
+          <GlobalPortalSearch />
+        </header>
+
         <Routes>
           {/* Common Dashboard */}
           <Route path="/dashboard" element={<Dashboard />} />
@@ -370,6 +383,7 @@ export default function App() {
           <Routes>
             {/* Public Website Routes */}
             <Route path="/" element={<PublicWebsite initialTab="home" />} />
+            <Route path="/about" element={<PublicWebsite initialTab="about" />} />
             <Route path="/facilities" element={<PublicWebsite initialTab="facilities" />} />
             <Route path="/programs" element={<PublicWebsite initialTab="programs" />} />
             <Route path="/contact" element={<PublicWebsite initialTab="contact" />} />

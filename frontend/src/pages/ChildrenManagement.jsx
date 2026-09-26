@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   colors, cardStyle, buttonPrimary, buttonSecondary, buttonDanger,
   inputStyle, selectStyle, modalOverlay, modalBox,
@@ -24,6 +25,7 @@ const emptyEducation = {
 
 export default function ChildrenManagement() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -268,7 +270,7 @@ export default function ChildrenManagement() {
             margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700,
             fontFamily: "'Outfit', sans-serif",
           }}>
-            Our Children
+            {t("Children Management")}
           </h1>
         </div>
         <button style={buttonPrimary} onClick={() => {
@@ -278,7 +280,7 @@ export default function ChildrenManagement() {
           setDobError('');
           setShowModal(true);
         }}>
-          + Add Child
+          + {t("Add Child")}
         </button>
       </div>
 

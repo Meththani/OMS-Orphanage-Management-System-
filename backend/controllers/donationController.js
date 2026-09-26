@@ -2,6 +2,7 @@ const { Donation, CashDonation, GoodsDonation, MealDonation } = require('../mode
 const Donor = require('../models/Donor');
 const BankAccount = require('../models/BankAccount');
 const Income = require('../models/Income');
+const { sendSMS, buildMealSmsText } = require('../services/smsService');
 
 const generateDonationID = () => `DON-${Date.now()}`;
 
@@ -34,6 +35,31 @@ exports.createDonation = async (req, res) => {
         break;
       case 'meal':
         donation = await MealDonation.create(payload);
+        if (donor && donor.contactDetails && donor.contactDetails !== 'N/A') {
+          const mealDateFormatted = new Date(donation.mealDate).toLocaleDateString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+          });
+          const smsText = buildMealSmsText({
+            donorName: donor.name,
+            mealDateFormatted,
+            mealType: donation.mealType,
+            quantity: donation.quantity,
+            isReminder: false,
+          });
+          const smsResult = await sendSMS({ to: donor.contactDetails, message: smsText });
+          donation.smsSent = smsResult.success;
+          donation.lastSmsSentAt = new Date();
+          donation.smsLogs = [{
+            sentAt: new Date(),
+            type: 'booking_confirmation',
+            phone: donor.contactDetails,
+            message: smsText,
+            provider: smsResult.provider,
+            status: smsResult.success ? 'success' : 'failed',
+            messageId: smsResult.messageId || null,
+          }];
+          await donation.save();
+        }
         break;
       default:
         return res.status(400).json({ status: 'fail', message: 'type must be cash, goods, or meal.' });
@@ -177,3 +203,62 @@ exports.updateDonation = async (req, res) => {
     res.status(400).json({ status: 'error', message: err.message });
   }
 };
+
+// POST /api/donations/:id/send-sms — Trigger manual SMS reminder to meal donor
+exports.sendMealSmsReminder = async (req, res) => {
+  try {
+    const donation = await MealDonation.findById(req.params.id).populate('donorID');
+    if (!donation) {
+      return res.status(404).json({ status: 'fail', message: 'Meal donation record not found.' });
+    }
+
+    const donor = donation.donorID;
+    if (!donor || !donor.contactDetails || donor.contactDetails === 'N/A') {
+      return res.status(400).json({ status: 'fail', message: 'Donor phone number is missing or invalid.' });
+    }
+
+    const mealDateFormatted = new Date(donation.mealDate).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    const smsText = buildMealSmsText({
+      donorName: donor.name || 'Valued Donor',
+      mealDateFormatted,
+      mealType: donation.mealType,
+      quantity: donation.quantity,
+      isReminder: true,
+    });
+
+    const result = await sendSMS({ to: donor.contactDetails, message: smsText });
+
+    donation.smsSent = result.success;
+    donation.lastSmsSentAt = new Date();
+    if (!donation.smsLogs) donation.smsLogs = [];
+    donation.smsLogs.push({
+      sentAt: new Date(),
+      type: 'manual_reminder',
+      phone: donor.contactDetails,
+      message: smsText,
+      provider: result.provider,
+      status: result.success ? 'success' : 'failed',
+      messageId: result.messageId || null,
+      error: result.error || null,
+    });
+
+    await donation.save();
+
+    res.status(200).json({
+      status: 'success',
+      message: result.simulated
+        ? `[Simulation Mode] SMS reminder logged to server console for ${donor.name} (${donor.contactDetails}).`
+        : `SMS reminder sent successfully to ${donor.contactDetails}!`,
+      data: donation,
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+};
+

@@ -193,14 +193,148 @@ const translations = {
   "Self-Catered": "ස්වයං සපයන ලද",
   "Menu": "මෙනුව",
   "portions": "බෙදීම්",
+
+  // Extended Children Management
+  "Children Management": "ළමා කළමනාකරණය",
+  "Manage profiles, medical records, and education": "ළමුන්ගේ පැතිකඩ, වෛද්‍ය වාර්තා සහ අධ්‍යාපනික තොරතුරු කළමනාකරණය",
+  "Register New Child": "නව ළමයෙකු ලියාපදිංචි කරන්න",
+  "Search children...": "ළමුන් සෙවීම...",
+  "Child ID": "ළමා අංකය",
+  "Age / DOB": "වයස / උපන් දිනය",
+  "Guardian": "භාරකරු",
+  "Actions": "ක්‍රියාමාර්ග",
+  "View Profile": "පැතිකඩ බලන්න",
+  "Deactivate": "අක්‍රීය කරන්න",
+  "No children registered.": "ලියාපදිංචි කළ ළමුන් නොමැත.",
+  "Child Profile Details": "ළමා පැතිකඩ විස්තර",
+  "Personal Information": "පෞද්ගලික තොරතුරු",
+  "Medical Records": "වෛද්‍ය වාර්තා",
+  "Education & Progress": "අධ්‍යාපනය සහ ප්‍රගතිය",
+  "Add Medical Record": "වෛද්‍ය වාර්තාවක් එක් කරන්න",
+  "Add Education Record": "අධ්‍යාපන වාර්තාවක් එක් කරන්න",
+  "Diagnosis": "රෝග විනිශ්චය",
+  "Treatment": "ප්‍රතිකාරය",
+  "Severity": "බරපතලකම",
+  "School": "පාසල",
+  "Grade": "ශ්‍රේණිය",
+  "Enrolled": "ලියාපදිංචි වී ඇත",
+  "Graduated": "අධ්‍යාපනය නිමකර ඇත",
+  "Dropped": "ඉවත් වී ඇත",
+  "Mild": "සාමාන්‍ය",
+  "Moderate": "මධ්‍යස්ථ",
+  "Severe": "බරපතල",
+  "Critical": "අතිශය බරපතල",
+  "Guardianship & Contact Details": "භාරකාරත්වය සහ සම්බන්ධතා විස්තර",
+  "Medical History & Records": "වෛද්‍ය ඉතිහාසය සහ වාර්තා",
+  "Academic Progress & Education": "අධ්‍යාපනික ප්‍රගතිය",
+
+  // Extended Staff Management
+  "Staff & User Accounts": "කාර්ය මණ්ඩලය සහ පරිශීලක ගිණුම්",
+  "Manage staff accounts, credentials, and roles": "කාර්ය මණ්ඩල ගිණුම් සහ තනතුරු කළමනාකරණය",
+  "Register Staff Member": "නව කාර්ය මණ්ඩල සාමාජිකයෙකු එක් කරන්න",
+  "Search staff...": "කාර්ය මණ්ඩලය සෙවීම...",
+  "Staff ID": "කාර්ය මණ්ඩල අංකය",
+  "Email": "විද්‍යුත් තැපෑල",
+  "Phone": "දුරකථන අංකය",
+  "Role / Status": "තනතුර / තත්ත්වය",
+  "Reset Password": "මුරපදය නැවත සකසන්න",
+  "No staff accounts found.": "කාර්ය මණ්ඩල ගිණුම් හමු නොවීය.",
+  "Staff Profile": "කාර්ය මණ්ඩල පැතිකඩ",
+  "System Role": "පද්ධති තනතුර",
+  "Joined Date": "එක්වූ දිනය",
+
+  // Extended Meal Scheduling
+  "Meal Scheduling & Sponsorships": "ආහාර උපලේඛන සහ අනුග්‍රාහකත්ව",
+  "Manage daily sponsored breakfasts, lunches, and dinners": "දෛනික උදේ, දවල් සහ රාත්‍රී ආහාර අනුග්‍රාහකත්ව කළමනාකරණය",
+  "Schedule Meal Donation": "ආහාර පරිත්‍යාගයක් වෙන්කරන්න",
+  "Send SMS Reminder": "SMS මතක් කිරීමක් යවන්න",
+  "SMS Sent": "SMS යවන ලදී",
+  "SMS Status": "SMS තත්ත්වය",
+  "Calendar View": "දින දර්ශන දසුන",
+  "List View": "ලැයිස්තු දසුන",
+  "Portions": "ප්‍රමාණය",
+  "Kitchen Notes": "මුළුතැන්ගෙයි සටහන්",
+  "Estimated Cost": "ඇස්තමේන්තුගත පිරිවැය",
+
+  // Inventory Management
+  "Inventory Management": "තොග කළමනාකරණය",
+  "Track kitchen supplies, clothing, medicines, and stationery": "ආහාර ද්‍රව්‍ය, ඇඳුම් පැළඳුම්, ඖෂධ සහ අභ්‍යාස පොත් තොග පාලනය",
+  "Add Inventory Item": "නව තොග අයිතමයක් එක් කරන්න",
+  "Search inventory...": "තොග සෙවීම...",
+  "Item Name": "අයිතමයේ නම",
+  "Stock Quantity": "තොග ප්‍රමාණය",
+  "Unit": "ඒකකය",
+  "Reorder Level": "නැවත ඇණවුම් මට්ටම",
+  "Low Stock": "අඩු තොග",
+  "In Stock": "තොග තිබේ",
+  "Out of Stock": "තොග අවසන්",
+  "Food & Kitchen": "ආහාර සහ මුළුතැන්ගෙය",
+  "Clothing & Linen": "ඇඳුම් පැළඳුම්",
+  "Medicine & Hygiene": "ඖෂධ සහ සෞඛ්‍ය",
+  "Stationery & Education": "අධ්‍යාපන ද්‍රව්‍ය",
+
+  // Financial Pages (Income, Expense, Bank Accounts)
+  "Income Records": "ආදායම් වාර්තා",
+  "Expense Records": "වියදම් වාර්තා",
+  "Manage and track organizational income": "සංවිධානාත්මක ආදායම් කළමනාකරණය සහ නිරීක්ෂණය",
+  "Manage operational expenses and ledger": "මෙහෙයුම් වියදම් සහ ලෙජරය කළමනාකරණය",
+  "Manage bank accounts, deposits, and balances": "බැංකු ගිණුම් සහ ශේෂයන් කළමනාකරණය",
+  "Record Income": "ආදායමක් වාර්තා කරන්න",
+  "Record Expense": "වියදමක් වාර්තා කරන්න",
+  "Add Bank Account": "බැංකු ගිණුමක් එක් කරන්න",
+  "Description": "විස්තරය",
+  "Voucher / Ref": "වවුචර් / යොමු අංකය",
+  "Account Details": "ගිණුම් විස්තර",
+  // Dynamic Data & Entered Details Translations
+  "male": "පිරිමි",
+  "female": "ගැහැණු",
+  "active": "ක්‍රියාකාරී",
+  "inactive": "අක්‍රීය",
+  "enrolled": "ලියාපදිංචි වී ඇත",
+  "graduated": "අධ්‍යාපනය නිමකර ඇත",
+  "dropped": "ඉවත් වී ඇත",
+  "breakfast": "උදේ ආහාරය",
+  "lunch": "දවල් ආහාරය",
+  "dinner": "රාත්‍රී ආහාරය",
+  "sponsor": "අනුග්‍රහය",
+  "bringyourown": "ස්වයං සපයන ලද",
+  "standard": "සම්මත මෙනුව",
+  "deluxe": "විශේෂ මෙනුව",
+  "custom": "අභිරුචි මෙනුව",
+  "bank_transfer": "බැංකු තැන්පතුව",
+  "card": "කාඩ්පත් ගෙවීම",
+  "stripe": "ස්ට්‍රයිප් (Stripe)",
+  "online": "සබැඳි ගෙවීම්",
+  "Food": "ආහාර ද්‍රව්‍ය",
+  "Clothing": "ඇඳුම් පැළඳුම්",
+  "Medicine": "ඖෂධ සහ සෞඛ්‍ය",
+  "Stationery": "අධ්‍යාපන ද්‍රව්‍ය",
+  "Other": "වෙනත්",
+  "Donation": "පරිත්‍යාග",
+  "Grant": "ප්‍රදාන",
+  "Fundraising": "අරමුදල් රැස්කිරීම්",
+  "Food & Nutrition": "ආහාර සහ පෝෂණය",
+  "Utilities": "සේවා ගාස්තු (විදුලිය/ජලය)",
+  "Salaries": "වේතන සහ දීමනා",
+  "Maintenance": "නඩත්තු කටයුතු",
+  "Medical": "වෛද්‍ය වියදම්",
+  "Supplies": "සැපයුම්",
 };
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState('en');
 
   const t = (key) => {
+    if (!key) return '';
     if (language === 'si') {
-      return translations[key] || key;
+      const strKey = String(key).trim();
+      const lowerKey = strKey.toLowerCase();
+      const capKey = strKey.charAt(0).toUpperCase() + strKey.slice(1);
+      
+      return translations[strKey] || 
+             translations[lowerKey] || 
+             translations[capKey] || 
+             strKey;
     }
     return key;
   };

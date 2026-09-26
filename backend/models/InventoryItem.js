@@ -6,6 +6,7 @@ const inventoryItemSchema = new mongoose.Schema(
     category: { type: String, enum: ['Food', 'Medicine', 'Education', 'Clothing', 'Other'], required: true },
     quantity: { type: Number, required: true, default: 0, min: 0 },
     unit: { type: String, required: true }, // e.g., kg, liters, boxes, pieces
+    barcode: { type: String, trim: true, default: '' },
     status: { type: String, enum: ['in-stock', 'low-stock', 'out-of-stock'], default: 'in-stock' },
   },
   { timestamps: true }
