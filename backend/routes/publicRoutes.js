@@ -5,7 +5,7 @@ const Message = require('../models/Message');
 const BankAccount = require('../models/BankAccount');
 const Income = require('../models/Income');
 const Child = require('../models/Child');
-const { sendSMS, buildMealSmsText } = require('../services/smsService');
+const { sendSMS, buildMealSmsText, buildCashDonationSmsText } = require('../services/smsService');
 
 const router = express.Router();
 
@@ -19,6 +19,9 @@ router.post('/create-checkout-session', async (req, res) => {
     if (!amount || !name || !email) {
       return res.status(400).json({ status: 'fail', message: 'Missing required checkout fields.' });
     }
+
+    const clientUrl = req.headers.origin || req.headers.referer?.replace(/\/$/, '') || process.env.CLIENT_URL || 'http://localhost:5173';
+    const baseUrl = String(clientUrl).replace(/\/$/, '');
 
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_placeholder_key_replace_me') {
       // Simulate successful checkout database recording (since webhook won't be called for sandbox demo)
@@ -69,7 +72,7 @@ router.post('/create-checkout-session', async (req, res) => {
 
       return res.status(200).json({ 
         status: 'success', 
-        url: `http://localhost:5173/?status=success&amount=${amount}` 
+        url: `${baseUrl}/?status=success&amount=${amount}` 
       });
     }
 
@@ -83,7 +86,7 @@ router.post('/create-checkout-session', async (req, res) => {
             currency: 'lkr',
             product_data: {
               name: 'Orphanage Cash Donation',
-              description: 'General Expenses Fund Donation',
+              description: 'General Expenses Fund Donation - Hope Haven Orphanage',
             },
             unit_amount: Math.round(Number(amount) * 100), // Stripe expects amount in cents
           },
@@ -98,8 +101,8 @@ router.post('/create-checkout-session', async (req, res) => {
         contactDetails: contactDetails || 'N/A',
         notes: notes || '',
       },
-      success_url: `http://localhost:5173/?status=success&amount=${amount}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `http://localhost:5173/?status=cancel`,
+      success_url: `${baseUrl}/?status=success&amount=${amount}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/?status=cancel`,
     });
 
     res.status(200).json({ status: 'success', url: session.url });
@@ -182,6 +185,20 @@ router.post('/confirm-checkout-session', async (req, res) => {
 
       defaultAccount.balance += amount;
       await defaultAccount.save();
+    }
+
+    // Send instant SMS receipt if phone number is provided
+    if (contactDetails && contactDetails !== 'N/A') {
+      try {
+        const smsMsg = buildCashDonationSmsText({
+          donorName: name,
+          amount: amount,
+          donationId: donation.donationID,
+        });
+        await sendSMS({ to: contactDetails, message: smsMsg });
+      } catch (smsErr) {
+        console.warn('Could not send cash donation SMS:', smsErr.message);
+      }
     }
 
     res.status(200).json({ status: 'success', data: donation });
@@ -330,6 +347,17 @@ router.post('/donate-cash', async (req, res) => {
 
         defaultAccount.balance += Number(amount);
         await defaultAccount.save();
+      }
+    }
+
+    if (contactDetails && contactDetails !== 'N/A') {
+      try {
+        const smsMsg = isOnline
+          ? buildCashDonationSmsText({ donorName: name, amount: Number(amount), donationId: donation.donationID })
+          : `ACKNOWLEDGEMENT: Dear ${name}, we received your donation submission of LKR ${Number(amount).toLocaleString()} (Ref: ${donation.donationID}). Our team is verifying your receipt. Thank you! - Hope Haven Orphanage`;
+        await sendSMS({ to: contactDetails, message: smsMsg });
+      } catch (smsErr) {
+        console.warn('Could not send donation SMS:', smsErr.message);
       }
     }
 

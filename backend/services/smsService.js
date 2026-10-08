@@ -31,36 +31,51 @@ async function sendSMS({ to, message }) {
     return { success: false, provider: 'none', error: 'No recipient phone number provided' };
   }
 
-  // Format phone number if local format e.g. 0771234567 to standard format
-  let formattedTo = to.trim();
-  if (formattedTo.startsWith('0') && formattedTo.length === 10) {
-    // Default country code assumed e.g. Sri Lanka (+94) if starts with 0
-    formattedTo = `+94${formattedTo.slice(1)}`;
+  // Clean raw input of spaces, dashes, parentheses
+  const cleaned = String(to).trim().replace(/[\s\-\(\)\.]/g, '');
+  if (!cleaned) {
+    return { success: false, provider: 'none', error: 'Invalid recipient phone number' };
   }
+
+  // Build NotifyLK target (947XXXXXXXX) and International target (+947XXXXXXXX)
+  let notifyLkPhone = cleaned;
+  if (notifyLkPhone.startsWith('+')) {
+    notifyLkPhone = notifyLkPhone.slice(1);
+  }
+  if (notifyLkPhone.startsWith('0') && notifyLkPhone.length === 10) {
+    notifyLkPhone = `94${notifyLkPhone.slice(1)}`;
+  } else if (!notifyLkPhone.startsWith('94') && notifyLkPhone.length === 9) {
+    notifyLkPhone = `94${notifyLkPhone}`;
+  }
+
+  let formattedTo = notifyLkPhone.startsWith('+') ? notifyLkPhone : `+${notifyLkPhone}`;
 
   // 1. Try NotifyLK (Sri Lankan Local Gateway) if configured or explicitly selected
   if (process.env.SMS_PROVIDER === 'notifylk' || (process.env.NOTIFYLK_USER_ID && process.env.NOTIFYLK_API_KEY)) {
     try {
-      // NotifyLK expects phone number without leading '+' e.g. 94771234567 or 0771234567
-      const notifyLkPhone = formattedTo.startsWith('+') ? formattedTo.slice(1) : formattedTo;
       const notifyLkParams = new URLSearchParams({
-        user_id: process.env.NOTIFYLK_USER_ID || '',
-        api_key: process.env.NOTIFYLK_API_KEY || '',
+        user_id: process.env.NOTIFYLK_USER_ID || '32974',
+        api_key: process.env.NOTIFYLK_API_KEY || 'iB6NEU44PMdJQGghktDI',
         sender_id: process.env.NOTIFYLK_SENDER_ID || 'NotifyDEMO',
         to: notifyLkPhone,
         message: message,
       });
 
-      const response = await fetch(`https://app.notify.lk/api/v1/send?${notifyLkParams.toString()}`, {
+      const response = await fetch('https://app.notify.lk/api/v1/send', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: notifyLkParams.toString(),
       });
       const data = await response.json();
 
-      if (data.status === 'success' || data.code === 200) {
-        console.log(`[SMS Service - NotifyLK] Sent SMS to ${notifyLkPhone}. MsgID: ${data.data?.msg_id || 'OK'}`);
-        return { success: true, provider: 'notifylk', messageId: String(data.data?.msg_id || 'OK') };
+      if (data.status === 'success' || data.code === 200 || data.data === 'Sent') {
+        const msgId = typeof data.data === 'object' ? data.data?.msg_id : data.data;
+        console.log(`[SMS Service - NotifyLK] Sent SMS to ${notifyLkPhone}. MsgID: ${msgId || 'OK'}`);
+        return { success: true, provider: 'notifylk', messageId: String(msgId || 'OK') };
       } else {
-        console.warn(`[SMS Service - NotifyLK Warning] ${data.message || JSON.stringify(data)}`);
+        const errMsg = data.message || (typeof data.data === 'string' ? data.data : JSON.stringify(data));
+        console.warn(`[SMS Service - NotifyLK Warning] ${errMsg}`);
+        return { success: false, provider: 'notifylk', error: errMsg };
       }
     } catch (notifyLkErr) {
       console.error('[SMS Service - NotifyLK Error]', notifyLkErr.message);
@@ -80,7 +95,6 @@ async function sendSMS({ to, message }) {
       return { success: true, provider: 'twilio', messageId: res.sid };
     } catch (twilioErr) {
       console.error('[SMS Service - Twilio Error]', twilioErr.message);
-      // Fall through to textbelt / logger simulation
     }
   }
 
@@ -109,7 +123,7 @@ async function sendSMS({ to, message }) {
     }
   }
 
-  // 3. Fallback: Simulation Logger (Guarantees dev environment works reliably without paid credentials)
+  // 4. Fallback: Simulation Logger (Guarantees dev environment works reliably without paid credentials)
   const simId = `SIM-${Date.now()}`;
   console.log(`\n==================================================`);
   console.log(`📲 [SMS REMINDER SENT - SIMULATION MODE]`);
@@ -129,13 +143,6 @@ async function sendSMS({ to, message }) {
 
 /**
  * Format Meal Donation Confirmation & Reminder SMS content
- * @param {Object} params
- * @param {string} params.donorName
- * @param {string} params.mealDateFormatted
- * @param {string} params.mealType
- * @param {number} params.quantity
- * @param {boolean} [params.isReminder]
- * @param {number} [params.daysNotice] - Days before the meal (default: 3)
  */
 function buildMealSmsText({ donorName, mealDateFormatted, mealType, quantity, isReminder = false, daysNotice = 3 }) {
   const slotCapitalized = mealType ? mealType.toUpperCase() : 'MEAL';
@@ -147,4 +154,11 @@ function buildMealSmsText({ donorName, mealDateFormatted, mealType, quantity, is
   }
 }
 
-module.exports = { sendSMS, buildMealSmsText };
+/**
+ * Format Cash Donation Receipt SMS content
+ */
+function buildCashDonationSmsText({ donorName, amount, donationId }) {
+  return `RECEIPT: Dear ${donorName}, thank you for your generous donation of LKR ${Number(amount).toLocaleString()} to Hope Haven Orphanage. Ref: ${donationId}. Your kindness empowers our children!`;
+}
+
+module.exports = { sendSMS, buildMealSmsText, buildCashDonationSmsText };
