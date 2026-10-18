@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox } from '../styles';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, FileSpreadsheet } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas } from '../utils/numberFormat';
+import { exportExpensesToExcel } from '../utils/excelExport';
 
 const emptyForm = { category: 'Food & Nutrition', customCategory: '', amount: '', referenceReceipt: '', description: '', bankAccountId: '', proofOfReceipt: null };
 
@@ -202,9 +203,18 @@ export default function ExpenseManagement() {
             {t("Manage operational expenses and ledger")}
           </p>
         </div>
-        <button style={buttonPrimary} onClick={openModal}>
-          <Plus size={16} style={{ marginRight: '6px' }} /> {t("Record Expense")}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => exportExpensesToExcel(expenses, bankAccounts)}
+            title="Export all expense records to Excel"
+          >
+            <FileSpreadsheet size={16} color={colors.primary} /> {t("Export to Excel")}
+          </button>
+          <button style={buttonPrimary} onClick={openModal}>
+            <Plus size={16} style={{ marginRight: '6px' }} /> {t("Record Expense")}
+          </button>
+        </div>
       </div>
 
       {error && (

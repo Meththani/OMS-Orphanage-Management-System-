@@ -103,7 +103,7 @@ exports.getDonation = async (req, res) => {
 exports.updateDonationStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['pending', 'received', 'cancelled'].includes(status)) {
+    if (!['pending', 'received', 'cancelled', 'rejected'].includes(status)) {
       return res.status(400).json({ status: 'fail', message: 'Invalid status value.' });
     }
 

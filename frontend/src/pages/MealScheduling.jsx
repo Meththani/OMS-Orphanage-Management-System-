@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
-import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone } from 'lucide-react';
+import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone, FileSpreadsheet, Lock } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
+import { exportMealBookingsToExcel } from '../utils/excelExport';
 
 export default function MealScheduling() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const canEditOrAction = user?.role === 'admin' || user?.role === 'accountant';
+
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -90,6 +95,10 @@ export default function MealScheduling() {
   const handleOpenForm = (meal = null) => {
     setFormError('');
     if (meal) {
+      if (!canEditOrAction) {
+        alert('Action restricted: Only Admin and Accountant are authorized to edit existing meal bookings.');
+        return;
+      }
       setEditingMealId(meal._id);
       setForm({
         donorID: meal.donorID?._id || meal.donorID || '',
@@ -216,6 +225,20 @@ export default function MealScheduling() {
 
         {/* Actions & View Mode Toggle */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => exportMealBookingsToExcel(meals)}
+            style={{
+              ...buttonSecondary,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+            }}
+            title="Export all meal bookings to Excel"
+          >
+            <FileSpreadsheet size={16} color={colors.primary} /> {t("Export to Excel")}
+          </button>
+
           <button
             onClick={() => handleOpenForm()}
             style={{
@@ -396,49 +419,63 @@ export default function MealScheduling() {
                       </td>
                       <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          {meal.status === 'pending' && (
+                          {canEditOrAction ? (
                             <>
+                              {meal.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleUpdateStatus(meal._id, 'received')}
+                                    style={{
+                                      ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                      padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(16,185,129,0.3)', color: colors.success
+                                    }}
+                                  >
+                                    <Check size={12} /> Mark Served
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateStatus(meal._id, 'cancelled')}
+                                    style={{
+                                      ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                      padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(239,68,68,0.3)', color: colors.danger
+                                    }}
+                                  >
+                                    <X size={12} /> Cancel
+                                  </button>
+                                </>
+                              )}
                               <button
-                                onClick={() => handleUpdateStatus(meal._id, 'received')}
+                                onClick={() => handleOpenForm(meal)}
                                 style={{
                                   ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                  padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(16,185,129,0.3)', color: colors.success
+                                  padding: '5px 10px', fontSize: '11px', borderColor: colors.border, color: colors.primary
                                 }}
                               >
-                                <Check size={12} /> Mark Served
+                                <Edit2 size={12} /> Edit
                               </button>
+
                               <button
-                                onClick={() => handleUpdateStatus(meal._id, 'cancelled')}
+                                onClick={(e) => handleSendSmsReminder(meal._id, e)}
+                                disabled={sendingSmsId === meal._id}
                                 style={{
                                   ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                  padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(239,68,68,0.3)', color: colors.danger
+                                  padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(59,130,246,0.3)', color: '#3b82f6'
                                 }}
+                                title="Send SMS reminder to donor phone"
                               >
-                                <X size={12} /> Cancel
+                                <MessageSquare size={12} /> {sendingSmsId === meal._id ? 'Sending...' : 'Send SMS'}
                               </button>
                             </>
+                          ) : (
+                            <button
+                              onClick={() => setSelectedMeal(meal)}
+                              style={{
+                                ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '5px 12px', fontSize: '11px', color: colors.primary, borderColor: `${colors.primary}40`
+                              }}
+                            >
+                              👁️ View Details
+                            </button>
                           )}
-                          <button
-                            onClick={() => handleOpenForm(meal)}
-                            style={{
-                              ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
-                              padding: '5px 10px', fontSize: '11px', borderColor: colors.border, color: colors.primary
-                            }}
-                          >
-                            <Edit2 size={12} /> Edit
-                          </button>
-
-                          <button
-                            onClick={(e) => handleSendSmsReminder(meal._id, e)}
-                            disabled={sendingSmsId === meal._id}
-                            style={{
-                              ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px',
-                              padding: '5px 10px', fontSize: '11px', borderColor: 'rgba(59,130,246,0.3)', color: '#3b82f6'
-                            }}
-                            title="Send SMS reminder to donor phone"
-                          >
-                            <MessageSquare size={12} /> {sendingSmsId === meal._id ? 'Sending...' : 'Send SMS'}
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -687,6 +724,48 @@ export default function MealScheduling() {
                 )}
               </div>
 
+              {/* Advance Payment Details */}
+              {(selectedMeal.advanceAmount > 0 || selectedMeal.advanceStatus) && (
+                <div style={{
+                  padding: '12px 14px', borderRadius: '10px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 700 }}>
+                      Advance Payment
+                    </span>
+                    <span style={{
+                      padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700,
+                      backgroundColor: selectedMeal.advanceStatus === 'received' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(245, 158, 11, 0.18)',
+                      color: selectedMeal.advanceStatus === 'received' ? '#10b981' : '#f59e0b'
+                    }}>
+                      {selectedMeal.advanceStatus === 'received' ? 'Advance Paid' : 'Advance Pending'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '6px' }}>
+                    <span style={{ fontWeight: 800, fontSize: '16px', color: '#10b981' }}>
+                      LKR {Number(selectedMeal.advanceAmount || 0).toLocaleString()}
+                    </span>
+                    <span style={{ fontSize: '12px', color: colors.textSecondary, textTransform: 'capitalize' }}>
+                      Via: {selectedMeal.advancePaymentMethod?.replace('_', ' ') || 'Bank Transfer'}
+                    </span>
+                  </div>
+                  {selectedMeal.proofOfPayment?.fileData && (
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed rgba(16, 185, 129, 0.3)' }}>
+                      <a
+                        href={selectedMeal.proofOfPayment.fileData}
+                        download={selectedMeal.proofOfPayment.fileName || 'meal-advance-receipt'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: '12px', color: colors.primary, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                      >
+                        📎 View Advance Deposit Slip ({selectedMeal.proofOfPayment.fileName || 'Receipt'})
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Bring Your Own Meal description */}
               {selectedMeal.mealDonationType === 'bringyourown' && selectedMeal.donorCooksMenu && (
                 <div>
@@ -738,39 +817,47 @@ export default function MealScheduling() {
 
             {/* Actions for Pending/All meals */}
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px', borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
-              <button
-                onClick={() => {
-                  const mealToEdit = selectedMeal;
-                  setSelectedMeal(null);
-                  handleOpenForm(mealToEdit);
-                }}
-                style={{ ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px', color: colors.primary, borderColor: colors.primaryGlow }}
-              >
-                <Edit2 size={12} /> Edit Details
-              </button>
-              <button type="button" style={buttonSecondary} onClick={() => setSelectedMeal(null)}>Close</button>
-              {selectedMeal.status === 'pending' && (
+              {canEditOrAction ? (
                 <>
                   <button
                     onClick={() => {
-                      handleUpdateStatus(selectedMeal._id, 'cancelled');
+                      const mealToEdit = selectedMeal;
                       setSelectedMeal(null);
+                      handleOpenForm(mealToEdit);
                     }}
-                    style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.2)' }}
+                    style={{ ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px', color: colors.primary, borderColor: colors.primaryGlow }}
                   >
-                    Cancel Sponsorship
+                    <Edit2 size={12} /> Edit Details
                   </button>
-                  <button
-                    onClick={() => {
-                      handleUpdateStatus(selectedMeal._id, 'received');
-                      setSelectedMeal(null);
-                    }}
-                    style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)` }}
-                  >
-                    Mark Served
-                  </button>
+                  {selectedMeal.status === 'pending' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          handleUpdateStatus(selectedMeal._id, 'cancelled');
+                          setSelectedMeal(null);
+                        }}
+                        style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.2)' }}
+                      >
+                        Cancel Sponsorship
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleUpdateStatus(selectedMeal._id, 'received');
+                          setSelectedMeal(null);
+                        }}
+                        style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)` }}
+                      >
+                        Mark Served
+                      </button>
+                    </>
+                  )}
                 </>
+              ) : (
+                <div style={{ alignSelf: 'center', fontSize: '12px', color: colors.textMuted, display: 'inline-flex', alignItems: 'center', gap: '4px', marginRight: 'auto' }}>
+                  <Lock size={13} color={colors.warning} /> Staff View Mode (Read-Only)
+                </div>
               )}
+              <button type="button" style={buttonSecondary} onClick={() => setSelectedMeal(null)}>Close</button>
             </div>
           </div>
         </div>

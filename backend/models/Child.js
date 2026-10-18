@@ -15,6 +15,7 @@ const childSchema = new mongoose.Schema(
     },
     bloodType: { type: String },
     allergies: { type: String },
+    photo: { type: String },
     assignedStaff: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }

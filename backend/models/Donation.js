@@ -21,7 +21,7 @@ const donationSchema = new Schema(
     donationID: { type: String, required: true, unique: true },
     donorID: { type: Schema.Types.ObjectId, ref: 'Donor', required: true },
     date: { type: Date, required: true, default: Date.now },
-    status: { type: String, enum: ['pending', 'received', 'cancelled'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'received', 'cancelled', 'rejected'], default: 'pending' },
     receiptRef: { type: String },
     notes: { type: String },
     recordedBy: { type: Schema.Types.ObjectId, ref: 'User' }, // staff/admin/accountant who logged it
@@ -65,6 +65,10 @@ const MealDonation = Donation.discriminator(
     estimatedCost: { type: Number, min: 0 },      // used when mealDonationType = 'sponsor'
     donorCooksMenu: { type: String },              // used when mealDonationType = 'bringyourown'
     dietaryNotes: { type: String },
+    advanceAmount: { type: Number, default: 0, min: 0 },
+    totalAmount: { type: Number, default: 0, min: 0 },
+    advancePaymentMethod: { type: String, enum: ['online', 'bank_transfer', 'cash'], default: 'bank_transfer' },
+    advanceStatus: { type: String, enum: ['pending', 'received'], default: 'pending' },
     smsSent: { type: Boolean, default: false },
     lastSmsSentAt: { type: Date },
     smsLogs: [

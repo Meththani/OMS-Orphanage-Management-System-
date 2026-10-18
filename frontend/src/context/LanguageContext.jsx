@@ -319,13 +319,188 @@ const translations = {
   "Maintenance": "නඩත්තු කටයුතු",
   "Medical": "වෛද්‍ය වියදම්",
   "Supplies": "සැපයුම්",
+
+  // ═══════════════════════════════════════════════════════
+  // Public Website - Navigation & General
+  // ═══════════════════════════════════════════════════════
+  "Home": "මුල් පිටුව",
+  "About Us": "අප ගැන",
+  "Facilities": "පහසුකම්",
+  "Programs": "වැඩසටහන්",
+  "Contact Us": "අප අමතන්න",
+  "Support Us": "සහයෝගය දක්වන්න",
+  "Donate Now": "පරිත්‍යාග කරන්න",
+  "Donate & Support": "පරිත්‍යාග සහ සහයෝගය",
+  "Portal Login": "ද්වාරයට පිවිසෙන්න",
+  "Login": "පිවිසෙන්න",
+  "Senehasa Dari Sewana": "සෙනෙහස දැරි සෙවණ",
+  "Child Development Center & Sanctuary": "ළමා සංවර්ධන මධ්‍යස්ථානය සහ අභයභූමිය",
+  "Kirillawala Sanctuary • 50+ Children": "කිරිල්ලවල අභයභූමිය • ළමුන් 50+",
+  "100% Nutritious • Fresh Daily Preparation": "100% පෝෂ්‍යදායී • දිනපතා නැවුම්ව පිළියෙළ කෙරේ",
+  "100% School Attendance • Academic Excellence": "100% පාසල් පැමිණීම • විශිෂ්ට අධ්‍යාපනය",
+  "Routine Screenings • 24/7 Medical Care": "නිරන්තර පරීක්ෂණ • පැය 24 වෛද්‍ය රැකවරණය",
+  "Traditional Costumes • Festive Celebration": "සාම්ප්‍රදායික ඇඳුම් • උත්සව සැමරුම්",
+  "Gift Packages • Field Trips & Joy": "තෑගි පාර්සල් • අධ්‍යාපනික චාරිකා සහ ප්‍රීතිය",
+
+  // ═══════════════════════════════════════════════════════
+  // Public Website - Hero Slides & Sections
+  // ═══════════════════════════════════════════════════════
+  "Safe Shelter, Wholesome Food, & Bright Educational Futures.": "ආරක්ෂිත නවාතැන්, පෝෂ්‍යදායී ආහාර සහ දීප්තිමත් අධ්‍යාපනික අනාගතයක්.",
+  "At Senehasa Dari Sewana, we provide round-the-clock loving care, nutritious daily meals, complete schooling support, and medical protection to over 50 orphaned and vulnerable children.": "සෙනෙහස දැරි සෙවණ හිදී, අපි අනාථ සහ අවදානමට ලක්විය හැකි දරුවන් 50 කට වැඩි පිරිසකට පැය 24 පුරාම ආදරණීය රැකවරණය, පෝෂ්‍යදායී දෛනික ආහාර වේල්, සම්පූර්ණ පාසල් අධ්‍යාපන සහය සහ වෛද්‍ය ආරක්ෂාව සලසන්නෙමු.",
+  "Make a Financial Gift": "මූල්‍ය පරිත්‍යාගයක් කරන්න",
+  "Sponsor a Daily Meal": "දෛනික ආහාර වේලක් අනුග්‍රහය දක්වන්න",
+  "Nourishing 50+ Children Everyday with Fresh, Wholesome Meals.": "නැවුම්, පෝෂ්‍යදායී ආහාර වේල් සමඟ දිනපතා ළමුන් 50+ කට පෝෂණය ලබා දීම.",
+  "Every child deserves wholesome, balanced nutrition. You can sponsor a warm breakfast, high-protein lunch, or comforting dinner cooked daily in our sanitary kitchen facility.": "සෑම දරුවෙකුටම පෝෂ්‍යදායී, සමබර ආහාර වේලක් හිමිවිය යුතුය. අපගේ සනීපාරක්ෂක මුළුතැන්ගෙයි දිනපතා පිසින උණුසුම් උදේ ආහාරය, ප්‍රෝටීන් බහුල දවල් ආහාරය හෝ සුවපහසු රාත්‍රී ආහාරය සඳහා ඔබට අනුග්‍රහය දැක්විය හැකිය.",
+  "View Meal Packages": "ආහාර පැකේජ බලන්න",
+  "Empowering Young Minds Through Books, Supplies & Tuition.": "පොත්පත්, උපකරණ සහ උපකාරක පන්ති හරහා තරුණ මනස සවිබල ගැන්වීම.",
+  "Sponsor a Student": "ශිෂ්‍යයෙකුට අනුග්‍රහය දක්වන්න",
+  "Learn About Scholarships": "ශිෂ්‍යත්ව ගැන දැනගන්න",
+  "Round-the-Clock Healthcare, Dental Care & Emergency Coverage.": "පැය 24 පුරා සෞඛ්‍ය සේවා, දන්ත වෛද්‍ය ප්‍රතිකාර සහ හදිසි ආවරණය.",
+  "Support Healthcare Fund": "සෞඛ්‍ය අරමුදලට දායක වන්න",
+  "Contact Medical Team": "වෛද්‍ය කණ්ඩායම අමතන්න",
+  "Preserving Cultural Heritage with Festive Outfits & Traditions.": "උත්සව ඇඳුම් සහ සම්ප්‍රදායන් සමඟ සංස්කෘතික උරුමය ආරක්ෂා කිරීම.",
+  "Donate Festive Outfits": "උත්සව ඇඳුම් පරිත්‍යාග කරන්න",
+  "Explore Cultural Events": "සංස්කෘතික උත්සව ගවේෂණය කරන්න",
+  "Creating Unforgettable Smiles with Magic Shows & Gifts.": "මැජික් සංදර්ශන සහ තෑගි සමඟ අමතක නොවන සිනහවක් නිර්මාණය කිරීම.",
+  "Sponsor Event Joy": "උත්සව ප්‍රීතියට දායක වන්න",
+  "Volunteer for Events": "උත්සව සඳහා ස්වේච්ඡාවෙන් ඉදිරිපත් වන්න",
+  "Empowering Children Across Sri Lanka": "ශ්‍රී ලංකාව පුරා දරුවන් සවිබල ගැන්වීම",
+  "Full Daily Meals Initiative": "දෛනික ආහාර වේල් වැඩසටහන",
+  "Educational Scholarship Program": "අධ්‍යාපනික ශිෂ්‍යත්ව වැඩසටහන",
+  "Pediatric Health & Wellness": "ළමා සෞඛ්‍ය සහ සුවතාව",
+  "Sri Lankan Cultural Heritage": "ශ්‍රී ලාංකීය සංස්කෘතික උරුමය",
+  "Annual Youth Events & Celebrations": "වාර්ෂික ළමා උත්සව සහ සැමරුම්",
+
+  // ═══════════════════════════════════════════════════════
+  // POP WINDOW 1: Sponsor a Nutritious Meal (Meal Booking Modal)
+  // ═══════════════════════════════════════════════════════
+  "Sponsor a Nutritious Meal": "පෝෂ්‍යදායී ආහාර වේලක් අනුග්‍රහය දක්වන්න",
+  "Select an available date on the calendar to reserve Breakfast, Lunch, or Dinner for our 50+ children.": "අපගේ දරුවන් 50+ වෙනුවෙන් උදේ, දවල් හෝ රාත්‍රී ආහාර වේලක් වෙන්කරවා ගැනීමට දින දර්ශනයෙන් දිනයක් තෝරන්න.",
+  "Meal Sponsorship Scheduled!": "ආහාර අනුග්‍රහය සාර්ථකව වෙන්කරන ලදී!",
+  "Selected Date": "තෝරාගත් දිනය",
+  "Choose Meal Slot": "ආහාර වේල තෝරන්න",
+  "No Date Selected": "දිනයක් තෝරාගෙන නොමැත",
+  "Please click an open date on the calendar to select Breakfast, Lunch, or Dinner.": "උදේ, දවල් හෝ රාත්‍රී ආහාරය තෝරා ගැනීමට කරුණාකර දින දර්ශනයේ විවෘත දිනයක් මත ක්ලික් කරන්න.",
+  "Standard Menu (LKR 600/kid)": "සම්මත මෙනුව (ළමයෙකුට රු. 600)",
+  "Special Menu (LKR 1,200/kid)": "විශේෂ මෙනුව (ළමයෙකුට රු. 1,200)",
+  "Feast Menu (LKR 1,800/kid)": "මංගල මෙනුව (ළමයෙකුට රු. 1,800)",
+  "Portions Count": "බෙදීම් (ළමුන්) ගණන",
+  "Total Contribution:": "මුළු දායකත්වය:",
+  "Total Meal Cost:": "මුළු ආහාර පිරිවැය:",
+  "Advance Payment Required": "අත්තිකාරම් ගෙවීමක් අවශ්‍ය වේ",
+  "Advance Payment Option": "අත්තිකාරම් ගෙවීම් විකල්පය",
+  "50% Advance Deposit (Recommended)": "50% අත්තිකාරම් තැන්පතුව (නිර්දේශිතයි)",
+  "100% Full Payment": "100% සම්පූර්ණ ගෙවීම",
+  "Custom Advance Amount": "වෙනත් අත්තිකාරම් මුදලක්",
+  "Advance Amount to Pay (LKR) *": "ගෙවිය යුතු අත්තිකාරම් මුදල (රු.) *",
+  "Remaining Balance (Due on Meal Date):": "ඉතිරි ශේෂය (ආහාර දිනයේදී ගෙවිය යුතු):",
+  "Advance Payment Method": "අත්තිකාරම් ගෙවීම් ක්‍රමය",
+  "Online Payment (Instant Card / Stripe)": "සබැඳි කාඩ්පත් ගෙවීම (Stripe)",
+  "Bank Transfer Deposit": "බැංකු තැන්පතුව",
+  "Bank Transfer Account Details:": "බැංකු තැන්පතු ගිණුම් විස්තර:",
+  "Upload Deposit Receipt (Image or PDF) *": "තැන්පතු පත්‍රිකාව (Slip) උඩුගත කරන්න (ඡායාරූපය හෝ PDF) *",
+  "Upload Deposit Receipt (Image or PDF)": "තැන්පතු පත්‍රිකාව (Slip) උඩුගත කරන්න (ඡායාරූපය හෝ PDF)",
+  "You will be securely redirected to Stripe's 256-bit encrypted checkout page.": "ඔබව ආරක්ෂිත 256-bit සංකේතාත්මක Stripe ගෙවීම් පිටුව වෙත යොමු කරනු ඇත.",
+  "Your full name *": "ඔබගේ සම්පූර්ණ නම *",
+  "Email address *": "විද්‍යුත් තැපැල් ලිපිනය *",
+  "Mobile phone number for SMS confirmation": "SMS තහවුරු කිරීම සඳහා ජංගම දුරකථන අංකය",
+  "Dedication or Occasion (Optional)": "කැපවීම හෝ අවස්ථාව (උදා: උපන් දිනය, සිහිපත් කිරීම)",
+  "Special Dietary Notes or Instructions (Optional)": "විශේෂ ආහාර උපදෙස් (විකල්ප)",
+  "Reserve & Pay Advance": "වෙන්කර අත්තිකාරම් ගෙවන්න",
+  "Reserve Meal Slot": "ආහාර වේල වෙන්කරන්න",
+  "Confirming...": "තහවුරු කරමින්...",
+  "Checking meal slot availability...": "ආහාර වේලෙහි ඉඩ පරීක්ෂා කරමින් පවතී...",
+  "Sponsored": "වෙන්කර ඇත",
+  "Selected": "තෝරාගෙන ඇත",
+  "Sun": "ඉරිදා", "Mon": "සඳුදා", "Tue": "අඟහ", "Wed": "බදාදා", "Thu": "බ්‍රහස්", "Fri": "සිකු", "Sat": "සෙන",
+  "January": "ජනවාරි", "February": "පෙබරවාරි", "March": "මාර්තු", "April": "අප්‍රේල්", "May": "මැයි", "June": "ජූනි",
+  "July": "ජූලි", "August": "අගෝස්තු", "September": "සැප්තැම්බර්", "October": "ඔක්තෝබර්", "November": "නොවැම්බර්", "December": "දෙසැම්බර්",
+
+  // ═══════════════════════════════════════════════════════
+  // POP WINDOW 2: Direct Financial Contribution (Cash Modal)
+  // ═══════════════════════════════════════════════════════
+  "Make a Financial Contribution": "මූල්‍ය පරිත්‍යාගයක් සිදු කරන්න",
+  "Every rupee directly supports the daily nourishment, healthcare, education, and sanctuary for our 50+ resident children.": "සෑම රුපියලක්ම අපගේ දරුවන් 50+ දෙනාගේ දෛනික පෝෂණය, සෞඛ්‍යය, අධ්‍යාපනය සහ නවාතැන් සඳහා සෘජුවම උපකාරී වේ.",
+  "Select Amount (LKR)": "මුදල තෝරන්න (රු.)",
+  "Or Enter Custom Amount (LKR)": "හෝ වෙනත් මුදලක් ඇතුළත් කරන්න (රු.)",
+  "Select Payment Method": "ගෙවීම් ක්‍රමය තෝරන්න",
+  "Card / Online (Stripe)": "කාඩ්පත් / සබැඳි (Stripe)",
+  "Direct Bank Deposit": "සෘජු බැංකු තැන්පතුව",
+  "Upload Deposit Receipt": "බැංකු රිසිට්පත උඩුගත කරන්න",
+  "Full Name *": "සම්පූර්ණ නම *",
+  "Email Address *": "විද්‍යුත් තැපෑල *",
+  "Contact Number": "දුරකථන අංකය",
+  "Donor Type": "පරිත්‍යාගශීලී වර්ගය",
+  "Individual Donor": "තනි පුද්ගල පරිත්‍යාගශීලියා",
+  "Corporate / NGO Partner": "ආයතනික / රාජ්‍ය නොවන සංවිධානය",
+  "Dedication or Notes (Optional)": "කැපකිරීම හෝ සටහන (විකල්ප)",
+  "Confirm Donation": "පරිත්‍යාගය තහවුරු කරන්න",
+  "Processing Contribution...": "පරිත්‍යාගය සකසමින් පවතී...",
+  "Thank You for Your Generous Heart!": "ඔබගේ පරිත්‍යාගශීලී හදවතට බෙහෙවින් ස්තූතියි!",
+  "Direct Monetary Gift": "සෘජු මූල්‍ය පරිත්‍යාගය",
+
+  // ═══════════════════════════════════════════════════════
+  // POP WINDOW 3: Child Profile & Registration Modals
+  // ═══════════════════════════════════════════════════════
+  "Child Photo": "ළමයාගේ ඡායාරූපය",
+  "Upload Child Photo": "ළමයාගේ ඡායාරූපය උඩුගත කරන්න",
+  "Change Photo": "ඡායාරූපය වෙනස් කරන්න",
+  "Remove Photo": "ඡායාරූපය ඉවත් කරන්න",
+  "Upload Photo": "ඡායාරූපයක් උඩුගත කරන්න",
+  "Click or drag an image here (JPG, PNG)": "ඡායාරූපයක් මෙතැනට තෝරන්න (JPG, PNG)",
+  "Registration ID": "ලියාපදිංචි අංකය",
+  "Registration ID (e.g. Stu-0054)": "ලියාපදිංචි අංකය (උදා: Stu-0054)",
+  "Full name": "සම්පූර්ණ නම",
+  "Date of Birth": "උපන් දිනය",
+  "Date of Birth * (Age must be 18 or below)": "උපන් දිනය * (වයස අවුරුදු 18 හෝ ඊට අඩු විය යුතුය)",
+  "Blood Type": "ලේ වර්ගය",
+  "Allergies": "ආසාත්මිකතා (Allergies)",
+  "Guardian Information": "භාරකරුගේ තොරතුරු",
+  "Guardian Name": "භාරකරුගේ නම",
+  "Relationship": "ඥාතිත්වය",
+  "Save Profile": "පැතිකඩ සුරකින්න",
+  "Saving...": "සුරකිමින් පවතී...",
+  "Edit Child Profile": "ළමා පැතිකඩ සංස්කරණය",
+  "Add New Child": "නව ළමයෙකු ලියාපදිංචි කරන්න",
+  "Profile & Health Files": "පැතිකඩ සහ සෞඛ්‍ය ලිපිගොනු",
+  "Medical Health Ledger": "වෛද්‍ය වාර්තා ලෙජරය",
+  "Academic Records": "අධ්‍යාපන වාර්තා",
+  "+ Add Log": "+ වාර්තාවක් එක් කරන්න",
+  "New Medical Entry": "නව වෛද්‍ය සටහන",
+  "New Academic Entry": "නව අධ්‍යාපන සටහන",
+  "Diagnosis": "රෝග විනිශ්චය",
+  "Diagnosis (e.g. Common cold, Asthma checkup)": "රෝග විනිශ්චය (උදා: සෙම්ප්‍රතිශ්‍යාව, ඇදුම පරීක්ෂාව)",
+  "Treatment details": "ප්‍රතිකාර විස්තර",
+  "Treatment details (e.g. Paracetamol 500mg, Inhaler)": "ප්‍රතිකාර විස්තර (උදා: පැරසිටමෝල් 500mg)",
+  "Severity": "බරපතලකම",
+  "Add Record": "වාර්තාව එක් කරන්න",
+  "School Name": "පාසලේ නම",
+  "School Name (e.g. Dharmaloka College)": "පාසලේ නම (උදා: ධර්මාලෝක විද්‍යාලය)",
+  "Grade / Class": "ශ්‍රේණිය / පන්තිය",
+  "Grade / Class (e.g. Grade 7-B)": "ශ්‍රේණිය / පන්තිය (උදා: 7-B ශ්‍රේණිය)",
+  "Enrolled": "ලියාපදිංචි වී ඇත",
+  "Graduated": "අධ්‍යාපනය නිමකර ඇත",
+  "Dropped": "ඉවත් වී ඇත",
+  "Reg. ID": "ලියාපදිංචි අංකය",
+  "DOB": "උපන් දිනය",
+  "Guardian": "භාරකරු",
+  "Blood type": "ලේ වර්ගය",
+  "No medical history logged yet.": "තවමත් වෛද්‍ය ඉතිහාසයක් සටහන් කර නොමැත.",
+  "No academic records logged yet.": "තවමත් අධ්‍යාපන වාර්තා සටහන් කර නොමැත.",
+  "Advance Paid": "ගෙවූ අත්තිකාරම් මුදල",
+  "Advance Status": "අත්තිකාරම් තත්ත්වය",
+  "Total Meal Cost": "මුළු ආහාර පිරිවැය",
+  "Balance Due": "ගෙවීමට ඇති ඉතිරිය",
+  "Edit Profile": "පැතිකඩ සංස්කරණය",
+  "Photo Updated": "ඡායාරූපය යාවත්කාලීන කරන ලදී",
+  "Update Photo": "ඡායාරූපය යාවත්කාලීන කරන්න",
 };
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState('en');
 
-  const t = (key) => {
-    if (!key) return '';
+  const t = (key, fallback) => {
+    if (!key) return fallback || '';
     if (language === 'si') {
       const strKey = String(key).trim();
       const lowerKey = strKey.toLowerCase();
@@ -334,9 +509,10 @@ export function LanguageProvider({ children }) {
       return translations[strKey] || 
              translations[lowerKey] || 
              translations[capKey] || 
+             fallback || 
              strKey;
     }
-    return key;
+    return fallback || key;
   };
 
   return (

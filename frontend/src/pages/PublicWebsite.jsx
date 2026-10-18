@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
+import { useLanguage } from '../context/LanguageContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -47,9 +48,11 @@ const charityTheme = {
 };
 
 export default function PublicWebsite({ initialTab = 'home' }) {
+  const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showCashModal, setShowCashModal] = useState(false);
   const [showMealModal, setShowMealModal] = useState(false);
+  const [bookedAdvanceAmount, setBookedAdvanceAmount] = useState('0');
   const navigate = useNavigate();
 
   // ─── Hero Auto-Swiping Card Slides State (Whole Card Carousel) ───
@@ -57,112 +60,112 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
   const heroSlides = [
     {
-      badge: 'Empowering Children Across Sri Lanka',
+      badge: t('Empowering Children Across Sri Lanka'),
       badgeIcon: HandHeart,
       badgeColor: charityTheme.primary,
       badgeBg: charityTheme.primaryLight,
-      title: 'Safe Shelter, Wholesome Food, & Bright Educational Futures.',
-      description: 'At Senehasa Dari Sewana, we provide round-the-clock loving care, nutritious daily meals, complete schooling support, and medical protection to over 50 orphaned and vulnerable children.',
-      primaryBtnText: 'Make a Financial Gift',
+      title: t('Safe Shelter, Wholesome Food, & Bright Educational Futures.'),
+      description: t('At Senehasa Dari Sewana, we provide round-the-clock loving care, nutritious daily meals, complete schooling support, and medical protection to over 50 orphaned and vulnerable children.'),
+      primaryBtnText: t('Make a Financial Gift'),
       primaryBtnIcon: Heart,
       primaryBtnColor: charityTheme.primary,
       primaryBtnHoverColor: charityTheme.primaryDark,
       primaryBtnAction: () => setShowCashModal(true),
-      secondaryBtnText: 'Sponsor a Daily Meal',
+      secondaryBtnText: t('Sponsor a Daily Meal'),
       secondaryBtnIcon: UtensilsCrossed,
       secondaryBtnAction: () => setShowMealModal(true),
       image: '/hero-child.jpg',
-      imageTag: 'Kirillawala Sanctuary • 50+ Children',
+      imageTag: t('Kirillawala Sanctuary • 50+ Children'),
     },
     {
-      badge: 'Full Daily Meals Initiative',
+      badge: t('Full Daily Meals Initiative'),
       badgeIcon: UtensilsCrossed,
       badgeColor: charityTheme.accentGreen,
       badgeBg: charityTheme.accentGreenLight,
-      title: 'Nourishing 50+ Children Everyday with Fresh, Wholesome Meals.',
-      description: 'Every child deserves wholesome, balanced nutrition. You can sponsor a warm breakfast, high-protein lunch, or comforting dinner cooked daily in our sanitary kitchen facility.',
-      primaryBtnText: 'Sponsor a Daily Meal',
+      title: t('Nourishing 50+ Children Everyday with Fresh, Wholesome Meals.'),
+      description: t('Every child deserves wholesome, balanced nutrition. You can sponsor a warm breakfast, high-protein lunch, or comforting dinner cooked daily in our sanitary kitchen facility.'),
+      primaryBtnText: t('Sponsor a Daily Meal'),
       primaryBtnIcon: UtensilsCrossed,
       primaryBtnColor: charityTheme.accentGreen,
       primaryBtnHoverColor: '#059669',
       primaryBtnAction: () => setShowMealModal(true),
-      secondaryBtnText: 'View Meal Packages',
+      secondaryBtnText: t('View Meal Packages'),
       secondaryBtnIcon: Calendar,
       secondaryBtnAction: () => setActiveTab('programs'),
       image: '/full-plates-meal-program.jpg',
-      imageTag: '100% Nutritious • Fresh Daily Preparation',
+      imageTag: t('100% Nutritious • Fresh Daily Preparation'),
     },
     {
-      badge: 'Educational Scholarship Program',
+      badge: t('Educational Scholarship Program'),
       badgeIcon: GraduationCap,
       badgeColor: charityTheme.accentAmber,
       badgeBg: charityTheme.accentAmberLight,
-      title: 'Empowering Young Minds Through Books, Supplies & Tuition.',
-      description: 'Breaking generational cycles through quality schooling. Our scholarship program provides textbooks, school uniforms, shoes, stationery sets, and private tutoring.',
-      primaryBtnText: 'Sponsor a Student',
+      title: t('Empowering Young Minds Through Books, Supplies & Tuition.'),
+      description: t('Breaking generational cycles through quality schooling. Our scholarship program provides textbooks, school uniforms, shoes, stationery sets, and private tutoring.'),
+      primaryBtnText: t('Sponsor a Student'),
       primaryBtnIcon: GraduationCap,
       primaryBtnColor: charityTheme.primary,
       primaryBtnHoverColor: charityTheme.primaryDark,
       primaryBtnAction: () => setShowCashModal(true),
-      secondaryBtnText: 'Learn About Scholarships',
+      secondaryBtnText: t('Learn About Scholarships'),
       secondaryBtnIcon: BookOpen,
       secondaryBtnAction: () => setActiveTab('programs'),
       image: '/scholarship-school-supplies.jpg',
-      imageTag: '100% School Attendance • Academic Excellence',
+      imageTag: t('100% School Attendance • Academic Excellence'),
     },
     {
-      badge: 'Pediatric Health & Wellness',
+      badge: t('Pediatric Health & Wellness'),
       badgeIcon: ShieldCheck,
       badgeColor: charityTheme.accentRose,
       badgeBg: charityTheme.accentRoseLight,
-      title: 'Round-the-Clock Healthcare, Dental Care & Emergency Coverage.',
-      description: 'We ensure every resident child receives routine physician checkups, pediatric dental visits, prescription medicines, and complete mental wellness support.',
-      primaryBtnText: 'Support Healthcare Fund',
+      title: t('Round-the-Clock Healthcare, Dental Care & Emergency Coverage.'),
+      description: t('We ensure every resident child receives routine physician checkups, pediatric dental visits, prescription medicines, and complete mental wellness support.'),
+      primaryBtnText: t('Support Healthcare Fund'),
       primaryBtnIcon: ShieldCheck,
       primaryBtnColor: charityTheme.primary,
       primaryBtnHoverColor: charityTheme.primaryDark,
       primaryBtnAction: () => setShowCashModal(true),
-      secondaryBtnText: 'Contact Medical Team',
+      secondaryBtnText: t('Contact Medical Team'),
       secondaryBtnIcon: Phone,
       secondaryBtnAction: () => setActiveTab('contact'),
       image: '/child-health-wellness.jpg',
-      imageTag: 'Routine Screenings • 24/7 Medical Care',
+      imageTag: t('Routine Screenings • 24/7 Medical Care'),
     },
     {
-      badge: 'Sri Lankan Cultural Heritage',
+      badge: t('Sri Lankan Cultural Heritage'),
       badgeIcon: Trophy,
       badgeColor: '#f19c38',
       badgeBg: 'rgba(241, 156, 56, 0.15)',
-      title: 'Preserving Cultural Heritage with Festive Outfits & Traditions.',
-      description: 'Celebrating traditional holidays like Sinhala & Tamil New Year with new festive clothes (traditional Lama Sariya outfits), festive meals, and traditional games.',
-      primaryBtnText: 'Donate Festive Outfits',
+      title: t('Preserving Cultural Heritage with Festive Outfits & Traditions.'),
+      description: t('Celebrating traditional holidays like Sinhala & Tamil New Year with new festive clothes (traditional Lama Sariya outfits), festive meals, and traditional games.'),
+      primaryBtnText: t('Donate Festive Outfits'),
       primaryBtnIcon: Trophy,
       primaryBtnColor: '#f19c38',
       primaryBtnHoverColor: '#d97706',
       primaryBtnAction: () => setShowCashModal(true),
-      secondaryBtnText: 'Explore Cultural Events',
+      secondaryBtnText: t('Explore Cultural Events'),
       secondaryBtnIcon: Sparkles,
       secondaryBtnAction: () => setActiveTab('programs'),
       image: '/new-year-celebration.jpg',
-      imageTag: 'Traditional Costumes • Festive Celebration',
+      imageTag: t('Traditional Costumes • Festive Celebration'),
     },
     {
-      badge: 'Annual Youth Events & Celebrations',
+      badge: t('Annual Youth Events & Celebrations'),
       badgeIcon: Award,
       badgeColor: '#8b5cf6',
       badgeBg: 'rgba(139, 92, 246, 0.15)',
-      title: 'Creating Unforgettable Smiles with Magic Shows & Gifts.',
-      description: 'Bringing joy to every child on Children’s Day and special occasions with customized gift hampers, magic shows, carnival treats, and outdoor educational trips.',
-      primaryBtnText: 'Sponsor Event Joy',
+      title: t('Creating Unforgettable Smiles with Magic Shows & Gifts.'),
+      description: t('Bringing joy to every child on Children’s Day and special occasions with customized gift hampers, magic shows, carnival treats, and outdoor educational trips.'),
+      primaryBtnText: t('Sponsor Event Joy'),
       primaryBtnIcon: Award,
       primaryBtnColor: charityTheme.primary,
       primaryBtnHoverColor: charityTheme.primaryDark,
       primaryBtnAction: () => setShowCashModal(true),
-      secondaryBtnText: 'Volunteer for Events',
+      secondaryBtnText: t('Volunteer for Events'),
       secondaryBtnIcon: Users,
       secondaryBtnAction: () => setActiveTab('contact'),
       image: '/childrens-day-celebration.jpg',
-      imageTag: 'Gift Packages • Field Trips & Joy',
+      imageTag: t('Gift Packages • Field Trips & Joy'),
     },
   ];
 
@@ -200,11 +203,30 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           .catch(err => console.error('Error verifying Stripe session:', err));
       }
       window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (status === 'meal_success') {
+      setBookedAdvanceAmount(amt || '0');
+      setMealSuccess(true);
+      setShowMealModal(true);
+
+      if (sessionId) {
+        fetch(`${API_BASE_URL}/public/confirm-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            console.log('Stripe meal advance verified:', data);
+            fetchBookedMeals();
+          })
+          .catch(err => console.error('Error verifying Stripe meal session:', err));
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
     } else if (status === 'cancel') {
-      alert('Donation cancelled. You can try again whenever you are ready.');
+      alert(language === 'si' ? 'ගෙවීම අවලංගු කරන ලදී. ඔබට නැවත උත්සාහ කළ හැක.' : 'Payment cancelled. You can try again whenever you are ready.');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+  }, [language]);
 
   // Contact Form State
   const [contactForm, setContactForm] = useState({ firstName: '', lastName: '', email: '', phone: '', message: '' });
@@ -217,7 +239,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   const [cashLoading, setCashLoading] = useState(false);
   const [donatedAmount, setDonatedAmount] = useState('0');
 
-  // Meal Booking Form State
+  // Meal Booking Form State with Advance Payment
   const [mealForm, setMealForm] = useState({
     name: '',
     email: '',
@@ -227,7 +249,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     quantity: '50',
     occasion: '',
     menuPackage: 'standard',
-    dietaryNotes: ''
+    dietaryNotes: '',
+    advanceOption: '50_percent', // '50_percent', '100_percent', 'custom'
+    customAdvance: '',
+    paymentMethod: 'bank_transfer', // 'bank_transfer', 'online'
+    proof: null
   });
   const [mealSuccess, setMealSuccess] = useState(false);
   const [mealLoading, setMealLoading] = useState(false);
@@ -308,6 +334,23 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     return 600; // standard
   };
 
+  const calculateMealTotal = () => {
+    const qty = Number(mealForm.quantity || childCount || 50);
+    return qty * getPackagePrice(mealForm.menuPackage);
+  };
+
+  const calculateAdvanceAmount = () => {
+    const total = calculateMealTotal();
+    if (mealForm.advanceOption === '100_percent') return total;
+    if (mealForm.advanceOption === 'custom') {
+      const clean = stripCommas(String(mealForm.customAdvance || '0'));
+      const customVal = Number(clean);
+      return isNaN(customVal) || customVal <= 0 ? 0 : customVal;
+    }
+    // Default 50%
+    return Math.round(total * 0.5);
+  };
+
   const calendarDays = [];
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
   const firstDayIndex = getFirstDayOfMonth(currentMonth, currentYear);
@@ -346,13 +389,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     try {
       const cleanAmount = stripCommas(cashForm.amount);
       if (!cleanAmount || isNaN(Number(cleanAmount)) || Number(cleanAmount) <= 0) {
-        alert('Please enter a valid donation amount.');
+        alert(language === 'si' ? 'කරුණාකර වලංගු පරිත්‍යාග මුදලක් ඇතුළත් කරන්න.' : 'Please enter a valid donation amount.');
         setCashLoading(false);
         return;
       }
 
       if (cashForm.paymentMethod === 'bank_transfer' && !cashForm.proof) {
-        alert('Please upload a bank transfer receipt as proof of payment.');
+        alert(language === 'si' ? 'කරුණාකර ගෙවීමේ සාක්ෂියක් ලෙස බැංකු රිසිට්පත උඩුගත කරන්න.' : 'Please upload a bank transfer receipt as proof of payment.');
         setCashLoading(false);
         return;
       }
@@ -374,7 +417,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           window.location.href = data.url;
           return;
         } else {
-          alert(data.message || 'Failed to initialize Stripe checkout session.');
+          alert(data.message || (language === 'si' ? 'Stripe සබැඳිය සකස් කිරීම අසාර්ථක විය.' : 'Failed to initialize Stripe checkout session.'));
           setCashLoading(false);
           return;
         }
@@ -398,11 +441,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           setShowCashModal(false);
         }, 3500);
       } else {
-        alert(data.message || 'Donation submission failed.');
+        alert(data.message || (language === 'si' ? 'පරිත්‍යාගය සටහන් කිරීම අසාර්ථක විය.' : 'Donation submission failed.'));
       }
     } catch (err) {
       console.error(err);
-      alert('Network error. Failed to submit donation.');
+      alert(language === 'si' ? 'ජාල දෝෂයකි. කරුණාකර නැවත උත්සාහ කරන්න.' : 'Network error. Failed to submit donation.');
     } finally {
       setCashLoading(false);
     }
@@ -411,18 +454,65 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   const handleMealSubmit = async (e) => {
     e.preventDefault();
     if (!mealForm.mealDate) {
-      alert('Please select an available date on the calendar.');
+      alert(language === 'si' ? 'කරුණාකර දින දර්ශනයෙන් දිනයක් තෝරන්න.' : 'Please select an available date on the calendar.');
       return;
     }
+
+    const total = calculateMealTotal();
+    const advance = calculateAdvanceAmount();
+
+    if (!advance || advance <= 0) {
+      alert(language === 'si' ? 'කරුණාකර වලංගු අත්තිකාරම් මුදලක් ඇතුළත් කරන්න (අවම වශයෙන් රු. 1,000).' : 'Please specify a valid advance payment amount (at least LKR 1,000).');
+      return;
+    }
+
+    if (advance > total) {
+      alert(language === 'si' ? 'අත්තිකාරම් මුදල සම්පූර්ණ මුදලට වඩා වැඩි විය නොහැක.' : 'Advance payment amount cannot exceed the total meal cost.');
+      return;
+    }
+
+    if (mealForm.paymentMethod === 'bank_transfer' && !mealForm.proof) {
+      alert(language === 'si' ? 'කරුණාකර අත්තිකාරම් ගෙවීමේ බැංකු රිසිට්පත උඩුගත කරන්න.' : 'Please upload a bank transfer receipt as proof of advance payment.');
+      return;
+    }
+
     setMealLoading(true);
     try {
+      if (mealForm.paymentMethod === 'online') {
+        const res = await fetch(`${API_BASE_URL}/public/create-meal-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...mealForm,
+            totalAmount: total,
+            advanceAmount: advance
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          window.location.href = data.url;
+          return;
+        } else {
+          alert(data.message || (language === 'si' ? 'Stripe සබැඳිය සකස් කිරීම අසාර්ථක විය.' : 'Failed to initialize Stripe checkout session for meal advance.'));
+          setMealLoading(false);
+          return;
+        }
+      }
+
+      // Direct Bank Transfer
       const res = await fetch(`${API_BASE_URL}/public/book-meal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mealForm),
+        body: JSON.stringify({
+          ...mealForm,
+          totalAmount: total,
+          advanceAmount: advance,
+          advancePaymentMethod: 'bank_transfer'
+        }),
       });
       const data = await res.json();
       if (res.ok) {
+        setBookedAdvanceAmount(String(advance));
         setMealSuccess(true);
         setMealForm({
           name: '',
@@ -433,19 +523,23 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           quantity: String(childCount),
           occasion: '',
           menuPackage: 'standard',
-          dietaryNotes: ''
+          dietaryNotes: '',
+          advanceOption: '50_percent',
+          customAdvance: '',
+          paymentMethod: 'bank_transfer',
+          proof: null
         });
         fetchBookedMeals();
         setTimeout(() => {
           setMealSuccess(false);
           setShowMealModal(false);
-        }, 3500);
+        }, 4000);
       } else {
-        alert(data.message || 'Booking failed.');
+        alert(data.message || (language === 'si' ? 'වෙන්කිරීම අසාර්ථක විය.' : 'Booking failed.'));
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred during booking.');
+      alert(language === 'si' ? 'වෙන්කිරීමේදී දෝෂයක් සිදු විය.' : 'An error occurred during meal booking.');
     } finally {
       setMealLoading(false);
     }
@@ -538,7 +632,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               letterSpacing: '-0.02em',
               lineHeight: 1.1
             }}>
-              Senehasa Dari Sewana
+              {t("Senehasa Dari Sewana")}
             </div>
             <div style={{
               fontSize: '11px',
@@ -548,7 +642,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               textTransform: 'uppercase',
               marginTop: '2px'
             }}>
-              Child Development Center &amp; Sanctuary
+              {t("Child Development Center & Sanctuary")}
             </div>
           </div>
         </div>
@@ -584,12 +678,59 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 }}
               >
                 {tab.id === 'donate' && <Heart size={14} fill={isActive ? charityTheme.primary : 'none'} color={isActive ? charityTheme.primary : charityTheme.accentAmber} />}
-                {tab.label}
+                {t(tab.label)}
               </button>
             );
           })}
 
           <div style={{ width: '1px', height: '24px', backgroundColor: charityTheme.border, margin: '0 8px' }} />
+
+          {/* Language Switcher: English / සිංහල */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'rgba(15, 23, 42, 0.05)',
+            borderRadius: '9px',
+            padding: '3px',
+            border: `1px solid ${charityTheme.border}`,
+            gap: '2px',
+            marginRight: '6px'
+          }}>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              style={{
+                padding: '5px 11px',
+                borderRadius: '7px',
+                border: 'none',
+                backgroundColor: language === 'en' ? charityTheme.primary : 'transparent',
+                color: language === 'en' ? '#ffffff' : charityTheme.textHeading,
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('si')}
+              style={{
+                padding: '5px 11px',
+                borderRadius: '7px',
+                border: 'none',
+                backgroundColor: language === 'si' ? charityTheme.primary : 'transparent',
+                color: language === 'si' ? '#ffffff' : charityTheme.textHeading,
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              සිංහල
+            </button>
+          </div>
 
           {/* Quick Action Buttons */}
           <button
@@ -619,7 +760,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             }}
           >
             <HandHeart size={16} />
-            <span>Donate Now</span>
+            <span>{t("Donate Now")}</span>
           </button>
 
           <button
@@ -650,7 +791,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             }}
           >
             <Lock size={13} />
-            <span>Staff Portal</span>
+            <span>{t("Portal Login", "Staff Portal")}</span>
           </button>
         </nav>
       </header>
@@ -3006,10 +3147,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading }}>
-                  Make a Financial Contribution
+                  {t("Make a Financial Contribution")}
                 </h2>
                 <p style={{ fontSize: '13px', color: charityTheme.textMuted, margin: '4px 0 0' }}>
-                  Support health, meals, and education at Senehasa sanctuary.
+                  {t("Every rupee directly supports the daily nourishment, healthcare, education, and sanctuary for our 50+ resident children.")}
                 </p>
               </div>
               <ModalCloseButton onClick={() => setShowCashModal(false)} />
@@ -3038,10 +3179,12 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   <Check size={28} color={charityTheme.accentGreen} />
                 </div>
                 <h3 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '6px', color: charityTheme.textHeading }}>
-                  Thank You for Your Generosity!
+                  {t("Thank You for Your Generosity!", "Thank You for Your Generous Heart!")}
                 </h3>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody }}>
-                  Your contribution of <strong>LKR {Number(donatedAmount).toLocaleString()}</strong> provides vital support to the children. An official digital receipt is recorded in the system.
+                  {language === 'si'
+                    ? `ඔබගේ රු. ${Number(donatedAmount).toLocaleString()} ක පරිත්‍යාගය ළමුන්ගේ දෛනික පෝෂණය හා සංවර්ධනයට සෘජුවම උපකාරී වේ. ඩිජිටල් රිසිට්පත පද්ධතියේ සටහන් කර ඇත.`
+                    : `Your contribution of LKR ${Number(donatedAmount).toLocaleString()} provides vital support to the children. An official digital receipt is recorded in the system.`}
                 </p>
               </div>
             ) : (
@@ -3049,7 +3192,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 {/* Amount presets for Efficiency */}
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '8px' }}>
-                    Select Donation Amount
+                    {t("Select Donation Amount", "Select Amount (LKR)")}
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '10px' }}>
                     {['1000', '2500', '5000', '10000', '25000'].map((preset) => {
@@ -3093,7 +3236,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         color: charityTheme.textHeading,
                         boxSizing: 'border-box'
                       }}
-                      placeholder="Custom amount (e.g. 10,000)"
+                      placeholder={t("Or Enter Custom Amount (LKR)", "Custom amount (e.g. 10,000)")}
                       value={cashForm.amount}
                       onChange={(e) => setCashForm({ ...cashForm, amount: formatWithCommas(e.target.value) })}
                       required
@@ -3104,12 +3247,12 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 {/* Payment Method Selector */}
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '8px' }}>
-                    Payment Method
+                    {t("Payment Method", "Select Payment Method")}
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {[
-                      { id: 'online', label: 'Card Payment (Stripe)', icon: CreditCard },
-                      { id: 'bank_transfer', label: 'Bank Transfer Slip', icon: Landmark }
+                      { id: 'online', labelKey: 'Card / Online (Stripe)', defaultLabel: 'Card Payment (Stripe)', icon: CreditCard },
+                      { id: 'bank_transfer', labelKey: 'Bank Transfer Deposit', defaultLabel: 'Bank Transfer Slip', icon: Landmark }
                     ].map((method) => {
                       const isSelected = cashForm.paymentMethod === method.id;
                       const MethodIcon = method.icon;
@@ -3135,7 +3278,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           }}
                         >
                           <MethodIcon size={16} />
-                          <span>{method.label}</span>
+                          <span>{t(method.labelKey, method.defaultLabel)}</span>
                         </button>
                       );
                     })}
@@ -3156,7 +3299,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   }}>
                     <Lock size={18} color={charityTheme.primary} />
                     <div style={{ fontSize: '12px', color: charityTheme.textBody, lineHeight: 1.5 }}>
-                      You will be securely redirected to Stripe's 256-bit encrypted checkout page.
+                      {t("You will be securely redirected to Stripe's 256-bit encrypted checkout page.")}
                     </div>
                   </div>
                 )}
@@ -3171,16 +3314,16 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     marginBottom: '18px'
                   }}>
                     <div style={{ fontSize: '12px', color: charityTheme.textHeading, fontWeight: 700, marginBottom: '6px' }}>
-                      Bank Transfer Account Details:
+                      {t("Bank Transfer Account Details:")}
                     </div>
                     <div style={{ fontSize: '12px', color: charityTheme.textMuted, lineHeight: 1.6, marginBottom: '12px' }}>
-                      Bank: <strong>Commercial Bank of Ceylon</strong><br />
-                      Account Name: <strong>Senehasa Dari Sewana Foundation</strong><br />
-                      Account Number: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya
+                      {t("Bank Name")}: <strong>Commercial Bank of Ceylon</strong><br />
+                      {t("Account Name")}: <strong>Senehasa Dari Sewana Foundation</strong><br />
+                      {t("Account Number")}: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya
                     </div>
 
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>
-                      Upload Deposit Receipt (Image or PDF) *
+                      {t("Upload Deposit Receipt (Image or PDF) *")}
                     </label>
                     <input
                       type="file"
@@ -3219,7 +3362,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
                           onClick={() => setCashForm(prev => ({ ...prev, proof: null }))}
                         >
-                          Remove
+                          {t("Remove Photo", "Remove")}
                         </button>
                       </div>
                     )}
@@ -3229,7 +3372,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 {/* Donor Contact Details */}
                 <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '16px' }}>
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Full Name *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                      {t("Full Name *", "Your full name *")}
+                    </label>
                     <input
                       style={{
                         width: '100%', padding: '10px 12px', borderRadius: '8px',
@@ -3245,7 +3390,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Email Address *</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                        {t("Email Address *", "Email address *")}
+                      </label>
                       <input
                         type="email"
                         style={{
@@ -3260,7 +3407,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Contact Number</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                        {t("Contact Number", "Mobile phone number for SMS confirmation")}
+                      </label>
                       <input
                         style={{
                           width: '100%', padding: '10px 12px', borderRadius: '8px',
@@ -3275,7 +3424,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Donor Type</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                      {t("Donor Type")}
+                    </label>
                     <select
                       style={{
                         width: '100%', padding: '10px 12px', borderRadius: '8px',
@@ -3285,13 +3436,15 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       value={cashForm.type}
                       onChange={(e) => setCashForm({ ...cashForm, type: e.target.value })}
                     >
-                      <option value="individual">Individual Donor</option>
-                      <option value="organization">Corporate / NGO Partner</option>
+                      <option value="individual">{t("Individual Donor")}</option>
+                      <option value="organization">{t("Corporate / NGO Partner")}</option>
                     </select>
                   </div>
 
                   <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Dedication or Notes (Optional)</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                      {t("Dedication or Notes (Optional)")}
+                    </label>
                     <textarea
                       style={{
                         width: '100%', padding: '8px 12px', borderRadius: '8px',
@@ -3316,7 +3469,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       color: charityTheme.textMuted, fontSize: '13px', fontWeight: 600, cursor: 'pointer'
                     }}
                   >
-                    Cancel
+                    {t("Cancel")}
                   </button>
                   <button
                     type="submit"
@@ -3329,7 +3482,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       boxShadow: '0 4px 12px rgba(29, 112, 184, 0.25)'
                     }}
                   >
-                    {cashLoading ? 'Processing Contribution...' : 'Confirm Donation'}
+                    {cashLoading ? t("Processing Contribution...") : t("Confirm Donation")}
                   </button>
                 </div>
               </form>
@@ -3366,10 +3519,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading }}>
-                  Sponsor a Nutritious Meal
+                  {t("Sponsor a Nutritious Meal")}
                 </h2>
                 <p style={{ fontSize: '13px', color: charityTheme.textMuted, margin: '4px 0 0' }}>
-                  Select an available date on the calendar to reserve Breakfast, Lunch, or Dinner for our 50+ children.
+                  {t("Select an available date on the calendar to reserve Breakfast, Lunch, or Dinner for our 50+ children.")}
                 </p>
               </div>
               <ModalCloseButton onClick={() => setShowMealModal(false)} />
@@ -3398,15 +3551,17 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   <Check size={30} color={charityTheme.accentGreen} />
                 </div>
                 <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', color: charityTheme.textHeading }}>
-                  Meal Sponsorship Scheduled!
+                  {t("Meal Sponsorship Scheduled!")}
                 </h3>
-                <p style={{ fontSize: '14px', color: charityTheme.textBody }}>
-                  Thank you for sponsoring a <strong>{mealForm.mealType}</strong> meal on <strong>{mealForm.mealDate}</strong> ({mealForm.quantity} portions). Our kitchen supervisor and coordinator will prepare everything according to your reservation. An instant SMS confirmation has been dispatched.
+                <p style={{ fontSize: '14px', color: charityTheme.textBody, maxWidth: '600px', margin: '0 auto 12px', lineHeight: 1.6 }}>
+                  {language === 'si'
+                    ? `ඔබ ${mealForm.mealDate || 'තෝරාගත් දිනය'} දින ${t(mealForm.mealType)} ආහාර වේල වෙනුවෙන් රු. ${Number(bookedAdvanceAmount).toLocaleString()} ක අත්තිකාරම් මුදලක් සාර්ථකව ගෙවා ඇත. අපගේ මුළුතැන්ගෙයි කණ්ඩායම සූදානම් කිරීම් ආරම්භ කරනු ඇත. ක්ෂණික SMS තහවුරු කිරීමක් ඔබ වෙත යොමු කරන ලදී.`
+                    : `Thank you for sponsoring a ${mealForm.mealType} meal on ${mealForm.mealDate || 'selected date'} (${mealForm.quantity} portions). Advance payment of LKR ${Number(bookedAdvanceAmount).toLocaleString()} was received. An instant SMS confirmation has been dispatched.`}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleMealSubmit}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '28px', alignItems: 'start' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 1.15fr', gap: '28px', alignItems: 'start' }}>
 
                   {/* Left Column: Interactive Calendar */}
                   <div style={{ borderRight: `1px solid ${charityTheme.border}`, paddingRight: '28px' }}>
@@ -3422,7 +3577,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         <ChevronLeft size={16} />
                       </button>
                       <span style={{ fontWeight: 700, fontSize: '15px', color: charityTheme.textHeading, fontFamily: charityTheme.fontHeading }}>
-                        {monthNames[currentMonth]} {currentYear}
+                        {t(monthNames[currentMonth])} {currentYear}
                       </span>
                       <button
                         type="button"
@@ -3437,16 +3592,24 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '8px' }}>
-                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                        <div key={day} style={{ fontSize: '11px', fontWeight: 700, color: charityTheme.textMuted, textTransform: 'uppercase' }}>
-                          {day}
+                      {[
+                        { en: 'Su', key: 'Sun' },
+                        { en: 'Mo', key: 'Mon' },
+                        { en: 'Tu', key: 'Tue' },
+                        { en: 'We', key: 'Wed' },
+                        { en: 'Th', key: 'Thu' },
+                        { en: 'Fr', key: 'Fri' },
+                        { en: 'Sa', key: 'Sat' }
+                      ].map(d => (
+                        <div key={d.en} style={{ fontSize: '11px', fontWeight: 700, color: charityTheme.textMuted, textTransform: 'uppercase' }}>
+                          {language === 'si' ? t(d.key).substring(0, 3) : d.en}
                         </div>
                       ))}
                     </div>
 
                     {calendarLoading ? (
                       <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: charityTheme.textMuted, fontSize: '13px' }}>
-                        Checking meal slot availability...
+                        {t("Checking meal slot availability...")}
                       </div>
                     ) : (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
@@ -3535,43 +3698,47 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: charityTheme.textMuted }}>
                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981' }} /> Available
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981' }} /> {t("In Stock", "Available")}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> Sponsored
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> {t("Sponsored")}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <div style={{ width: '9px', height: '9px', borderRadius: '2px', backgroundColor: charityTheme.primary }} /> Selected
+                          <div style={{ width: '9px', height: '9px', borderRadius: '2px', backgroundColor: charityTheme.primary }} /> {t("Selected")}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Column: Slot Selection & Details */}
+                  {/* Right Column: Slot Selection, Advance Payment & Details */}
                   <div>
                     {!mealForm.mealDate ? (
                       <div style={{ textAlign: 'center', padding: '48px 20px', color: charityTheme.textMuted }}>
                         <Calendar size={44} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-                        <h4 style={{ margin: '0 0 6px', color: charityTheme.textHeading, fontFamily: charityTheme.fontHeading }}>No Date Selected</h4>
+                        <h4 style={{ margin: '0 0 6px', color: charityTheme.textHeading, fontFamily: charityTheme.fontHeading }}>
+                          {t("No Date Selected")}
+                        </h4>
                         <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>
-                          Please click an open date on the calendar to select Breakfast, Lunch, or Dinner.
+                          {t("Please click an open date on the calendar to select Breakfast, Lunch, or Dinner.")}
                         </p>
                       </div>
                     ) : (
                       <div>
+                        {/* Selected Date Notice */}
                         <div style={{ marginBottom: '14px' }}>
                           <div style={{ fontSize: '11px', color: charityTheme.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-                            Selected Date
+                            {t("Selected Date")}
                           </div>
                           <div style={{ fontWeight: 700, fontSize: '15px', color: charityTheme.primary, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                             <Calendar size={15} />
-                            {new Date(mealForm.mealDate).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            {new Date(mealForm.mealDate).toLocaleDateString(language === 'si' ? 'si-LK' : undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                           </div>
                         </div>
 
+                        {/* Choose Meal Slot */}
                         <div style={{ marginBottom: '14px' }}>
                           <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '6px' }}>
-                            Choose Meal Slot
+                            {t("Choose Meal Slot")}
                           </label>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                             {['breakfast', 'lunch', 'dinner'].map(slotType => {
@@ -3589,8 +3756,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                     }}
                                   >
                                     <Lock size={12} color="#ef4444" />
-                                    <span style={{ textTransform: 'capitalize', fontWeight: 600, color: charityTheme.textMuted }}>{slotType}</span>
-                                    <span style={{ fontSize: '10px', color: '#ef4444' }}>Sponsored</span>
+                                    <span style={{ textTransform: 'capitalize', fontWeight: 600, color: charityTheme.textMuted }}>{t(slotType)}</span>
+                                    <span style={{ fontSize: '10px', color: '#ef4444' }}>{t("Sponsored")}</span>
                                   </div>
                                 );
                               }
@@ -3611,17 +3778,19 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                   }}
                                 >
                                   {isSelectedSlot ? <Check size={12} /> : <Clock size={12} color={charityTheme.textMuted} />}
-                                  <span>{slotType}</span>
+                                  <span>{t(slotType)}</span>
                                 </button>
                               );
                             })}
                           </div>
                         </div>
 
-                        {/* Package Selection */}
+                        {/* Package Selection & Portions */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', marginBottom: '12px' }}>
                           <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Menu Package</label>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                              {t("Menu Package")}
+                            </label>
                             <select
                               style={{
                                 width: '100%', padding: '9px 10px', borderRadius: '8px',
@@ -3631,13 +3800,15 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                               value={mealForm.menuPackage}
                               onChange={(e) => setMealForm(prev => ({ ...prev, menuPackage: e.target.value }))}
                             >
-                              <option value="standard">Standard Menu (LKR 600/kid)</option>
-                              <option value="special">Special Menu (LKR 1,200/kid)</option>
-                              <option value="feast">Feast Menu (LKR 1,800/kid)</option>
+                              <option value="standard">{t("Standard Menu (LKR 600/kid)")}</option>
+                              <option value="special">{t("Special Menu (LKR 1,200/kid)")}</option>
+                              <option value="feast">{t("Feast Menu (LKR 1,800/kid)")}</option>
                             </select>
                           </div>
                           <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>Portions Count</label>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                              {t("Portions Count")}
+                            </label>
                             <input
                               type="number"
                               min="10"
@@ -3653,17 +3824,241 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           </div>
                         </div>
 
-                        {/* Estimated Total Summary */}
+                        {/* Total Cost Summary */}
                         <div style={{
                           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                           padding: '10px 14px', backgroundColor: charityTheme.accentGreenLight,
                           border: `1px solid rgba(16, 185, 129, 0.25)`, borderRadius: '8px',
                           color: charityTheme.accentGreen, marginBottom: '14px'
                         }}>
-                          <span style={{ fontSize: '12px', fontWeight: 600 }}>Total Contribution:</span>
+                          <span style={{ fontSize: '12px', fontWeight: 600 }}>{t("Total Meal Cost:")}</span>
                           <span style={{ fontWeight: 800, fontSize: '16px' }}>
-                            LKR {(Number(mealForm.quantity || childCount) * getPackagePrice(mealForm.menuPackage)).toLocaleString()}
+                            LKR {calculateMealTotal().toLocaleString()}
                           </span>
+                        </div>
+
+                        {/* ─── MANDATORY ADVANCE PAYMENT SECTION ─── */}
+                        <div style={{
+                          border: `1.5px solid ${charityTheme.primaryLight}`,
+                          backgroundColor: '#f8fbff',
+                          borderRadius: '12px',
+                          padding: '14px',
+                          marginBottom: '16px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <HandCoins size={16} color={charityTheme.primary} />
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: charityTheme.textHeading }}>
+                              {t("Advance Payment Required")}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '11px', color: charityTheme.textMuted, margin: '0 0 10px', lineHeight: 1.4 }}>
+                            {language === 'si'
+                              ? 'ආහාර වේල වෙන්කිරීම සඳහා අත්තිකාරම් ගෙවීමක් (Advance) සිදුකළ යුතුය. ඉතිරි මුදල ආහාර පිළියෙළ කරන දිනයේදී ගෙවිය හැක.'
+                              : 'To secure the meal reservation, donors must pay an advance deposit. The remaining balance is payable on the meal date.'}
+                          </p>
+
+                          {/* Advance Option Selector */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
+                            {[
+                              { id: '50_percent', labelKey: '50% Advance Deposit (Recommended)', shortLabel: '50% Deposit' },
+                              { id: '100_percent', labelKey: '100% Full Payment', shortLabel: '100% Full' },
+                              { id: 'custom', labelKey: 'Custom Advance Amount', shortLabel: 'Custom' }
+                            ].map(opt => {
+                              const isSelected = mealForm.advanceOption === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setMealForm(prev => ({ ...prev, advanceOption: opt.id }))}
+                                  style={{
+                                    padding: '8px 4px',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${isSelected ? charityTheme.primary : charityTheme.border}`,
+                                    backgroundColor: isSelected ? charityTheme.primary : '#ffffff',
+                                    color: isSelected ? '#ffffff' : charityTheme.textHeading,
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                >
+                                  {language === 'si' ? t(opt.labelKey).split(' ')[0] + ' ' + (opt.id === 'custom' ? 'අභිරුචි' : opt.id === '100_percent' ? 'සම්පූර්ණ' : 'අත්තිකාරම්') : opt.shortLabel}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Custom Advance Input */}
+                          {mealForm.advanceOption === 'custom' && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
+                                {t("Advance Amount to Pay (LKR) *")}
+                              </label>
+                              <div style={{ position: 'relative' }}>
+                                <span style={{ position: 'absolute', left: '10px', top: '8px', fontSize: '12px', fontWeight: 700, color: charityTheme.textMuted }}>
+                                  LKR
+                                </span>
+                                <input
+                                  type="text"
+                                  style={{
+                                    width: '100%', padding: '7px 10px 7px 42px', borderRadius: '6px',
+                                    border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                    fontSize: '12px', fontWeight: 700, color: charityTheme.textHeading, boxSizing: 'border-box'
+                                  }}
+                                  placeholder="e.g. 10,000"
+                                  value={mealForm.customAdvance}
+                                  onChange={(e) => setMealForm(prev => ({ ...prev, customAdvance: formatWithCommas(e.target.value) }))}
+                                  required
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Calculation Breakdown */}
+                          <div style={{
+                            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
+                            backgroundColor: '#ffffff', padding: '10px 12px', borderRadius: '8px',
+                            border: `1px solid ${charityTheme.border}`, marginBottom: '12px'
+                          }}>
+                            <div>
+                              <div style={{ fontSize: '10px', color: charityTheme.textMuted, textTransform: 'uppercase', fontWeight: 700 }}>
+                                {t("Advance Amount to Pay (LKR) *")}
+                              </div>
+                              <div style={{ fontSize: '15px', fontWeight: 800, color: charityTheme.primary, marginTop: '2px' }}>
+                                LKR {calculateAdvanceAmount().toLocaleString()}
+                              </div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '10px', color: charityTheme.textMuted, textTransform: 'uppercase', fontWeight: 700 }}>
+                                {t("Remaining Balance (Due on Meal Date):")}
+                              </div>
+                              <div style={{ fontSize: '15px', fontWeight: 800, color: charityTheme.accentAmber, marginTop: '2px' }}>
+                                LKR {Math.max(0, calculateMealTotal() - calculateAdvanceAmount()).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Advance Payment Method Selector */}
+                          <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '6px' }}>
+                              {t("Advance Payment Method")}
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                              {[
+                                { id: 'bank_transfer', labelKey: 'Bank Transfer Deposit', defaultLabel: 'Bank Transfer Slip', icon: Landmark },
+                                { id: 'online', labelKey: 'Online Payment (Instant Card / Stripe)', defaultLabel: 'Online Card (Stripe)', icon: CreditCard }
+                              ].map(m => {
+                                const isSelected = mealForm.paymentMethod === m.id;
+                                const MIcon = m.icon;
+                                return (
+                                  <button
+                                    key={m.id}
+                                    type="button"
+                                    onClick={() => setMealForm(prev => ({ ...prev, paymentMethod: m.id }))}
+                                    style={{
+                                      padding: '8px 10px',
+                                      borderRadius: '8px',
+                                      border: `1px solid ${isSelected ? charityTheme.primary : charityTheme.border}`,
+                                      backgroundColor: isSelected ? charityTheme.primaryLight : '#ffffff',
+                                      color: isSelected ? charityTheme.primary : charityTheme.textBody,
+                                      fontWeight: 600,
+                                      fontSize: '11px',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '6px',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <MIcon size={14} />
+                                    <span>{t(m.labelKey, m.defaultLabel)}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* If Online Stripe */}
+                          {mealForm.paymentMethod === 'online' && (
+                            <div style={{
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              backgroundColor: '#eff6ff',
+                              border: `1px solid rgba(29, 112, 184, 0.2)`,
+                              fontSize: '11px',
+                              color: charityTheme.primaryDark,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}>
+                              <Lock size={14} style={{ flexShrink: 0 }} />
+                              <span>{t("You will be securely redirected to Stripe's 256-bit encrypted checkout page.")}</span>
+                            </div>
+                          )}
+
+                          {/* If Bank Transfer Slip */}
+                          {mealForm.paymentMethod === 'bank_transfer' && (
+                            <div style={{
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              backgroundColor: '#ffffff',
+                              border: `1px solid ${charityTheme.border}`
+                            }}>
+                              <div style={{ fontSize: '11px', color: charityTheme.textHeading, fontWeight: 700, marginBottom: '4px' }}>
+                                {t("Bank Transfer Account Details:")}
+                              </div>
+                              <div style={{ fontSize: '11px', color: charityTheme.textMuted, lineHeight: 1.5, marginBottom: '8px' }}>
+                                {t("Bank Name")}: <strong>Commercial Bank</strong> &bull; {t("Account Name")}: <strong>Senehasa Dari Sewana Foundation</strong><br />
+                                {t("Account Number")}: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya
+                              </div>
+
+                              <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: charityTheme.textBody, marginBottom: '4px' }}>
+                                {t("Upload Deposit Receipt (Image or PDF) *")}
+                              </label>
+                              <input
+                                type="file"
+                                style={{
+                                  width: '100%',
+                                  padding: '6px',
+                                  borderRadius: '6px',
+                                  border: `1px solid ${charityTheme.border}`,
+                                  backgroundColor: '#f8fafc',
+                                  fontSize: '11px',
+                                  boxSizing: 'border-box'
+                                }}
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (!file) return;
+                                  const reader = new FileReader();
+                                  reader.onload = () => {
+                                    setMealForm(prev => ({
+                                      ...prev,
+                                      proof: {
+                                        fileData: reader.result,
+                                        fileName: file.name,
+                                        fileType: file.type
+                                      }
+                                    }));
+                                  };
+                                  reader.readAsDataURL(file);
+                                }}
+                                required={mealForm.paymentMethod === 'bank_transfer'}
+                              />
+                              {mealForm.proof && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', marginTop: '6px', background: charityTheme.primaryLight, padding: '4px 8px', borderRadius: '4px' }}>
+                                  <span>Slip: <strong>{mealForm.proof.fileName}</strong></span>
+                                  <button
+                                    type="button"
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
+                                    onClick={() => setMealForm(prev => ({ ...prev, proof: null }))}
+                                  >
+                                    {t("Remove Photo", "Remove")}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Contact Info Inputs */}
@@ -3675,7 +4070,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                 border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
                                 fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
                               }}
-                              placeholder="Your full name *"
+                              placeholder={t("Your full name *")}
                               value={mealForm.name}
                               onChange={(e) => setMealForm(prev => ({ ...prev, name: e.target.value }))}
                               required
@@ -3687,22 +4082,34 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                 border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
                                 fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
                               }}
-                              placeholder="Email address *"
+                              placeholder={t("Email address *")}
                               value={mealForm.email}
                               onChange={(e) => setMealForm(prev => ({ ...prev, email: e.target.value }))}
                               required
                             />
                           </div>
-                          <input
-                            style={{
-                              width: '100%', padding: '8px 10px', borderRadius: '8px',
-                              border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
-                              fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
-                            }}
-                            placeholder="Mobile phone number for SMS confirmation"
-                            value={mealForm.contactDetails}
-                            onChange={(e) => setMealForm(prev => ({ ...prev, contactDetails: e.target.value }))}
-                          />
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '6px' }}>
+                            <input
+                              style={{
+                                width: '100%', padding: '8px 10px', borderRadius: '8px',
+                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                              }}
+                              placeholder={t("Mobile phone number for SMS confirmation")}
+                              value={mealForm.contactDetails}
+                              onChange={(e) => setMealForm(prev => ({ ...prev, contactDetails: e.target.value }))}
+                            />
+                            <input
+                              style={{
+                                width: '100%', padding: '8px 10px', borderRadius: '8px',
+                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
+                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
+                              }}
+                              placeholder={t("Dedication or Occasion (Optional)")}
+                              value={mealForm.occasion}
+                              onChange={(e) => setMealForm(prev => ({ ...prev, occasion: e.target.value }))}
+                            />
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
@@ -3715,7 +4122,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                               color: charityTheme.textMuted, fontSize: '12px', fontWeight: 600, cursor: 'pointer'
                             }}
                           >
-                            Cancel
+                            {t("Cancel")}
                           </button>
                           <button
                             type="submit"
@@ -3724,10 +4131,15 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                               padding: '8px 20px', borderRadius: '8px',
                               backgroundColor: charityTheme.accentGreen, color: '#ffffff',
                               border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', gap: '6px'
+                              display: 'flex', alignItems: 'center', gap: '6px',
+                              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
                             }}
                           >
-                            {mealLoading ? 'Confirming...' : 'Reserve Meal Slot'}
+                            {mealLoading
+                              ? t("Confirming...")
+                              : mealForm.paymentMethod === 'online'
+                                ? t("Reserve & Pay Advance")
+                                : t("Reserve Meal Slot")}
                           </button>
                         </div>
                       </div>

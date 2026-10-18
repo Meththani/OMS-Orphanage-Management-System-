@@ -5,8 +5,9 @@ import {
   colors, cardStyle, buttonPrimary, buttonSecondary, buttonDanger,
   inputStyle, selectStyle, modalOverlay, modalBox,
 } from '../styles';
-import { Eye, EyeOff, Edit2, Trash2, X, Phone, User, Calendar, Hash, Briefcase, Award } from 'lucide-react';
+import { Eye, EyeOff, Edit2, Trash2, X, Phone, User, Calendar, Hash, Briefcase, Award, FileSpreadsheet } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
+import { exportStaffToExcel } from '../utils/excelExport';
 
 const emptyForm = {
   name: '', username: '', password: '', confirmPassword: '', role: 'staff',
@@ -353,7 +354,16 @@ export default function StaffManagement() {
             {t("Staff Management")}
           </h1>
         </div>
-        <button style={buttonPrimary} onClick={openAddModal}>+ {t("Register Staff Member")}</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => exportStaffToExcel(staff)}
+            title="Export full staff roster to Excel"
+          >
+            <FileSpreadsheet size={16} color={colors.primary} /> {t("Export to Excel")}
+          </button>
+          <button style={buttonPrimary} onClick={openAddModal}>+ {t("Register Staff Member")}</button>
+        </div>
       </div>
 
       {error && (

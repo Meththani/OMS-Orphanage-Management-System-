@@ -1,5 +1,5 @@
 const express = require('express');
-const { CashDonation, MealDonation } = require('../models/Donation');
+const { Donation, CashDonation, MealDonation } = require('../models/Donation');
 const Donor = require('../models/Donor');
 const Message = require('../models/Message');
 const BankAccount = require('../models/BankAccount');
@@ -112,6 +112,152 @@ router.post('/create-checkout-session', async (req, res) => {
   }
 });
 
+// POST /api/public/create-meal-checkout-session
+router.post('/create-meal-checkout-session', async (req, res) => {
+  try {
+    const {
+      name, email, contactDetails, mealDate, mealType, quantity, occasion,
+      menuPackage, dietaryNotes, advanceAmount, totalAmount
+    } = req.body;
+
+    if (!name || !email || !mealDate || !mealType || !quantity || !advanceAmount) {
+      return res.status(400).json({ status: 'fail', message: 'Missing required meal checkout fields.' });
+    }
+
+    // Check for double booking
+    const targetDate = new Date(mealDate);
+    const dateStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const dateEnd = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+
+    const existingBooking = await MealDonation.findOne({
+      mealDate: { $gte: dateStart, $lte: dateEnd },
+      mealType,
+      status: { $ne: 'cancelled' }
+    });
+
+    if (existingBooking) {
+      return res.status(400).json({ status: 'fail', message: `The ${mealType} slot for this date is already booked.` });
+    }
+
+    const clientUrl = req.headers.origin || req.headers.referer?.replace(/\/$/, '') || process.env.CLIENT_URL || 'http://localhost:5173';
+    const baseUrl = String(clientUrl).replace(/\/$/, '');
+
+    if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_placeholder_key_replace_me') {
+      // Simulate successful checkout database recording (sandbox demo)
+      let donor = await Donor.findOne({ email: email.toLowerCase() });
+      if (!donor) {
+        donor = await Donor.create({
+          donorID: generateID('DON'),
+          name,
+          email: email.toLowerCase(),
+          contactDetails: contactDetails || 'N/A',
+          type: 'individual',
+          preference: 'meal',
+          totalDonated: 0,
+        });
+      } else if (contactDetails && contactDetails !== donor.contactDetails) {
+        donor.contactDetails = contactDetails;
+        await donor.save();
+      }
+
+      const receiptRef = generateID('REC');
+      const donation = await MealDonation.create({
+        donationID: generateID('MEL'),
+        donorID: donor._id,
+        mealDate: new Date(mealDate),
+        mealType,
+        quantity: Number(quantity),
+        status: 'received',
+        occasion,
+        menuPackage: menuPackage || 'standard',
+        dietaryNotes,
+        advanceAmount: Number(advanceAmount),
+        totalAmount: Number(totalAmount || advanceAmount),
+        advancePaymentMethod: 'online',
+        advanceStatus: 'received',
+        receiptRef,
+        notes: `Meal Sponsorship (${mealType}) with Advance Payment paid online. Occasion: ${occasion || 'N/A'}`,
+      });
+
+      donor.totalDonated += Number(advanceAmount);
+      await donor.save();
+
+      const defaultAccount = await BankAccount.findOne();
+      if (defaultAccount) {
+        await Income.create({
+          category: 'Meal Advance Donation',
+          amount: Number(advanceAmount),
+          paymentMethod: 'online',
+          donor: name,
+          refReceipt: receiptRef,
+          bankAccount: defaultAccount._id,
+        });
+
+        defaultAccount.balance += Number(advanceAmount);
+        await defaultAccount.save();
+      }
+
+      if (contactDetails && contactDetails !== 'N/A') {
+        try {
+          const mealDateFormatted = new Date(donation.mealDate).toLocaleDateString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+          });
+          const smsText = `CONFIRMATION: Dear ${name}, your ${mealType} sponsorship for ${quantity} kids on ${mealDateFormatted} is confirmed! Advance payment of LKR ${Number(advanceAmount).toLocaleString()} received (Ref: ${donation.donationID}). Thank you! - Hope Haven`;
+          await sendSMS({ to: contactDetails, message: smsText });
+        } catch (smsErr) {
+          console.warn('Could not send meal advance SMS:', smsErr.message);
+        }
+      }
+
+      return res.status(200).json({ 
+        status: 'success', 
+        url: `${baseUrl}/?status=meal_success&amount=${advanceAmount}&mealDate=${mealDate}&mealType=${mealType}` 
+      });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'lkr',
+            product_data: {
+              name: `Meal Sponsorship Advance (${mealType.toUpperCase()})`,
+              description: `Advance payment for ${quantity} portions on ${mealDate}`,
+            },
+            unit_amount: Math.round(Number(advanceAmount) * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      customer_email: email.toLowerCase(),
+      metadata: {
+        type: 'meal',
+        donorName: name,
+        donorEmail: email.toLowerCase(),
+        contactDetails: contactDetails || 'N/A',
+        mealDate,
+        mealType,
+        quantity: String(quantity),
+        occasion: occasion || '',
+        menuPackage: menuPackage || 'standard',
+        dietaryNotes: dietaryNotes || '',
+        advanceAmount: String(advanceAmount),
+        totalAmount: String(totalAmount || advanceAmount),
+      },
+      success_url: `${baseUrl}/?status=meal_success&amount=${advanceAmount}&mealDate=${mealDate}&mealType=${mealType}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/?status=cancel`,
+    });
+
+    res.status(200).json({ status: 'success', url: session.url });
+  } catch (err) {
+    console.error('Stripe Meal Checkout error:', err);
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 // POST /api/public/confirm-checkout-session
 router.post('/confirm-checkout-session', async (req, res) => {
   try {
@@ -121,7 +267,7 @@ router.post('/confirm-checkout-session', async (req, res) => {
     }
 
     // Check if we have already recorded this session to prevent double recording
-    const existingDonation = await CashDonation.findOne({ receiptRef: sessionId });
+    const existingDonation = await Donation.findOne({ receiptRef: sessionId });
     if (existingDonation) {
       return res.status(200).json({ status: 'success', message: 'Donation already recorded.', data: existingDonation });
     }
@@ -151,12 +297,73 @@ router.post('/confirm-checkout-session', async (req, res) => {
         email: email.toLowerCase(),
         contactDetails,
         type: 'individual',
-        preference: 'cash',
+        preference: session.metadata.type === 'meal' ? 'meal' : 'cash',
         totalDonated: 0,
       });
     }
 
-    // Create Cash Donation record
+    if (session.metadata.type === 'meal') {
+      const mealDate = new Date(session.metadata.mealDate);
+      const mealType = session.metadata.mealType;
+      const quantity = Number(session.metadata.quantity) || 50;
+      const occasion = session.metadata.occasion || '';
+      const menuPackage = session.metadata.menuPackage || 'standard';
+      const dietaryNotes = session.metadata.dietaryNotes || '';
+      const advanceAmount = amount;
+      const totalAmount = Number(session.metadata.totalAmount) || advanceAmount;
+
+      const donation = await MealDonation.create({
+        donationID: generateID('MEL'),
+        donorID: donor._id,
+        mealDate,
+        mealType,
+        quantity,
+        status: 'received',
+        occasion,
+        menuPackage,
+        dietaryNotes,
+        advanceAmount,
+        totalAmount,
+        advancePaymentMethod: 'online',
+        advanceStatus: 'received',
+        receiptRef: sessionId,
+        notes: occasion ? `Sponsorship for occasion: ${occasion}. Advance paid online via Stripe.` : 'Meal sponsorship booked via online Stripe checkout.',
+      });
+
+      donor.totalDonated += amount;
+      await donor.save();
+
+      const defaultAccount = await BankAccount.findOne();
+      if (defaultAccount) {
+        await Income.create({
+          category: 'Meal Advance Donation',
+          amount,
+          paymentMethod: 'online',
+          donor: name,
+          refReceipt: sessionId,
+          bankAccount: defaultAccount._id,
+        });
+
+        defaultAccount.balance += amount;
+        await defaultAccount.save();
+      }
+
+      if (contactDetails && contactDetails !== 'N/A') {
+        try {
+          const mealDateFormatted = mealDate.toLocaleDateString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+          });
+          const smsText = `CONFIRMATION: Dear ${name}, your ${mealType} sponsorship for ${quantity} kids on ${mealDateFormatted} is confirmed! Advance payment of LKR ${Number(amount).toLocaleString()} received (Ref: ${donation.donationID}). Thank you! - Hope Haven`;
+          await sendSMS({ to: contactDetails, message: smsText });
+        } catch (smsErr) {
+          console.warn('Could not send meal donation SMS:', smsErr.message);
+        }
+      }
+
+      return res.status(200).json({ status: 'success', data: donation });
+    }
+
+    // Default: Cash Donation record
     const donation = await CashDonation.create({
       donationID: generateID('CSH'),
       donorID: donor._id,
@@ -245,9 +452,59 @@ router.post('/stripe-webhook', async (req, res) => {
           email: email.toLowerCase(),
           contactDetails,
           type: 'individual',
-          preference: 'cash',
+          preference: session.metadata.type === 'meal' ? 'meal' : 'cash',
           totalDonated: 0,
         });
+      }
+
+      if (session.metadata.type === 'meal') {
+        const mealDate = new Date(session.metadata.mealDate);
+        const mealType = session.metadata.mealType;
+        const quantity = Number(session.metadata.quantity) || 50;
+        const occasion = session.metadata.occasion || '';
+        const menuPackage = session.metadata.menuPackage || 'standard';
+        const dietaryNotes = session.metadata.dietaryNotes || '';
+        const advanceAmount = amount;
+        const totalAmount = Number(session.metadata.totalAmount) || advanceAmount;
+
+        const donation = await MealDonation.create({
+          donationID: generateID('MEL'),
+          donorID: donor._id,
+          mealDate,
+          mealType,
+          quantity,
+          status: 'received',
+          occasion,
+          menuPackage,
+          dietaryNotes,
+          advanceAmount,
+          totalAmount,
+          advancePaymentMethod: 'online',
+          advanceStatus: 'received',
+          receiptRef: generateID('REC'),
+          notes: occasion ? `Sponsorship for occasion: ${occasion}. Advance paid via Stripe webhook.` : 'Meal sponsorship booked via Stripe webhook.',
+        });
+
+        donor.totalDonated += amount;
+        await donor.save();
+
+        const defaultAccount = await BankAccount.findOne();
+        if (defaultAccount) {
+          await Income.create({
+            category: 'Meal Advance Donation',
+            amount,
+            paymentMethod: 'online',
+            donor: name,
+            refReceipt: donation.receiptRef,
+            bankAccount: defaultAccount._id,
+          });
+
+          defaultAccount.balance += amount;
+          await defaultAccount.save();
+        }
+
+        console.log(`Successfully processed Stripe meal donation advance: LKR ${amount} from ${name}`);
+        return res.json({ received: true });
       }
 
       // Create Cash Donation record
@@ -401,9 +658,22 @@ router.get('/booked-meals', async (req, res) => {
 // POST /api/public/book-meal
 router.post('/book-meal', async (req, res) => {
   try {
-    const { name, email, contactDetails, mealDate, mealType, quantity, occasion, menuPackage, dietaryNotes } = req.body;
+    const { 
+      name, email, contactDetails, mealDate, mealType, quantity, occasion, 
+      menuPackage, dietaryNotes, advanceAmount, totalAmount, paymentMethod, proof 
+    } = req.body;
+
     if (!name || !email || !mealDate || !mealType || !quantity) {
       return res.status(400).json({ status: 'fail', message: 'Missing required meal fields.' });
+    }
+
+    if (!advanceAmount || Number(advanceAmount) <= 0) {
+      return res.status(400).json({ status: 'fail', message: 'An advance payment is required to book a meal slot.' });
+    }
+
+    const payMethod = paymentMethod || 'bank_transfer';
+    if (payMethod === 'bank_transfer' && !proof) {
+      return res.status(400).json({ status: 'fail', message: 'Please upload a bank deposit/transfer slip as proof of advance payment.' });
     }
 
     // Check for double booking
@@ -431,11 +701,15 @@ router.post('/book-meal', async (req, res) => {
         contactDetails: contactDetails || 'N/A',
         type: 'individual',
         preference: 'meal',
+        totalDonated: 0,
       });
     } else if (contactDetails && contactDetails !== donor.contactDetails) {
       donor.contactDetails = contactDetails;
       await donor.save();
     }
+
+    const isOnline = payMethod === 'online';
+    const receiptRef = generateID('REC');
 
     // Create Meal Donation record
     const donation = await MealDonation.create({
@@ -444,25 +718,50 @@ router.post('/book-meal', async (req, res) => {
       mealDate: new Date(mealDate),
       mealType,
       quantity: Number(quantity),
-      status: 'received',
+      status: isOnline ? 'received' : 'pending',
       occasion,
       menuPackage: menuPackage || 'standard',
       dietaryNotes,
-      notes: occasion ? `Sponsorship for occasion: ${occasion}` : 'Booked via public website meal portal.',
+      advanceAmount: Number(advanceAmount),
+      totalAmount: Number(totalAmount || advanceAmount),
+      advancePaymentMethod: payMethod,
+      advanceStatus: isOnline ? 'received' : 'pending',
+      receiptRef,
+      proofOfPayment: proof || undefined,
+      notes: occasion 
+        ? `Sponsorship for occasion: ${occasion}. Advance: LKR ${Number(advanceAmount).toLocaleString()} (${payMethod}).` 
+        : `Booked via website meal portal. Advance: LKR ${Number(advanceAmount).toLocaleString()} (${payMethod}).`,
     });
+
+    if (isOnline) {
+      donor.totalDonated += Number(advanceAmount);
+      await donor.save();
+
+      const defaultAccount = await BankAccount.findOne();
+      if (defaultAccount) {
+        await Income.create({
+          category: 'Meal Advance Donation',
+          amount: Number(advanceAmount),
+          paymentMethod: 'online',
+          donor: name,
+          refReceipt: donation.receiptRef,
+          bankAccount: defaultAccount._id,
+        });
+
+        defaultAccount.balance += Number(advanceAmount);
+        await defaultAccount.save();
+      }
+    }
 
     // Send instant SMS confirmation to donor
     if (contactDetails && contactDetails !== 'N/A') {
       const mealDateFormatted = new Date(donation.mealDate).toLocaleDateString(undefined, {
         weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
       });
-      const smsText = buildMealSmsText({
-        donorName: name,
-        mealDateFormatted,
-        mealType,
-        quantity: Number(quantity),
-        isReminder: false,
-      });
+      const smsText = isOnline
+        ? `CONFIRMATION: Dear ${name}, your ${mealType} booking for ${quantity} kids on ${mealDateFormatted} is confirmed! Advance payment of LKR ${Number(advanceAmount).toLocaleString()} received (Ref: ${donation.donationID}). Thank you! - Hope Haven`
+        : `ACKNOWLEDGEMENT: Dear ${name}, we received your ${mealType} booking for ${mealDateFormatted} with advance deposit of LKR ${Number(advanceAmount).toLocaleString()} (Ref: ${donation.donationID}). Our team will verify your payment slip. Thank you! - Hope Haven`;
+
       const smsResult = await sendSMS({ to: contactDetails, message: smsText });
 
       donation.smsSent = smsResult.success;
