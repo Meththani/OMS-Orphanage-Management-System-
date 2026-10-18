@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
   colors, cardStyle, buttonPrimary, buttonSecondary,
   inputStyle, selectStyle, tableStyle, thStyle, tdStyle, modalOverlay, modalBox,
 } from '../styles';
-import { Heart, Plus, Calendar, Filter } from 'lucide-react';
+import { Heart, Plus, Calendar, Filter, FileSpreadsheet, Edit, Eye, Lock } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
+import { exportDonationsToExcel } from '../utils/excelExport';
 
 const emptyForm = {
   type: 'cash', donorID: '', amount: '', itemType: '', quantity: '',
@@ -17,6 +19,9 @@ const emptyForm = {
 
 export default function DonationsManagement() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const canEditOrAction = user?.role === 'admin' || user?.role === 'accountant';
+
   const [donations, setDonations] = useState([]);
   const [donors, setDonors] = useState([]);
   const [filter, setFilter] = useState('all');
@@ -27,6 +32,12 @@ export default function DonationsManagement() {
   const [saving, setSaving] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [selectedDonation, setSelectedDonation] = useState(null);
+
+  // Edit Donation States (Admin/Accountant only)
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingDonation, setEditingDonation] = useState(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -97,6 +108,63 @@ export default function DonationsManagement() {
     }
   };
 
+  const handleOpenEdit = (donation, e) => {
+    if (e) e.stopPropagation();
+    setEditingDonation(donation);
+    setEditForm({
+      type: donation.type || 'cash',
+      amount: donation.amount ? formatWithCommas(donation.amount) : '',
+      paymentMethod: donation.paymentMethod || 'bank_transfer',
+      itemType: donation.itemType || '',
+      quantity: donation.quantity ? String(donation.quantity) : '',
+      mealDate: donation.mealDate ? new Date(donation.mealDate).toISOString().split('T')[0] : '',
+      mealType: donation.mealType || 'breakfast',
+      occasion: donation.occasion || '',
+      menuPackage: donation.menuPackage || 'standard',
+      dietaryNotes: donation.dietaryNotes || '',
+      receiptRef: donation.receiptRef || '',
+      notes: donation.notes || '',
+      status: donation.status || 'pending',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateDonation = async (e) => {
+    e.preventDefault();
+    setSavingEdit(true);
+    setError('');
+    try {
+      const payload = {
+        status: editForm.status,
+        receiptRef: editForm.receiptRef,
+        notes: editForm.notes,
+      };
+      if (editForm.type === 'cash') {
+        payload.amount = Number(stripCommas(editForm.amount));
+        payload.paymentMethod = editForm.paymentMethod;
+      } else if (editForm.type === 'goods') {
+        payload.itemType = editForm.itemType;
+        payload.quantity = Number(editForm.quantity);
+      } else if (editForm.type === 'meal') {
+        payload.mealDate = new Date(editForm.mealDate);
+        payload.mealType = editForm.mealType;
+        payload.quantity = Number(editForm.quantity);
+        payload.occasion = editForm.occasion;
+        payload.menuPackage = editForm.menuPackage;
+        payload.dietaryNotes = editForm.dietaryNotes;
+      }
+
+      await api.put(`/donations/${editingDonation._id}`, payload);
+      setShowEditModal(false);
+      setEditingDonation(null);
+      loadData();
+    } catch (err) {
+      setError(err.message || 'Failed to update donation.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const statusColor = (status) => {
     if (status === 'received') return colors.success;
     if (status === 'cancelled') return colors.danger;
@@ -125,9 +193,18 @@ export default function DonationsManagement() {
             {t("Manage and confirm contributions")}
           </p>
         </div>
-        <button style={buttonPrimary} onClick={() => setShowModal(true)}>
-          <Plus size={16} style={{ marginRight: '6px' }} /> {t("Record Donation")}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => exportDonationsToExcel(donations)}
+            title="Export all donations to Excel spreadsheet"
+          >
+            <FileSpreadsheet size={16} color={colors.primary} /> {t("Export to Excel")}
+          </button>
+          <button style={buttonPrimary} onClick={() => setShowModal(true)}>
+            <Plus size={16} style={{ marginRight: '6px' }} /> {t("Record Donation")}
+          </button>
+        </div>
       </div>
 
       {/* Filter tabs */}
@@ -320,28 +397,64 @@ export default function DonationsManagement() {
                     </span>
                   </td>
                   <td style={tdStyle}>
-                    {d.status === 'pending' && (
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      {canEditOrAction ? (
+                        <>
+                          {d.status === 'pending' && (
+                            <>
+                              <button
+                                style={{ ...buttonSecondary, padding: '5px 10px', fontSize: '11px', color: colors.success, borderColor: 'rgba(16,185,129,0.3)' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateStatus(d._id, 'received');
+                                }}
+                                title="Accept donation"
+                              >
+                                ✓ Accept
+                              </button>
+                              <button
+                                style={{ ...buttonSecondary, padding: '5px 10px', fontSize: '11px', color: colors.danger, borderColor: 'rgba(239,68,68,0.3)' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateStatus(d._id, 'cancelled');
+                                }}
+                                title="Reject donation"
+                              >
+                                ✗ Reject
+                              </button>
+                            </>
+                          )}
+                          <button
+                            style={{ ...buttonSecondary, padding: '5px 10px', fontSize: '11px', color: colors.primary, borderColor: `${colors.primary}40`, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            onClick={(e) => handleOpenEdit(d, e)}
+                            title="Edit donation details"
+                          >
+                            <Edit size={12} /> {t("Edit")}
+                          </button>
+                          <button
+                            style={{ ...buttonSecondary, padding: '5px 10px', fontSize: '11px', color: colors.textSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedDonation(d);
+                            }}
+                            title="View donation details"
+                          >
+                            <Eye size={12} /> {t("View")}
+                          </button>
+                        </>
+                      ) : (
                         <button
-                          style={{ ...buttonSecondary, padding: '5px 10px', fontSize: '11px', color: colors.success, borderColor: 'rgba(16,185,129,0.3)' }}
+                          style={{ ...buttonSecondary, padding: '5px 12px', fontSize: '11px', color: colors.primary, borderColor: `${colors.primary}40`, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            updateStatus(d._id, 'received');
+                            setSelectedDonation(d);
                           }}
+                          title="View donation details"
                         >
-                          ✓ Accept
+                          <Eye size={12} /> {t("View Details")}
                         </button>
-                        <button
-                          style={{ ...buttonSecondary, padding: '5px 10px', fontSize: '11px', color: colors.danger, borderColor: 'rgba(239,68,68,0.3)' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateStatus(d._id, 'cancelled');
-                          }}
-                        >
-                          ✗ Reject
-                        </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -687,26 +800,45 @@ export default function DonationsManagement() {
             {/* Modal Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
               <div>
-                {selectedDonation.status === 'pending' && (
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                {canEditOrAction ? (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    {selectedDonation.status === 'pending' && (
+                      <>
+                        <button
+                          style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)`, boxShadow: `0 4px 12px ${colors.successGlow}`, padding: '10px 20px', fontSize: '13px' }}
+                          onClick={async () => {
+                            await updateStatus(selectedDonation._id, 'received');
+                            setSelectedDonation(null);
+                          }}
+                        >
+                          ✓ {t("Approve & Receive")}
+                        </button>
+                        <button
+                          style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', padding: '10px 20px', fontSize: '13px' }}
+                          onClick={async () => {
+                            await updateStatus(selectedDonation._id, 'cancelled');
+                            setSelectedDonation(null);
+                          }}
+                        >
+                          ✗ {t("Reject & Cancel")}
+                        </button>
+                      </>
+                    )}
                     <button
-                      style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)`, boxShadow: `0 4px 12px ${colors.successGlow}`, padding: '10px 20px', fontSize: '13px' }}
-                      onClick={async () => {
-                        await updateStatus(selectedDonation._id, 'received');
+                      type="button"
+                      style={{ ...buttonSecondary, color: colors.primary, borderColor: `${colors.primary}40`, padding: '10px 18px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => {
+                        const don = selectedDonation;
                         setSelectedDonation(null);
+                        handleOpenEdit(don);
                       }}
                     >
-                      ✓ {t("Approve & Receive")}
+                      <Edit size={14} /> {t("Edit Record")}
                     </button>
-                    <button
-                      style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', padding: '10px 20px', fontSize: '13px' }}
-                      onClick={async () => {
-                        await updateStatus(selectedDonation._id, 'cancelled');
-                        setSelectedDonation(null);
-                      }}
-                    >
-                      ✗ {t("Reject & Cancel")}
-                    </button>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: colors.textMuted, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Lock size={14} color={colors.warning} /> Staff View Mode (Approval & editing restricted to Admin & Accountant)
                   </div>
                 )}
               </div>
@@ -718,6 +850,215 @@ export default function DonationsManagement() {
                 {t("Close")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Donation Modal (Admin & Accountant only) */}
+      {showEditModal && editingDonation && (
+        <div style={modalOverlay}>
+          <div style={{ ...modalBox, width: '650px', maxWidth: '95vw', padding: '24px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
+              <div>
+                <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Edit size={18} color={colors.primary} /> Edit Donation Record
+                </h2>
+                <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '2px', fontFamily: 'monospace' }}>
+                  ID: {editingDonation.donationID} | Donor: {editingDonation.donorID?.name || 'Anonymous'}
+                </div>
+              </div>
+              <ModalCloseButton onClick={() => setShowEditModal(false)} />
+            </div>
+
+            <form onSubmit={handleUpdateDonation}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                    Status
+                  </label>
+                  <select
+                    style={selectStyle}
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="received">Received / Approved</option>
+                    <option value="cancelled">Cancelled / Rejected</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                    Receipt Reference
+                  </label>
+                  <input
+                    style={inputStyle}
+                    value={editForm.receiptRef}
+                    placeholder="e.g. REC-12345"
+                    onChange={(e) => setEditForm({ ...editForm, receiptRef: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {editForm.type === 'cash' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                      Amount (LKR)
+                    </label>
+                    <input
+                      style={inputStyle}
+                      type="text"
+                      value={editForm.amount}
+                      onChange={(e) => setEditForm({ ...editForm, amount: formatWithCommas(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                      Payment Method
+                    </label>
+                    <select
+                      style={selectStyle}
+                      value={editForm.paymentMethod}
+                      onChange={(e) => setEditForm({ ...editForm, paymentMethod: e.target.value })}
+                    >
+                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="cash">Cash Handover</option>
+                      <option value="cheque">Cheque</option>
+                      <option value="online">Online Payment</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {editForm.type === 'goods' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                      Item Type / Description
+                    </label>
+                    <input
+                      style={inputStyle}
+                      value={editForm.itemType}
+                      onChange={(e) => setEditForm({ ...editForm, itemType: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                      Quantity
+                    </label>
+                    <input
+                      style={inputStyle}
+                      type="number"
+                      value={editForm.quantity}
+                      onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {editForm.type === 'meal' && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Meal Date</label>
+                      <input
+                        style={inputStyle}
+                        type="date"
+                        value={editForm.mealDate}
+                        onChange={(e) => setEditForm({ ...editForm, mealDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Meal Slot</label>
+                      <select
+                        style={selectStyle}
+                        value={editForm.mealType}
+                        onChange={(e) => setEditForm({ ...editForm, mealType: e.target.value })}
+                      >
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Kids Portions</label>
+                      <input
+                        style={inputStyle}
+                        type="number"
+                        value={editForm.quantity}
+                        onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Occasion</label>
+                      <input
+                        style={inputStyle}
+                        value={editForm.occasion}
+                        placeholder="e.g. Birthday"
+                        onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Menu Package</label>
+                      <select
+                        style={selectStyle}
+                        value={editForm.menuPackage}
+                        onChange={(e) => setEditForm({ ...editForm, menuPackage: e.target.value })}
+                      >
+                        <option value="standard">Standard Menu</option>
+                        <option value="special">Special Menu</option>
+                        <option value="feast">Feast Menu</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Dietary / Preparation Notes</label>
+                    <textarea
+                      style={{ ...inputStyle, minHeight: '50px', resize: 'vertical' }}
+                      value={editForm.dietaryNotes}
+                      onChange={(e) => setEditForm({ ...editForm, dietaryNotes: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Internal Notes</label>
+                <textarea
+                  style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
+                  value={editForm.notes}
+                  placeholder="Additional remarks or instructions..."
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
+                <button
+                  type="button"
+                  style={buttonSecondary}
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={buttonPrimary}
+                  disabled={savingEdit}
+                >
+                  {savingEdit ? 'Updating...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

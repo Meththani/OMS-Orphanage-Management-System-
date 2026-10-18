@@ -10,6 +10,7 @@ const donationRoutes = require('./routes/donationRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const financialRoutes = require('./routes/financialRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const stockMovementRoutes = require('./routes/stockMovementRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 
 const { initReminderScheduler } = require('./services/reminderScheduler');
@@ -39,6 +40,7 @@ app.use('/api/donations', donationRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/finances', financialRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/stock-movements', stockMovementRoutes);
 app.use('/api/messages', messageRoutes);
 
 
