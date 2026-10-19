@@ -7,6 +7,8 @@ import {
   ShieldCheck, Users, ArrowRight, Award, GraduationCap
 } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
+import AboutHeroCard from '../components/AboutHeroCard';
+import HistoryTimelineCard from '../components/HistoryTimelineCard';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -1405,178 +1407,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
         {activeTab === 'about' && (
           <div style={{ animation: 'fadeIn 0.35s ease-out' }}>
 
-            {/* Header Banner Showcase */}
-            <div style={{
-              backgroundColor: charityTheme.bgCard,
-              borderRadius: '24px',
-              padding: '48px',
-              border: `1px solid ${charityTheme.borderWarm}`,
-              boxShadow: charityTheme.shadowCard,
-              marginBottom: '48px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{ maxWidth: '820px' }}>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '7px 16px',
-                  borderRadius: '30px',
-                  backgroundColor: charityTheme.primaryLight,
-                  color: charityTheme.primary,
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
-                  marginBottom: '20px'
-                }}>
-                  <ShieldCheck size={15} />
-                  <span>Incorporated under Parliament Act No. 30 of 2024 &bull; Webada, Kirillawala</span>
-                </div>
+            {/* Header Banner Showcase - Styled Authentic About Us Card */}
+            <AboutHeroCard />
 
-                <h1 style={{
-                  fontSize: '42px',
-                  fontWeight: 800,
-                  fontFamily: charityTheme.fontHeading,
-                  color: charityTheme.textHeading,
-                  lineHeight: 1.2,
-                  marginBottom: '20px',
-                  letterSpacing: '-0.02em'
-                }}>
-                  Who We Are: A Legacy of Refuge, Care, &amp; Dignity.
-                </h1>
-
-                <p style={{
-                  color: charityTheme.textBody,
-                  fontSize: '16px',
-                  lineHeight: 1.75,
-                  marginBottom: '20px'
-                }}>
-                  <strong>Kirillawala Senehasa Dari Sewana Child Development Centre</strong> (Senehasa Dari Sewana) is a residential care institution located in Webada, Kirillawala, Sri Lanka. The centre is dedicated to providing a safe, caring, and supportive environment for children while actively supporting their education, wellbeing, and personal development.
-                </p>
-
-                <p style={{
-                  color: charityTheme.textBody,
-                  fontSize: '15px',
-                  lineHeight: 1.75
-                }}>
-                  The centre operates under the stewardship of the <strong>Kelaniya Buddhist Women's Charitable Society</strong>, a charitable organization established to carry out social, educational, and welfare activities across Sri Lanka.
-                </p>
-              </div>
-            </div>
-
-            {/* Historical Timeline Section */}
-            <div style={{
-              backgroundColor: charityTheme.bgCard,
-              borderRadius: '24px',
-              padding: '48px',
-              border: `1px solid ${charityTheme.borderWarm}`,
-              boxShadow: charityTheme.shadowCard,
-              marginBottom: '48px'
-            }}>
-              <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 44px' }}>
-                <div style={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: charityTheme.primary,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  marginBottom: '8px'
-                }}>
-                  Official History &amp; Milestones
-                </div>
-                <h2 style={{ fontSize: '36px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '12px' }}>
-                  Our History &amp; Parliamentary Incorporation
-                </h2>
-                <p style={{ color: charityTheme.textMuted, fontSize: '15px', lineHeight: 1.6 }}>
-                  From early welfare initiatives to formal Parliamentary Act certification in 2024.
-                </p>
-              </div>
-
-              {/* Timeline Items Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '28px' }}>
-                <div style={{
-                  backgroundColor: charityTheme.bgSurface,
-                  borderRadius: '18px',
-                  padding: '30px',
-                  border: `1px solid ${charityTheme.border}`,
-                  position: 'relative'
-                }}>
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    backgroundColor: charityTheme.primaryLight,
-                    color: charityTheme.primary,
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    marginBottom: '16px'
-                  }}>
-                    2018 — Gazette Proposal
-                  </div>
-                  <h3 style={{ fontSize: '19px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                    Sanctuary Establishment
-                  </h3>
-                  <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.65 }}>
-                    In 2018, a Parliamentary Gazette formally proposed the establishment and maintenance of the <strong>Senehasa Child Development Center</strong> (also referred to as <em>“Senehasa Dari Sevana Children's Home”</em>) at No. 307/16, Jaya Mawatha, Webada, Kirillawala.
-                  </p>
-                </div>
-
-                <div style={{
-                  backgroundColor: charityTheme.bgSurface,
-                  borderRadius: '18px',
-                  padding: '30px',
-                  border: `1px solid rgba(16, 185, 129, 0.3)`,
-                  position: 'relative'
-                }}>
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    backgroundColor: charityTheme.accentGreenLight,
-                    color: charityTheme.accentGreen,
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    marginBottom: '16px'
-                  }}>
-                    June 12 &amp; 14, 2024 — Incorporation
-                  </div>
-                  <h3 style={{ fontSize: '19px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                    Parliament Act No. 30 of 2024
-                  </h3>
-                  <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.65 }}>
-                    The Sri Lankan Parliament enacted the <strong>Kelaniya Buddhist Women's Charitable Society (Incorporation) Act, No. 30 of 2024</strong> (certified June 12, effective June 14, 2024), establishing statutory authority to run the sanctuary.
-                  </p>
-                </div>
-
-                <div style={{
-                  backgroundColor: charityTheme.bgSurface,
-                  borderRadius: '18px',
-                  padding: '30px',
-                  border: `1px solid rgba(241, 156, 56, 0.3)`,
-                  position: 'relative'
-                }}>
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    backgroundColor: charityTheme.accentAmberLight,
-                    color: charityTheme.accentAmber,
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    marginBottom: '16px'
-                  }}>
-                    Present Day — Residential Care
-                  </div>
-                  <h3 style={{ fontSize: '19px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                    Residential Child Development
-                  </h3>
-                  <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.65 }}>
-                    Today, Senehasa Dari Sewana provides children with round-the-clock care, shelter, education, healthcare, and guidance to build confident, independent futures.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Redesigned Premium Historical Timeline & Gallery Showcase */}
+            <HistoryTimelineCard />
 
             {/* Mission & Vision Creative Glowing Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '48px' }}>
@@ -2643,7 +2478,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               }}>
                 <div style={{
                   width: '100%',
-                  height: '180px',
+                  height: '220px',
                   borderRadius: '14px',
                   overflow: 'hidden',
                   marginBottom: '20px',
@@ -2733,7 +2568,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               <div style={{
                 backgroundColor: charityTheme.bgCard,
                 borderRadius: '20px',
-                padding: '36px',
+                padding: '32px',
                 border: `1px solid rgba(16, 185, 129, 0.25)`,
                 boxShadow: charityTheme.shadowCard,
                 display: 'flex',

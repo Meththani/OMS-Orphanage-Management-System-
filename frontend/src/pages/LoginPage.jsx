@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../styles';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, WifiOff } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 
 export default function LoginPage() {
@@ -10,19 +10,41 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!navigator.onLine) {
+      setError('Internet connection disconnected. Please check your internet connection and try again.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
       await login(username.toLowerCase(), password);
       navigate('/portal/dashboard');
     } catch (err) {
-      setError(err.message);
+      if (!navigator.onLine || err.message?.toLowerCase().includes('connect') || err.message?.toLowerCase().includes('fetch')) {
+        setError('Network Error: Internet connection disconnected or server is unreachable. Please check your connection and try again.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -114,6 +136,24 @@ export default function LoginPage() {
             Sign in to your account to continue
           </p>
         </div>
+
+        {isOffline && (
+          <div style={{
+            padding: '12px 16px',
+            backgroundColor: colors.warningGlow,
+            border: `1px solid rgba(241, 156, 56, 0.4)`,
+            borderRadius: '10px',
+            color: colors.warning,
+            fontSize: '13px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: 600
+          }}>
+            <WifiOff size={16} /> Internet connection disconnected. Please check your network.
+          </div>
+        )}
 
         {error && (
           <div style={{

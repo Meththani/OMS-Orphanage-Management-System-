@@ -236,7 +236,11 @@ export default function StaffManagement() {
       setTimeout(() => setSuccess(''), 5000);
       loadStaff();
     } catch (err) {
-      setError(err.message);
+      if (!navigator.onLine || err.message?.toLowerCase().includes('connect') || err.message?.toLowerCase().includes('fetch')) {
+        setError('Network Error: Internet connection disconnected or server is unreachable. Please check your connection and try again.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setSaving(false);
     }
@@ -534,6 +538,26 @@ export default function StaffManagement() {
               </h2>
               <ModalCloseButton onClick={closeModal} />
             </div>
+
+            {error && (
+              <div style={{
+                padding: '12px 16px',
+                backgroundColor: colors.dangerGlow,
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '10px',
+                color: colors.danger,
+                fontSize: '13px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 500,
+                boxShadow: '0 2px 8px rgba(239,68,68,0.1)'
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+
             <form onSubmit={handleCreateOrUpdate}>
 
               {/* Full Name */}

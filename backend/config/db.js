@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
 const seedDatabase = require('./seeder');
+
+// Resolve MongoDB SRV records reliably on Windows/Node.js networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch (dnsErr) {
+  // Fallback to system default if setting custom servers is restricted
+}
 
 const connectWithMemoryServer = async () => {
   console.log('-----------------------------------------------------------');
