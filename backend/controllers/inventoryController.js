@@ -1,5 +1,23 @@
 const InventoryItem = require('../models/InventoryItem');
 
+// Helper: generate a unique item number like INV-2026-001
+const generateItemNumber = async () => {
+  const year = new Date().getFullYear();
+  const prefix = `INV-${year}-`;
+  // Find the highest existing number with this year prefix
+  const last = await InventoryItem.findOne({ itemNumber: new RegExp(`^${prefix}`) })
+    .sort({ itemNumber: -1 })
+    .select('itemNumber');
+
+  let seq = 1;
+  if (last && last.itemNumber) {
+    const parts = last.itemNumber.split('-');
+    const lastNum = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(lastNum)) seq = lastNum + 1;
+  }
+  return `${prefix}${String(seq).padStart(3, '0')}`;
+};
+
 // GET /api/inventory
 exports.getInventory = async (req, res) => {
   try {
@@ -10,39 +28,22 @@ exports.getInventory = async (req, res) => {
   }
 };
 
-// GET /api/inventory/barcode/:barcode
-exports.getInventoryByBarcode = async (req, res) => {
-  try {
-    const barcode = req.params.barcode ? req.params.barcode.trim() : '';
-    if (!barcode) {
-      return res.status(400).json({ status: 'fail', message: 'Barcode parameter is required.' });
-    }
-
-    const item = await InventoryItem.findOne({ barcode });
-    if (!item) {
-      return res.status(404).json({ status: 'fail', message: `No inventory item found for barcode "${barcode}".` });
-    }
-
-    res.status(200).json({ status: 'success', data: item });
-  } catch (err) {
-    res.status(500).json({ status: 'error', message: err.message });
-  }
-};
-
 // POST /api/inventory
 exports.createInventoryItem = async (req, res) => {
   try {
-    const { name, category, quantity, unit, barcode } = req.body;
+    const { name, category, quantity, unit } = req.body;
     if (!name || !category || quantity === undefined || !unit) {
       return res.status(400).json({ status: 'fail', message: 'Missing inventory fields.' });
     }
 
+    const itemNumber = await generateItemNumber();
+
     const newItem = await InventoryItem.create({
+      itemNumber,
       name,
       category,
       quantity,
       unit,
-      barcode: barcode ? barcode.trim() : '',
     });
 
     res.status(201).json({ status: 'success', data: newItem });
@@ -54,7 +55,7 @@ exports.createInventoryItem = async (req, res) => {
 // PATCH /api/inventory/:id
 exports.updateInventoryItem = async (req, res) => {
   try {
-    const { quantity, addQuantity, name, category, unit, barcode } = req.body;
+    const { quantity, addQuantity, name, category, unit } = req.body;
 
     const item = await InventoryItem.findById(req.params.id);
     if (!item) {
@@ -70,7 +71,6 @@ exports.updateInventoryItem = async (req, res) => {
     if (name) item.name = name;
     if (category) item.category = category;
     if (unit) item.unit = unit;
-    if (barcode !== undefined) item.barcode = barcode.trim();
 
     await item.save();
 

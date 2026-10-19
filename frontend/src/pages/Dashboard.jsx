@@ -158,6 +158,7 @@ export default function Dashboard() {
     }
   }, [user]);
 
+
   const greeting = () => {
     const hr = new Date().getHours();
     return hr < 12 ? t('Good Morning') : hr < 17 ? t('Good Afternoon') : t('Good Evening');
@@ -182,6 +183,9 @@ export default function Dashboard() {
         <h1 style={{ fontSize: '28px', fontWeight: 700, color: colors.text, margin: '0 0 6px', fontFamily: "'Outfit', sans-serif" }}>
           {greeting()}, {user?.name || 'User'} 👋
         </h1>
+        <p style={{ margin: 0, color: colors.textMuted, fontSize: '14px' }}>
+          {t("Welcome to the Orphanage Management Portal")}
+        </p>
       </div>
 
       {error && (

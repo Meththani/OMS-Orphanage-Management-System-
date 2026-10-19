@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle, selectStyle, modalOverlay, modalBox } from '../styles';
-import { Landmark, Plus, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Landmark, Plus, RefreshCw, CheckCircle2, FileSpreadsheet } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
+import { exportBankAccountsToExcel } from '../utils/excelExport';
 
 const emptyForm = { accountName: '', bankName: '', accountNumber: '', initialBalance: '0' };
 
@@ -73,9 +74,18 @@ export default function BankAccountManagement() {
             {t("Manage bank accounts, deposits, and balances")}
           </p>
         </div>
-        <button style={buttonPrimary} onClick={() => setShowModal(true)}>
-          <Plus size={16} style={{ marginRight: '6px' }} /> {t("Add Bank Account")}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => exportBankAccountsToExcel(accounts)}
+            title="Export all bank accounts to Excel"
+          >
+            <FileSpreadsheet size={16} color={colors.primary} /> {t("Export to Excel")}
+          </button>
+          <button style={buttonPrimary} onClick={() => setShowModal(true)}>
+            <Plus size={16} style={{ marginRight: '6px' }} /> {t("Add Bank Account")}
+          </button>
+        </div>
       </div>
 
       {error && (

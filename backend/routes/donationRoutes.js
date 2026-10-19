@@ -31,12 +31,16 @@ router.get('/donors-list', async (req, res) => {
   }
 });
 
+// Staff, Admin, and Accountant can view all donations and register new donations
 router.route('/').get(getAllDonations).post(createDonation);
 
-router.route('/:id').get(getDonation).put(updateDonation);
+// Staff, Admin, and Accountant can view individual donation details; ONLY Admin and Accountant can edit
+router.route('/:id').get(getDonation).put(restrictTo('admin', 'accountant'), updateDonation);
 
-router.patch('/:id/status', updateDonationStatus);
+// ONLY Admin and Accountant can update status (approve, reject, cancel)
+router.patch('/:id/status', restrictTo('admin', 'accountant'), updateDonationStatus);
 
-router.post('/:id/send-sms', sendMealSmsReminder);
+// ONLY Admin and Accountant can trigger action updates (like SMS reminders)
+router.post('/:id/send-sms', restrictTo('admin', 'accountant'), sendMealSmsReminder);
 
 module.exports = router;

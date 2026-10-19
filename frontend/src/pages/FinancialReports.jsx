@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/apiClient';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, inputStyle } from '../styles';
-import { RefreshCw, Printer } from 'lucide-react';
+import { RefreshCw, Printer, FileSpreadsheet } from 'lucide-react';
+import { exportFinancialStatementToExcel } from '../utils/excelExport';
 
 export default function FinancialReports() {
   const [incomes, setIncomes] = useState([]);
@@ -838,9 +839,39 @@ export default function FinancialReports() {
             Financial Reports
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button style={buttonSecondary} onClick={loadData} disabled={loading}>
             <RefreshCw size={16} style={{ marginRight: '6px' }} /> Refresh Data
+          </button>
+          <button
+            style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => exportFinancialStatementToExcel(reportType, {
+              incomes: filteredIncomes,
+              expenses: filteredExpenses,
+              bankAccounts,
+              childrenList,
+              startDate,
+              endDate,
+            })}
+            disabled={loading}
+            title="Export the currently viewed financial statement to Excel"
+          >
+            <FileSpreadsheet size={16} color={colors.primary} /> Export Statement (Excel)
+          </button>
+          <button
+            style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => exportFinancialStatementToExcel('all', {
+              incomes: filteredIncomes,
+              expenses: filteredExpenses,
+              bankAccounts,
+              childrenList,
+              startDate,
+              endDate,
+            })}
+            disabled={loading}
+            title="Export full financial statements and ledgers to multi-tab Excel"
+          >
+            <FileSpreadsheet size={16} color={colors.success} /> Export All Financials (Excel)
           </button>
           <button style={buttonPrimary} onClick={handlePrint} disabled={loading}>
             <Printer size={16} style={{ marginRight: '6px' }} /> Download PDF Report
