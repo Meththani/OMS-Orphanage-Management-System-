@@ -4,12 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSelector from '../components/LanguageSelector';
 import { colors } from '../styles';
-import { ArrowLeft, WifiOff } from 'lucide-react';
+import { ArrowLeft, WifiOff, Eye, EyeOff } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -235,23 +236,39 @@ export default function LoginPage() {
                 {t('Forgot Password?')}
               </button>
             </div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('Enter your password')}
-              required
-              style={{
-                width: '100%', padding: '12px 16px', borderRadius: '10px',
-                border: `1px solid ${colors.border}`, backgroundColor: colors.surface,
-                color: colors.text, fontSize: '14px', outline: 'none',
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                boxSizing: 'border-box',
-                transition: 'border-color 0.2s ease',
-              }}
-              onFocus={(e) => e.target.style.borderColor = colors.primary}
-              onBlur={(e) => e.target.style.borderColor = colors.border}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t('Enter your password')}
+                required
+                style={{
+                  width: '100%', padding: '12px 42px 12px 16px', borderRadius: '10px',
+                  border: `1px solid ${colors.border}`, backgroundColor: colors.surface,
+                  color: colors.text, fontSize: '14px', outline: 'none',
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  boxSizing: 'border-box',
+                  transition: 'border-color 0.2s ease',
+                }}
+                onFocus={(e) => e.target.style.borderColor = colors.primary}
+                onBlur={(e) => e.target.style.borderColor = colors.border}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute', right: '12px', background: 'none',
+                  border: 'none', cursor: 'pointer', color: colors.textMuted,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '4px',
+                }}
+              >
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
+            </div>
           </div>
 
           <button

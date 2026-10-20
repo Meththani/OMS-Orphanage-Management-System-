@@ -51,6 +51,7 @@ export default function MealScheduling() {
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
   const [form, setForm] = useState({
+    donorName: '',
     donorID: '',
     mealDate: '',
     mealType: 'breakfast',
@@ -113,6 +114,7 @@ export default function MealScheduling() {
       }
       setEditingMealId(meal._id);
       setForm({
+        donorName: meal.donorID?.name || '',
         donorID: meal.donorID?._id || meal.donorID || '',
         mealDate: meal.mealDate ? new Date(meal.mealDate).toISOString().split('T')[0] : '',
         mealType: meal.mealType || 'breakfast',
@@ -127,7 +129,8 @@ export default function MealScheduling() {
     } else {
       setEditingMealId(null);
       setForm({
-        donorID: donors[0]?._id || '',
+        donorName: '',
+        donorID: '',
         mealDate: new Date().toISOString().split('T')[0],
         mealType: 'breakfast',
         quantity: effectiveCount,
@@ -150,6 +153,7 @@ export default function MealScheduling() {
       const finalCount = activeChildrenCount > 0 ? activeChildrenCount : Number(form.quantity || 50);
       const payload = {
         ...form,
+        donorName: form.donorName.trim(),
         quantity: finalCount,
         menuPackage: 'standard', // preserve backward compatibility with backend discriminator
         estimatedCost: form.estimatedCost ? Number(stripCommas(form.estimatedCost)) : 0,
@@ -987,20 +991,28 @@ export default function MealScheduling() {
               </div>
 
               {/* ── COMMON FIELDS ── */}
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Select Donor Profile")}</label>
-              <select
-                style={selectStyle}
-                value={form.donorID}
-                onChange={(e) => setForm({ ...form, donorID: e.target.value })}
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>
+                {t("Donor Name")} <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                list="meal-donors-list"
+                style={inputStyle}
+                placeholder={t("Enter donor name (e.g. John Silva)")}
+                value={form.donorName || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const matched = donors.find(d => d.name.toLowerCase() === val.trim().toLowerCase());
+                  setForm({ ...form, donorName: val, donorID: matched ? matched._id : '' });
+                }}
                 required
-              >
-                <option value="" disabled>-- {t("Select Donor")} --</option>
+              />
+              <datalist id="meal-donors-list">
                 {donors.map(donor => (
-                  <option key={donor._id} value={donor._id}>
-                    {donor.name} ({donor.email})
+                  <option key={donor._id} value={donor.name}>
+                    {donor.email ? `(${donor.email})` : ''}
                   </option>
                 ))}
-              </select>
+              </datalist>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div>

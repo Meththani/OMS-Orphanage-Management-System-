@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const { Donation, CashDonation, GoodsDonation, MealDonation } = require('../models/Donation');
 const Donor = require('../models/Donor');
 const BankAccount = require('../models/BankAccount');
@@ -6,19 +7,46 @@ const { sendSMS, buildMealSmsText } = require('../services/smsService');
 
 const generateDonationID = () => `DON-${Date.now()}`;
 
+// Helper: Resolve existing donor by ID or name, or automatically create a donor profile if entering a new donor name
+const resolveOrCreateDonor = async ({ donorID, donorName, type }) => {
+  let donor = null;
+  if (donorID && mongoose.Types.ObjectId.isValid(donorID)) {
+    donor = await Donor.findById(donorID);
+  }
+  const searchName = (donorName || (typeof donorID === 'string' && !mongoose.Types.ObjectId.isValid(donorID) ? donorID : '')).trim();
+  if (!donor && searchName) {
+    donor = await Donor.findOne({
+      name: new RegExp('^' + searchName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i')
+    });
+  }
+  if (!donor && searchName) {
+    donor = await Donor.create({
+      donorID: `DON-${Date.now()}`,
+      name: searchName,
+      email: `${searchName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'donor'}@donor.orphanage.org`,
+      contactDetails: 'N/A',
+      type: 'individual',
+      preference: type || 'cash',
+      totalDonated: 0,
+    });
+  }
+  return donor;
+};
+
 // POST /api/donations  (body.type = "cash" | "goods" | "meal")
 // Admin/Staff/Accountant only — see donationRoutes.js. Donors never hit this
 // endpoint directly; if you want public self-service donation submission,
 // add a separate, status-locked endpoint rather than opening this one up.
 exports.createDonation = async (req, res) => {
   try {
-    const { type, donorID } = req.body;
+    const { type, donorID, donorName } = req.body;
 
-    const donor = await Donor.findById(donorID);
-    if (!donor) return res.status(404).json({ status: 'fail', message: 'Donor not found.' });
+    const donor = await resolveOrCreateDonor({ donorID, donorName, type });
+    if (!donor) return res.status(400).json({ status: 'fail', message: 'Donor name is required.' });
 
     const payload = {
       ...req.body,
+      donorID: donor._id,
       donationID: generateDonationID(),
       recordedBy: req.user._id,
     };
@@ -180,10 +208,21 @@ exports.updateDonation = async (req, res) => {
       return res.status(404).json({ status: 'fail', message: 'Donation not found.' });
     }
 
+    if (req.body.donorName || req.body.donorID) {
+      const donor = await resolveOrCreateDonor({
+        donorID: req.body.donorID,
+        donorName: req.body.donorName,
+        type: donation.type
+      });
+      if (donor) {
+        donation.donorID = donor._id;
+      }
+    }
+
     const fieldsToUpdate = [
       'status', 'receiptRef', 'notes', 'mealDate', 'mealType',
       'quantity', 'occasion', 'menuPackage', 'dietaryNotes', 'amount',
-      'paymentMethod', 'itemType', 'donorID',
+      'paymentMethod', 'itemType',
       'mealDonationType', 'estimatedCost', 'donorCooksMenu'
     ];
 

@@ -5,11 +5,14 @@ import { api } from '../api/apiClient';
 import {
   colors, cardStyle, buttonPrimary, inputStyle
 } from '../styles';
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 
 export default function PortalSettings() {
   const { user, updateUser } = useAuth();
   const { t } = useLanguage();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
     username: user?.username || '',
     password: '',
@@ -112,15 +115,31 @@ export default function PortalSettings() {
           <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
             {t('Current Password')} <span style={{ color: colors.danger }}>*</span>
           </label>
-          <input
-            style={inputStyle}
-            name="password"
-            type="password"
-            placeholder={t('Required to authorize change')}
-            value={form.password}
-            onChange={handleChange}
-            required
-          />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              style={{ ...inputStyle, paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder={t('Required to authorize change')}
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
+              title={showPassword ? 'Hide password' : 'Show password'}
+              style={{
+                position: 'absolute', right: '12px', background: 'none',
+                border: 'none', cursor: 'pointer', color: colors.textMuted,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '4px',
+              }}
+            >
+              {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          </div>
 
           <div style={{ borderTop: `1px solid ${colors.border}`, margin: '20px 0', paddingTop: '20px' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', color: colors.text }}>
@@ -130,27 +149,59 @@ export default function PortalSettings() {
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
               {t('New Password')}
             </label>
-            <input
-              style={inputStyle}
-              name="newPassword"
-              type="password"
-              placeholder={t('Minimum 8 characters')}
-              value={form.newPassword}
-              onChange={handleChange}
-              minLength={8}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '14px' }}>
+              <input
+                style={{ ...inputStyle, paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+                name="newPassword"
+                type={showNewPassword ? 'text' : 'password'}
+                placeholder={t('Minimum 8 characters')}
+                value={form.newPassword}
+                onChange={handleChange}
+                minLength={8}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                tabIndex={-1}
+                title={showNewPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute', right: '12px', background: 'none',
+                  border: 'none', cursor: 'pointer', color: colors.textMuted,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '4px',
+                }}
+              >
+                {showNewPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
 
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
               {t('Confirm New Password')}
             </label>
-            <input
-              style={inputStyle}
-              name="confirmPassword"
-              type="password"
-              placeholder={t('Re-type new password')}
-              value={form.confirmPassword}
-              onChange={handleChange}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                style={{ ...inputStyle, paddingRight: '40px', width: '100%', boxSizing: 'border-box' }}
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder={t('Re-type new password')}
+                value={form.confirmPassword}
+                onChange={handleChange}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                tabIndex={-1}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute', right: '12px', background: 'none',
+                  border: 'none', cursor: 'pointer', color: colors.textMuted,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '4px',
+                }}
+              >
+                {showConfirmPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>

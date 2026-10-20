@@ -613,7 +613,7 @@ export default function StaffManagement() {
                   tabIndex={-1}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
               </div>
               {fieldErrors.password && <div style={errorMsgStyle}>⚠️ {fieldErrors.password}</div>}
@@ -639,7 +639,7 @@ export default function StaffManagement() {
                   tabIndex={-1}
                   title={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showConfirmPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
               </div>
               {fieldErrors.confirmPassword && <div style={errorMsgStyle}>⚠️ {fieldErrors.confirmPassword}</div>}

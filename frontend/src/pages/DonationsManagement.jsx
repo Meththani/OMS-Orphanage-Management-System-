@@ -12,7 +12,7 @@ import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 import { exportDonationsToExcel } from '../utils/excelExport';
 
 const emptyForm = {
-  type: 'cash', donorID: '', amount: '', itemType: '', quantity: '',
+  type: 'cash', donorName: '', donorID: '', amount: '', itemType: '', quantity: '',
   mealDate: '', mealType: 'breakfast', receiptRef: '', notes: '',
   occasion: '', menuPackage: 'standard', dietaryNotes: '',
 };
@@ -55,9 +55,6 @@ export default function DonationsManagement() {
       if (childrenRes?.data && Array.isArray(childrenRes.data)) {
         setActiveChildrenCount(childrenRes.data.length || 50);
       }
-      if (donorRes.data.length > 0) {
-        setForm(f => ({ ...f, donorID: donorRes.data[0]._id }));
-      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -75,6 +72,11 @@ export default function DonationsManagement() {
       setForm({ ...form, amount: formatWithCommas(value) });
       return;
     }
+    if (name === 'donorName') {
+      const matched = donors.find(d => d.name.toLowerCase() === value.trim().toLowerCase());
+      setForm({ ...form, donorName: value, donorID: matched ? matched._id : '' });
+      return;
+    }
     setForm({ ...form, [name]: value });
   };
 
@@ -84,6 +86,7 @@ export default function DonationsManagement() {
     setError('');
     try {
       const payload = { ...form };
+      payload.donorName = form.donorName.trim();
       if (form.type === 'cash') {
         payload.amount = Number(stripCommas(form.amount));
       } else if (form.type === 'goods') {
@@ -96,7 +99,7 @@ export default function DonationsManagement() {
       
       await api.post('/donations', payload);
       setShowModal(false);
-      setForm({ ...emptyForm, donorID: donors[0]?._id || '' });
+      setForm(emptyForm);
       loadData();
     } catch (err) {
       setError(err.message);
@@ -118,6 +121,7 @@ export default function DonationsManagement() {
     if (e) e.stopPropagation();
     setEditingDonation(donation);
     setEditForm({
+      donorName: donation.donorID?.name || '',
       type: donation.type || 'cash',
       amount: donation.amount ? formatWithCommas(donation.amount) : '',
       paymentMethod: donation.paymentMethod || 'bank_transfer',
@@ -141,6 +145,7 @@ export default function DonationsManagement() {
     setError('');
     try {
       const payload = {
+        donorName: editForm.donorName ? editForm.donorName.trim() : undefined,
         status: editForm.status,
         receiptRef: editForm.receiptRef,
         notes: editForm.notes,
@@ -480,14 +485,25 @@ export default function DonationsManagement() {
               <ModalCloseButton onClick={() => setShowModal(false)} />
             </div>
             <form onSubmit={handleCreate}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Select Donor Profile")}</label>
-              <select style={selectStyle} name="donorID" value={form.donorID} onChange={handleChange} required>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                {t("Donor Name")} <span style={{ color: colors.danger }}>*</span>
+              </label>
+              <input
+                list="donations-donor-list"
+                style={inputStyle}
+                name="donorName"
+                placeholder={t("Enter donor name (e.g. John Silva)")}
+                value={form.donorName}
+                onChange={handleChange}
+                required
+              />
+              <datalist id="donations-donor-list">
                 {donors.map((donor) => (
-                  <option key={donor._id} value={donor._id}>
-                    {donor.name} ({donor.email})
+                  <option key={donor._id} value={donor.name}>
+                    {donor.email ? `(${donor.email})` : ''}
                   </option>
                 ))}
-              </select>
+              </datalist>
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Donation Type")}</label>
               <select style={selectStyle} name="type" value={form.type} onChange={handleChange}>
@@ -904,6 +920,19 @@ export default function DonationsManagement() {
             </div>
 
             <form onSubmit={handleUpdateDonation}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
+                  {t("Donor Name")}
+                </label>
+                <input
+                  list="donations-donor-list"
+                  style={inputStyle}
+                  value={editForm.donorName || ''}
+                  placeholder={t("Enter donor name")}
+                  onChange={(e) => setEditForm({ ...editForm, donorName: e.target.value })}
+                />
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
