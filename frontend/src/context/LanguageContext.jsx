@@ -1344,9 +1344,29 @@ const translations = {
   "Fresh wholesome meals prepared for all resident children": "නේවාසික සියලුම දරුවන් වෙනුවෙන් පිළියෙල කෙරෙන නැවුම් පෝෂ්‍යදායී ආහාර",
   "Guaranteed nutrition for all children & instant confirmation": "සියලුම දරුවන්ට සහතික කළ පෝෂණය සහ ක්ෂණික තහවුරු කිරීම",
   "Total Meal Cost:": "සම්පූර්ණ ආහාර වියදම:",
-  "Meal Cost / Contribution": "ආහාර වියදම / දායකත්වය",
   "Kids": "ළමුන්",
   "Self-Catered": "ස්වයං ආහාර සැපයීම",
+
+  // Refundable Confirmation Deposit
+  "100% Refundable Confirmation Deposit": "100% ආපසු ගෙවනු ලබන තහවුරු තැන්පතුව",
+  "Refunded on Arrival": "පැමිණි පසු ආපසු ගෙවේ",
+  "Select Confirmation Deposit Amount": "තහවුරු තැන්පතු මුදල තෝරන්න",
+  "Standard": "සම්මත",
+  "High Commitment": "උසස් කැපවීම",
+  "Custom": "අභිරුචි",
+  "Custom Deposit Amount (LKR) *": "අභිරුචි තැන්පතු මුදල (රු.) *",
+  "Refundable Deposit Due Now": "දැනට ගෙවිය යුතු ආපසු ගෙවනු ලබන තැන්පතුව",
+  "100% Refunded on Arrival": "පැමිණි පසු 100%ක් ආපසු ගෙවනු ලැබේ",
+  "Deposit Payment Method": "තැන්පතු ගෙවීමේ ක්‍රමය",
+  "Pay Refundable Deposit (Stripe)": "ආපසු ගෙවනු ලබන තැන්පතුව ගෙවන්න (Stripe)",
+  "Confirm Reservation with Deposit Slip": "තැන්පතු රිසිට්පත සමඟ වෙන්කිරීම තහවුරු කරන්න",
+  "Refundable Confirmation Deposit": "ආපසු ගෙවනු ලබන තහවුරු තැන්පතුව",
+  "Meal completed. This confirmation deposit should be refunded to the donor upon their arrival/delivery.": "ආහාර වේල සම්පූර්ණයි. මෙම තහවුරු තැන්පතු මුදල පරිත්‍යාගශීලියා පැමිණ ආහාර ලබාදුන් පසු ඔහුට/ඇයට ආපසු ලබාදිය යුතුය.",
+  "Deposit collected to guarantee reservation and ensure meal delivery for all resident children. Refundable upon arrival.": "සියලුම නේවාසික දරුවන්ට ආහාර ලැබෙන බව සහතික කිරීමට සහ වෙන්කිරීම තහවුරු කිරීමට ලබාගත් තැන්පතුවකි. පැමිණි පසු ආපසු ගෙවනු ලැබේ.",
+  "Refund Due / Settled on Arrival": "පැමිණි පසු ආපසු ගෙවිය යුතුය / පියවන ලදී",
+  "Deposit Held (Pending Arrival)": "තැන්පතුව රඳවාගෙන ඇත (පැමිණෙන තෙක්)",
+  "Refunded": "ආපසු ගෙවන ලදී",
+  "Mark Refunded to Donor": "පරිත්‍යාගශීලියාට ආපසු ගෙවූ බව සටහන් කරන්න",
 };
 
 export function LanguageProvider({ children }) {

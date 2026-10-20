@@ -3,7 +3,7 @@ import { api } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
-import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone, FileSpreadsheet, Lock, Baby } from 'lucide-react';
+import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone, FileSpreadsheet, Lock, Baby, HandCoins } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 import { exportMealBookingsToExcel } from '../utils/excelExport';
@@ -1035,18 +1035,21 @@ export default function MealScheduling() {
                   borderRadius: '10px', padding: '14px', marginBottom: '14px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                    <Utensils size={14} color={colors.primary} />
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t("Staff-Cooked Meal Options")}</span>
+                    <HandCoins size={14} color={colors.primary} />
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t("Confirmation Deposit")}</span>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Estimated Cost (LKR)")}</label>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Refundable Confirmation Deposit (LKR)")}</label>
                     <input
                       type="text"
                       style={inputStyle}
-                      placeholder={t("e.g. 15,000")}
+                      placeholder={t("e.g. 2,500")}
                       value={form.estimatedCost}
                       onChange={(e) => setForm({ ...form, estimatedCost: formatWithCommas(e.target.value) })}
                     />
+                    <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '4px', lineHeight: 1.4 }}>
+                      {t("Collected to guarantee booking; refunded to donor when meal is delivered.")}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1268,11 +1271,40 @@ export default function MealScheduling() {
 
               </div>
 
-              {/* Estimated Cost info if provided */}
-              {selectedMeal.estimatedCost > 0 && (
-                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(241,156,56,0.04)', border: `1px solid rgba(241,156,56,0.15)`, borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: colors.primary, fontWeight: 700, textTransform: 'uppercase' }}>{t("Meal Cost / Contribution")}</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: colors.success }}>LKR {selectedMeal.estimatedCost.toLocaleString()}</span>
+              {/* Refundable Confirmation Deposit info if recorded */}
+              {(selectedMeal.advanceAmount > 0 || selectedMeal.estimatedCost > 0) && (
+                <div style={{
+                  marginBottom: '20px', padding: '14px 16px',
+                  backgroundColor: 'rgba(16,185,129,0.06)',
+                  border: `1.5px solid rgba(16,185,129,0.25)`,
+                  borderRadius: '10px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', color: colors.success, fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <HandCoins size={14} /> {t("Refundable Confirmation Deposit")}
+                    </span>
+                    <span style={{ fontSize: '15px', fontWeight: 800, color: colors.success }}>
+                      LKR {(selectedMeal.advanceAmount || selectedMeal.estimatedCost).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: colors.textSecondary, lineHeight: '1.4' }}>
+                    {selectedMeal.status === 'received'
+                      ? t("Meal completed. This confirmation deposit should be refunded to the donor upon their arrival/delivery.")
+                      : t("Deposit collected to guarantee reservation and ensure meal delivery for all resident children. Refundable upon arrival.")}
+                  </div>
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px' }}>
+                    <span style={{ color: colors.textMuted }}>
+                      {t("Payment Method")}: <strong style={{ color: colors.text, textTransform: 'uppercase' }}>{t(selectedMeal.advancePaymentMethod || 'online')}</strong>
+                    </span>
+                    <span style={{
+                      padding: '2px 8px', borderRadius: '4px',
+                      background: selectedMeal.status === 'received' ? 'rgba(59,130,246,0.1)' : 'rgba(241,156,56,0.1)',
+                      color: selectedMeal.status === 'received' ? '#2563eb' : '#d97706',
+                      fontWeight: 700
+                    }}>
+                      {selectedMeal.status === 'received' ? t("Refund Due / Settled on Arrival") : t("Deposit Held (Pending Arrival)")}
+                    </span>
+                  </div>
                 </div>
               )}
 

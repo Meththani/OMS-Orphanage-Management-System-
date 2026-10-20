@@ -253,7 +253,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     occasion: '',
     menuPackage: 'standard',
     dietaryNotes: '',
-    advanceOption: '50_percent', // '50_percent', '100_percent', 'custom'
+    advanceOption: '2500', // '2500', '5000', 'custom'
     customAdvance: '',
     paymentMethod: 'bank_transfer', // 'bank_transfer', 'online'
     proof: null
@@ -337,15 +337,14 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   };
 
   const calculateAdvanceAmount = () => {
-    const total = calculateMealTotal();
-    if (mealForm.advanceOption === '100_percent') return total;
+    if (mealForm.advanceOption === '5000') return 5000;
     if (mealForm.advanceOption === 'custom') {
       const clean = stripCommas(String(mealForm.customAdvance || '0'));
       const customVal = Number(clean);
       return isNaN(customVal) || customVal <= 0 ? 0 : customVal;
     }
-    // Default 50%
-    return Math.round(total * 0.5);
+    // Default standard confirmation deposit: LKR 2,500
+    return 2500;
   };
 
   const calendarDays = [];
@@ -455,21 +454,15 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       return;
     }
 
-    const total = calculateMealTotal();
     const advance = calculateAdvanceAmount();
 
-    if (!advance || advance <= 0) {
-      alert(language === 'si' ? 'කරුණාකර වලංගු අත්තිකාරම් මුදලක් ඇතුළත් කරන්න (අවම වශයෙන් රු. 1,000).' : 'Please specify a valid advance payment amount (at least LKR 1,000).');
-      return;
-    }
-
-    if (advance > total) {
-      alert(language === 'si' ? 'අත්තිකාරම් මුදල සම්පූර්ණ මුදලට වඩා වැඩි විය නොහැක.' : 'Advance payment amount cannot exceed the total meal cost.');
+    if (!advance || advance < 1000) {
+      alert(language === 'si' ? 'කරුණාකර වලංගු තහවුරු තැන්පතු මුදලක් ඇතුළත් කරන්න (අවම වශයෙන් රු. 1,000).' : 'Please specify a valid confirmation deposit amount (at least LKR 1,000).');
       return;
     }
 
     if (mealForm.paymentMethod === 'bank_transfer' && !mealForm.proof) {
-      alert(language === 'si' ? 'කරුණාකර අත්තිකාරම් ගෙවීමේ බැංකු රිසිට්පත උඩුගත කරන්න.' : 'Please upload a bank transfer receipt as proof of advance payment.');
+      alert(language === 'si' ? 'කරුණාකර තහවුරු තැන්පතු ගෙවීමේ බැංකු රිසිට්පත උඩුගත කරන්න.' : 'Please upload a bank deposit slip as proof of the confirmation deposit.');
       return;
     }
 
@@ -481,7 +474,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...mealForm,
-            totalAmount: total,
+            quantity: String(childCount || 50),
+            totalAmount: advance,
             advanceAmount: advance
           }),
         });
@@ -502,7 +496,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...mealForm,
-          totalAmount: total,
+          quantity: String(childCount || 50),
+          totalAmount: advance,
           advanceAmount: advance,
           advancePaymentMethod: 'bank_transfer'
         }),
@@ -517,11 +512,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           contactDetails: '',
           mealDate: '',
           mealType: 'lunch',
-          quantity: String(childCount),
+          quantity: String(childCount || 50),
           occasion: '',
           menuPackage: 'standard',
           dietaryNotes: '',
-          advanceOption: '50_percent',
+          advanceOption: '2500',
           customAdvance: '',
           paymentMethod: 'bank_transfer',
           proof: null
@@ -3351,8 +3346,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 </h3>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody, maxWidth: '600px', margin: '0 auto 12px', lineHeight: 1.6 }}>
                   {language === 'si'
-                    ? `ඔබ ${mealForm.mealDate || 'තෝරාගත් දිනය'} දින ${t(mealForm.mealType)} ආහාර වේල වෙනුවෙන් රු. ${Number(bookedAdvanceAmount).toLocaleString()} ක අත්තිකාරම් මුදලක් සාර්ථකව ගෙවා ඇත. අපගේ මුළුතැන්ගෙයි කණ්ඩායම සූදානම් කිරීම් ආරම්භ කරනු ඇත. ක්ෂණික SMS තහවුරු කිරීමක් ඔබ වෙත යොමු කරන ලදී.`
-                    : `Thank you for sponsoring a ${mealForm.mealType} meal on ${mealForm.mealDate || 'selected date'} (${mealForm.quantity} portions). Advance payment of LKR ${Number(bookedAdvanceAmount).toLocaleString()} was received. An instant SMS confirmation has been dispatched.`}
+                    ? `ඔබ ${mealForm.mealDate || 'තෝරාගත් දිනය'} දින ${t(mealForm.mealType)} ආහාර වේල වෙන්කරවා ගනිමින් රු. ${Number(bookedAdvanceAmount).toLocaleString()} ක ආපසු ගෙවනු ලබන තහවුරු තැන්පතුව සාර්ථකව ගෙවා ඇත. ඔබ මධ්‍යස්ථානය වෙත පැමිණ ආහාර පරිත්‍යාග කළ පසු මෙම තැන්පතු මුදල සම්පූර්ණයෙන්ම ඔබට ආපසු ගෙවනු ලැබේ. ක්ෂණික SMS තහවුරු කිරීමක් ඔබ වෙත යොමු කරන ලදී.`
+                    : `Your ${mealForm.mealType} meal reservation on ${mealForm.mealDate || 'selected date'} is confirmed! A refundable confirmation deposit of LKR ${Number(bookedAdvanceAmount).toLocaleString()} was received. When you arrive at the orphanage and donate the meal, this deposit will be 100% refunded to you. An instant SMS confirmation has been dispatched.`}
                 </p>
               </div>
             ) : (
@@ -3636,48 +3631,50 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           </div>
                         </div>
 
-                        {/* Total Cost Summary */}
+                        {/* ─── 100% REFUNDABLE CONFIRMATION DEPOSIT SECTION ─── */}
                         <div style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          padding: '10px 14px', backgroundColor: charityTheme.accentGreenLight,
-                          border: `1px solid rgba(16, 185, 129, 0.25)`, borderRadius: '8px',
-                          color: charityTheme.accentGreen, marginBottom: '14px'
-                        }}>
-                          <div>
-                            <span style={{ fontSize: '12px', fontWeight: 700, display: 'block' }}>{t("Total Meal Cost:")}</span>
-                            <span style={{ fontSize: '11px', opacity: 0.85 }}>LKR 600 × {childCount || 50} {t("Kids")}</span>
-                          </div>
-                          <span style={{ fontWeight: 800, fontSize: '17px' }}>
-                            LKR {calculateMealTotal().toLocaleString()}
-                          </span>
-                        </div>
-
-                        {/* ─── MANDATORY ADVANCE PAYMENT SECTION ─── */}
-                        <div style={{
-                          border: `1.5px solid ${charityTheme.primaryLight}`,
-                          backgroundColor: '#f8fbff',
+                          border: `1.5px solid rgba(16, 185, 129, 0.35)`,
+                          backgroundColor: '#f0fdf4',
                           borderRadius: '12px',
                           padding: '14px',
                           marginBottom: '16px'
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <HandCoins size={16} color={charityTheme.primary} />
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: charityTheme.textHeading }}>
-                              {t("Advance Payment Required")}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <ShieldCheck size={18} color="#059669" />
+                              <span style={{ fontSize: '13px', fontWeight: 800, color: '#065f46' }}>
+                                {t("100% Refundable Confirmation Deposit")}
+                              </span>
+                            </div>
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              backgroundColor: '#d1fae5',
+                              color: '#047857',
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em'
+                            }}>
+                              {t("Refunded on Arrival")}
                             </span>
                           </div>
-                          <p style={{ fontSize: '11px', color: charityTheme.textMuted, margin: '0 0 10px', lineHeight: 1.4 }}>
+
+                          <p style={{ fontSize: '12px', color: '#166534', margin: '0 0 12px', lineHeight: 1.5 }}>
                             {language === 'si'
-                              ? 'ආහාර වේල වෙන්කිරීම සඳහා අත්තිකාරම් ගෙවීමක් (Advance) සිදුකළ යුතුය. ඉතිරි මුදල ආහාර පිළියෙළ කරන දිනයේදී ගෙවිය හැක.'
-                              : 'To secure the meal reservation, donors must pay an advance deposit. The remaining balance is payable on the meal date.'}
+                              ? 'මෙම අත්තිකාරම් මුදල ලබාගන්නේ ඔබ වෙන්කරවා ගත් දිනයේදී ආහාර නිසැකවම රැගෙන එන බවට තහවුරු කරගැනීමට පමණි. ඔබ මධ්‍යස්ථානය වෙත පැමිණ දරුවන්ට ආහාර ලබාදුන් වහාම මෙම තැන්පතු මුදල සම්පූර්ණයෙන්ම ඔබට ආපසු ලබාදෙනු ලැබේ.'
+                              : 'This deposit is collected strictly to confirm that you will surely bring the meal on the scheduled day, preventing no-shows. When you arrive at the orphanage and donate the meal, this advance deposit is 100% refunded to you.'}
                           </p>
 
-                          {/* Advance Option Selector */}
+                          {/* Deposit Option Selector */}
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#065f46', marginBottom: '6px', textTransform: 'uppercase' }}>
+                            {t("Select Confirmation Deposit Amount")}
+                          </label>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '10px' }}>
                             {[
-                              { id: '50_percent', labelKey: '50% Advance Deposit (Recommended)', shortLabel: '50% Deposit' },
-                              { id: '100_percent', labelKey: '100% Full Payment', shortLabel: '100% Full' },
-                              { id: 'custom', labelKey: 'Custom Advance Amount', shortLabel: 'Custom' }
+                              { id: '2500', label: 'LKR 2,500', sub: t('Standard') },
+                              { id: '5000', label: 'LKR 5,000', sub: t('High Commitment') },
+                              { id: 'custom', label: t('Custom'), sub: t('Min. LKR 1,000') }
                             ].map(opt => {
                               const isSelected = mealForm.advanceOption === opt.id;
                               return (
@@ -3688,16 +3685,20 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                   style={{
                                     padding: '8px 4px',
                                     borderRadius: '8px',
-                                    border: `1px solid ${isSelected ? charityTheme.primary : charityTheme.border}`,
-                                    backgroundColor: isSelected ? charityTheme.primary : '#ffffff',
-                                    color: isSelected ? '#ffffff' : charityTheme.textHeading,
+                                    border: `1.5px solid ${isSelected ? '#059669' : 'rgba(5, 150, 105, 0.2)'}`,
+                                    backgroundColor: isSelected ? '#059669' : '#ffffff',
+                                    color: isSelected ? '#ffffff' : '#065f46',
                                     fontSize: '11px',
                                     fontWeight: 700,
                                     cursor: 'pointer',
-                                    transition: 'all 0.15s ease'
+                                    transition: 'all 0.15s ease',
+                                    textAlign: 'center'
                                   }}
                                 >
-                                  {language === 'si' ? t(opt.labelKey).split(' ')[0] + ' ' + (opt.id === 'custom' ? 'අභිරුචි' : opt.id === '100_percent' ? 'සම්පූර්ණ' : 'අත්තිකාරම්') : opt.shortLabel}
+                                  <div>{opt.label}</div>
+                                  <div style={{ fontSize: '9px', opacity: isSelected ? 0.9 : 0.7, fontWeight: 500, marginTop: '1px' }}>
+                                    {opt.sub}
+                                  </div>
                                 </button>
                               );
                             })}
@@ -3706,8 +3707,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           {/* Custom Advance Input */}
                           {mealForm.advanceOption === 'custom' && (
                             <div style={{ marginBottom: '10px' }}>
-                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
-                                {t("Advance Amount to Pay (LKR) *")}
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#065f46', marginBottom: '4px' }}>
+                                {t("Custom Deposit Amount (LKR) *")}
                               </label>
                               <div style={{ position: 'relative' }}>
                                 <span style={{ position: 'absolute', left: '10px', top: '8px', fontSize: '12px', fontWeight: 700, color: charityTheme.textMuted }}>
@@ -3717,10 +3718,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                   type="text"
                                   style={{
                                     width: '100%', padding: '7px 10px 7px 42px', borderRadius: '6px',
-                                    border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
-                                    fontSize: '12px', fontWeight: 700, color: charityTheme.textHeading, boxSizing: 'border-box'
+                                    border: `1px solid rgba(5, 150, 105, 0.3)`, backgroundColor: '#ffffff',
+                                    fontSize: '12px', fontWeight: 700, color: '#065f46', boxSizing: 'border-box'
                                   }}
-                                  placeholder={t("e.g. 10,000")}
+                                  placeholder="2,500"
                                   value={mealForm.customAdvance}
                                   onChange={(e) => setMealForm(prev => ({ ...prev, customAdvance: formatWithCommas(e.target.value) }))}
                                   required
@@ -3729,27 +3730,22 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                             </div>
                           )}
 
-                          {/* Calculation Breakdown */}
+                          {/* Deposit Due Now Banner */}
                           <div style={{
-                            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
-                            backgroundColor: '#ffffff', padding: '10px 12px', borderRadius: '8px',
-                            border: `1px solid ${charityTheme.border}`, marginBottom: '12px'
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            backgroundColor: '#ffffff', padding: '10px 14px', borderRadius: '8px',
+                            border: `1px solid rgba(5, 150, 105, 0.25)`, marginBottom: '12px'
                           }}>
                             <div>
-                              <div style={{ fontSize: '10px', color: charityTheme.textMuted, textTransform: 'uppercase', fontWeight: 700 }}>
-                                {t("Advance Amount to Pay (LKR) *")}
+                              <div style={{ fontSize: '10px', color: '#047857', textTransform: 'uppercase', fontWeight: 800 }}>
+                                {t("Refundable Deposit Due Now")}
                               </div>
-                              <div style={{ fontSize: '15px', fontWeight: 800, color: charityTheme.primary, marginTop: '2px' }}>
-                                LKR {calculateAdvanceAmount().toLocaleString()}
+                              <div style={{ fontSize: '11px', color: '#059669', fontWeight: 600, marginTop: '1px' }}>
+                                ✓ {t("100% Refunded on Arrival")}
                               </div>
                             </div>
-                            <div>
-                              <div style={{ fontSize: '10px', color: charityTheme.textMuted, textTransform: 'uppercase', fontWeight: 700 }}>
-                                {t("Remaining Balance (Due on Meal Date):")}
-                              </div>
-                              <div style={{ fontSize: '15px', fontWeight: 800, color: charityTheme.accentAmber, marginTop: '2px' }}>
-                                LKR {Math.max(0, calculateMealTotal() - calculateAdvanceAmount()).toLocaleString()}
-                              </div>
+                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#065f46' }}>
+                              LKR {calculateAdvanceAmount().toLocaleString()}
                             </div>
                           </div>
 
@@ -3953,8 +3949,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                             {mealLoading
                               ? t("Confirming...")
                               : mealForm.paymentMethod === 'online'
-                                ? t("Reserve & Pay Advance")
-                                : t("Reserve Meal Slot")}
+                                ? t("Pay Refundable Deposit (Stripe)")
+                                : t("Confirm Reservation with Deposit Slip")}
                           </button>
                         </div>
                       </div>

@@ -202,7 +202,7 @@ router.post('/create-meal-checkout-session', async (req, res) => {
           const mealDateFormatted = new Date(donation.mealDate).toLocaleDateString(undefined, {
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
           });
-          const smsText = `CONFIRMATION: Dear ${name}, your ${mealType} sponsorship for ${quantity} kids on ${mealDateFormatted} is confirmed! Advance payment of LKR ${Number(advanceAmount).toLocaleString()} received (Ref: ${donation.donationID}). Thank you! - Hope Haven`;
+          const smsText = `CONFIRMATION: Dear ${name}, your ${mealType} reservation for ${quantity} kids on ${mealDateFormatted} is confirmed! Refundable confirmation deposit of LKR ${Number(advanceAmount).toLocaleString()} received (Ref: ${donation.donationID}). Note: This deposit is 100% refunded when you arrive and donate the meal. Thank you! - Hope Haven`;
           await sendSMS({ to: contactDetails, message: smsText });
         } catch (smsErr) {
           console.warn('Could not send meal advance SMS:', smsErr.message);
@@ -223,8 +223,8 @@ router.post('/create-meal-checkout-session', async (req, res) => {
           price_data: {
             currency: 'lkr',
             product_data: {
-              name: `Meal Sponsorship Advance (${mealType.toUpperCase()})`,
-              description: `Advance payment for ${quantity} portions on ${mealDate}`,
+              name: `Refundable Confirmation Deposit (${mealType.toUpperCase()})`,
+              description: `100% Refundable confirmation deposit for ${quantity} kids on ${mealDate}. Refunded on arrival.`,
             },
             unit_amount: Math.round(Number(advanceAmount) * 100),
           },
@@ -353,7 +353,7 @@ router.post('/confirm-checkout-session', async (req, res) => {
           const mealDateFormatted = mealDate.toLocaleDateString(undefined, {
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
           });
-          const smsText = `CONFIRMATION: Dear ${name}, your ${mealType} sponsorship for ${quantity} kids on ${mealDateFormatted} is confirmed! Advance payment of LKR ${Number(amount).toLocaleString()} received (Ref: ${donation.donationID}). Thank you! - Hope Haven`;
+          const smsText = `CONFIRMATION: Dear ${name}, your ${mealType} reservation for ${quantity} kids on ${mealDateFormatted} is confirmed! Refundable confirmation deposit of LKR ${Number(amount).toLocaleString()} received (Ref: ${donation.donationID}). Note: This deposit is 100% refunded when you arrive and donate the meal. Thank you! - Hope Haven`;
           await sendSMS({ to: contactDetails, message: smsText });
         } catch (smsErr) {
           console.warn('Could not send meal donation SMS:', smsErr.message);
@@ -759,8 +759,8 @@ router.post('/book-meal', async (req, res) => {
         weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
       });
       const smsText = isOnline
-        ? `CONFIRMATION: Dear ${name}, your ${mealType} booking for ${quantity} kids on ${mealDateFormatted} is confirmed! Advance payment of LKR ${Number(advanceAmount).toLocaleString()} received (Ref: ${donation.donationID}). Thank you! - Hope Haven`
-        : `ACKNOWLEDGEMENT: Dear ${name}, we received your ${mealType} booking for ${mealDateFormatted} with advance deposit of LKR ${Number(advanceAmount).toLocaleString()} (Ref: ${donation.donationID}). Our team will verify your payment slip. Thank you! - Hope Haven`;
+        ? `CONFIRMATION: Dear ${name}, your ${mealType} booking for ${quantity} kids on ${mealDateFormatted} is confirmed! Refundable confirmation deposit of LKR ${Number(advanceAmount).toLocaleString()} received (Ref: ${donation.donationID}). Note: This deposit will be refunded to you when you arrive and donate the meal. Thank you! - Hope Haven`
+        : `ACKNOWLEDGEMENT: Dear ${name}, we received your ${mealType} booking for ${mealDateFormatted} with refundable confirmation deposit of LKR ${Number(advanceAmount).toLocaleString()} (Ref: ${donation.donationID}). Note: This deposit will be refunded when you donate the meal. Thank you! - Hope Haven`;
 
       const smsResult = await sendSMS({ to: contactDetails, message: smsText });
 
