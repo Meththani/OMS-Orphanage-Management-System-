@@ -263,7 +263,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
   // Calendar & Booked Meals State
   const [bookings, setBookings] = useState([]);
-  const [childCount, setChildCount] = useState(50);
+  const [childCount, setChildCount] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [calendarLoading, setCalendarLoading] = useState(false);
@@ -275,10 +275,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       const json = await res.json();
       if (json.status === 'success') {
         setBookings(json.data.bookings || []);
-        setChildCount(json.data.activeChildCount || 50);
+        const activeCount = typeof json.data?.activeChildCount === 'number' ? json.data.activeChildCount : (json.data?.activeChildCount || 0);
+        setChildCount(activeCount);
         setMealForm(prev => ({
           ...prev,
-          quantity: String(json.data.activeChildCount || 50)
+          quantity: String(activeCount)
         }));
       }
     } catch (err) {
@@ -287,6 +288,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       setCalendarLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchBookedMeals();
+  }, []);
 
   useEffect(() => {
     if (showMealModal) {
@@ -332,7 +337,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
   ];
 
   const calculateMealTotal = () => {
-    const qty = Number(childCount || mealForm.quantity || 50);
+    const qty = Number(childCount !== null && childCount !== undefined ? childCount : (mealForm.quantity || 0));
     return qty * 600;
   };
 
@@ -474,7 +479,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...mealForm,
-            quantity: String(childCount || 50),
+            quantity: String(childCount !== null && childCount !== undefined ? childCount : (mealForm.quantity || 0)),
             totalAmount: advance,
             advanceAmount: advance
           }),
@@ -496,7 +501,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...mealForm,
-          quantity: String(childCount || 50),
+          quantity: String(childCount !== null && childCount !== undefined ? childCount : (mealForm.quantity || 0)),
           totalAmount: advance,
           advanceAmount: advance,
           advancePaymentMethod: 'bank_transfer'
@@ -512,7 +517,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           contactDetails: '',
           mealDate: '',
           mealType: 'lunch',
-          quantity: String(childCount || 50),
+          quantity: String(childCount !== null && childCount !== undefined ? childCount : 0),
           occasion: '',
           menuPackage: 'standard',
           dietaryNotes: '',
@@ -1302,7 +1307,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               marginBottom: '48px'
             }}>
               {[
-                { number: '50+', label: t('Active Children in Care'), icon: Users, color: charityTheme.primary, bg: charityTheme.primaryLight },
+                { number: childCount !== null ? String(childCount) : '...', label: t('Active Children in Care'), icon: Users, color: charityTheme.primary, bg: charityTheme.primaryLight },
                 { number: '100%', label: t('School Enrollment Rate'), icon: BookOpen, color: charityTheme.accentGreen, bg: charityTheme.accentGreenLight },
                 { number: '3 Meals', label: t('Daily Balanced Nutrition'), icon: Utensils, color: charityTheme.accentAmber, bg: charityTheme.accentAmberLight },
                 { number: '24 / 7', label: t('Dedicated Caregiver Staff'), icon: Heart, color: charityTheme.accentRose, bg: charityTheme.accentRoseLight },
@@ -3626,7 +3631,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                               {t("Active Children")}
                             </div>
                             <div style={{ fontSize: '20px', fontWeight: 900, color: charityTheme.primary, marginTop: '1px' }}>
-                              {childCount || 50}
+                              {childCount !== null ? childCount : '...'}
                             </div>
                           </div>
                         </div>
