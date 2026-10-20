@@ -318,13 +318,13 @@ export default function InventoryManagement() {
               <Search size={16} color={colors.textMuted} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 style={{ ...inputStyle, paddingLeft: '36px', margin: 0 }}
-                placeholder="Search by name, item no., or category..."
+                placeholder={t("Search by name, item no., or category...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             {searchQuery && (
-              <button style={{ ...buttonSecondary, padding: '8px 12px', fontSize: '12px' }} onClick={() => setSearchQuery('')}>Clear</button>
+              <button style={{ ...buttonSecondary, padding: '8px 12px', fontSize: '12px' }} onClick={() => setSearchQuery('')}>{t("Clear")}</button>
             )}
           </div>
 
@@ -332,23 +332,23 @@ export default function InventoryManagement() {
             {loading ? (
               <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', margin: '0 auto 12px', border: `3px solid ${colors.border}`, borderTopColor: colors.primary, animation: 'spin 0.8s linear infinite' }} />
-                Loading inventory...
+                {t("Loading inventory...")}
               </div>
             ) : filteredItems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
                 <div style={{ fontSize: '48px', marginBottom: '12px' }}>📦</div>
-                <p>{searchQuery ? `No items matching "${searchQuery}".` : 'No inventory items yet. Click "Add Item" to get started.'}</p>
+                <p>{searchQuery ? `${t("No items matching")} "${searchQuery}".` : t('No inventory items yet. Click "Add Item" to get started.')}</p>
               </div>
             ) : (
               <table style={tableStyle}>
                 <thead>
                   <tr>
-                    <th style={thStyle}>Item No.</th>
-                    <th style={thStyle}>Item Name</th>
-                    <th style={thStyle}>Category</th>
-                    <th style={thStyle}>Current Qty</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Actions</th>
+                    <th style={thStyle}>{t("Item No.")}</th>
+                    <th style={thStyle}>{t("Item Name")}</th>
+                    <th style={thStyle}>{t("Category")}</th>
+                    <th style={thStyle}>{t("Current Qty")}</th>
+                    <th style={thStyle}>{t("Status")}</th>
+                    <th style={thStyle}>{t("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -404,11 +404,11 @@ export default function InventoryManagement() {
           <div style={{ ...cardStyle, marginBottom: '20px', padding: '16px 20px' }}>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>From Date</label>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>{t("From Date")}</label>
                 <input type="date" style={{ ...inputStyle, margin: 0, width: '160px' }} value={reportStart} onChange={(e) => setReportStart(e.target.value)} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>To Date</label>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '4px' }}>{t("To Date")}</label>
                 <input type="date" style={{ ...inputStyle, margin: 0, width: '160px' }} value={reportEnd} onChange={(e) => setReportEnd(e.target.value)} />
               </div>
               <button
@@ -417,7 +417,7 @@ export default function InventoryManagement() {
                 disabled={reportLoading}
               >
                 <RefreshCw size={15} style={reportLoading ? { animation: 'spin 0.8s linear infinite' } : {}} />
-                {reportLoading ? 'Loading...' : 'Generate Report'}
+                {reportLoading ? t('Loading...') : t('Generate Report')}
               </button>
             </div>
           </div>
@@ -431,7 +431,7 @@ export default function InventoryManagement() {
           {!reportData && !reportLoading && (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.textMuted }}>
               <BarChart2 size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
-              <p style={{ fontSize: '15px' }}>Select a date range and click <strong>Generate Report</strong> to view stock reports.</p>
+              <p style={{ fontSize: '15px' }}>{t("Select a date range and click")} <strong>{t("Generate Report")}</strong> {t("to view stock reports.")}</p>
             </div>
           )}
 
@@ -450,31 +450,31 @@ export default function InventoryManagement() {
                       fontWeight: 600, fontSize: '13px', cursor: 'pointer',
                     }}
                   >
-                    {rt.label}
+                    {t(rt.label)}
                   </button>
                 ))}
               </div>
 
               {/* Period label */}
               <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '12px' }}>
-                Period: <strong>{new Date(reportStart).toLocaleDateString()}</strong> → <strong>{new Date(reportEnd).toLocaleDateString()}</strong>
+                {t("Period")}: <strong>{new Date(reportStart).toLocaleDateString()}</strong> → <strong>{new Date(reportEnd).toLocaleDateString()}</strong>
               </p>
 
               {/* ── Opening Stock ── */}
               {reportTab === 'opening' && (
                 <div style={cardStyle}>
                   <h3 style={{ margin: '0 0 16px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ClipboardList size={18} color={colors.primary} /> Opening Stock
-                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>(Stock at start of period)</span>
+                    <ClipboardList size={18} color={colors.primary} /> {t("Opening Stock")}
+                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>({t("Stock at start of period")})</span>
                   </h3>
                   <table style={tableStyle}>
                     <thead>
                       <tr>
-                        <th style={thStyle}>Item No.</th>
-                        <th style={thStyle}>Item Name</th>
-                        <th style={thStyle}>Category</th>
-                        <th style={thStyle}>Opening Qty</th>
-                        <th style={thStyle}>Unit</th>
+                        <th style={thStyle}>{t("Item No.")}</th>
+                        <th style={thStyle}>{t("Item Name")}</th>
+                        <th style={thStyle}>{t("Category")}</th>
+                        <th style={thStyle}>{t("Opening Qty")}</th>
+                        <th style={thStyle}>{t("Unit")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -496,22 +496,22 @@ export default function InventoryManagement() {
               {reportTab === 'received' && (
                 <div style={cardStyle}>
                   <h3 style={{ margin: '0 0 16px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ArrowDownCircle size={18} color={colors.success} /> Stock Received (GRN)
-                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>({reportData.movements.filter(m => m.type === 'receipt').length} entries)</span>
+                    <ArrowDownCircle size={18} color={colors.success} /> {t("Stock Received (GRN)")}
+                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>({reportData.movements.filter(m => m.type === 'receipt').length} {t("entries")})</span>
                   </h3>
                   {reportData.movements.filter(m => m.type === 'receipt').length === 0 ? (
-                    <p style={{ color: colors.textMuted, textAlign: 'center', padding: '24px' }}>No stock receipts in this period.</p>
+                    <p style={{ color: colors.textMuted, textAlign: 'center', padding: '24px' }}>{t("No stock receipts in this period.")}</p>
                   ) : (
                     <table style={tableStyle}>
                       <thead>
                         <tr>
-                          <th style={thStyle}>GRN No.</th>
-                          <th style={thStyle}>Date</th>
-                          <th style={thStyle}>Item</th>
-                          <th style={thStyle}>Qty Received</th>
-                          <th style={thStyle}>Supplier</th>
-                          <th style={thStyle}>Recorded By</th>
-                          <th style={thStyle}>Stock After</th>
+                          <th style={thStyle}>{t("GRN No.")}</th>
+                          <th style={thStyle}>{t("Date")}</th>
+                          <th style={thStyle}>{t("Item")}</th>
+                          <th style={thStyle}>{t("Qty Received")}</th>
+                          <th style={thStyle}>{t("Supplier")}</th>
+                          <th style={thStyle}>{t("Recorded By")}</th>
+                          <th style={thStyle}>{t("Stock After")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -536,23 +536,23 @@ export default function InventoryManagement() {
               {reportTab === 'issued' && (
                 <div style={cardStyle}>
                   <h3 style={{ margin: '0 0 16px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ArrowUpCircle size={18} color={colors.warning} /> Issued Stock
-                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>({reportData.movements.filter(m => m.type === 'issue').length} entries)</span>
+                    <ArrowUpCircle size={18} color={colors.warning} /> {t("Issued Stock")}
+                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>({reportData.movements.filter(m => m.type === 'issue').length} {t("entries")})</span>
                   </h3>
                   {reportData.movements.filter(m => m.type === 'issue').length === 0 ? (
-                    <p style={{ color: colors.textMuted, textAlign: 'center', padding: '24px' }}>No stock issues recorded in this period.</p>
+                    <p style={{ color: colors.textMuted, textAlign: 'center', padding: '24px' }}>{t("No stock issues recorded in this period.")}</p>
                   ) : (
                     <table style={tableStyle}>
                       <thead>
                         <tr>
-                          <th style={thStyle}>Issue No.</th>
-                          <th style={thStyle}>Date</th>
-                          <th style={thStyle}>Item</th>
-                          <th style={thStyle}>Qty Issued</th>
-                          <th style={thStyle}>Issued To</th>
-                          <th style={thStyle}>Purpose</th>
-                          <th style={thStyle}>Recorded By</th>
-                          <th style={thStyle}>Stock After</th>
+                          <th style={thStyle}>{t("Issue No.")}</th>
+                          <th style={thStyle}>{t("Date")}</th>
+                          <th style={thStyle}>{t("Item")}</th>
+                          <th style={thStyle}>{t("Qty Issued")}</th>
+                          <th style={thStyle}>{t("Issued To")}</th>
+                          <th style={thStyle}>{t("Purpose")}</th>
+                          <th style={thStyle}>{t("Recorded By")}</th>
+                          <th style={thStyle}>{t("Stock After")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -578,20 +578,20 @@ export default function InventoryManagement() {
               {reportTab === 'closing' && (
                 <div style={cardStyle}>
                   <h3 style={{ margin: '0 0 16px', color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <CheckCircle size={18} color={colors.info} /> Closing Stock
-                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>Remaining stock at end of period</span>
+                    <CheckCircle size={18} color={colors.info} /> {t("Closing Stock")}
+                    <span style={{ fontSize: '12px', fontWeight: 400, color: colors.textMuted }}>{t("Remaining stock at end of period")}</span>
                   </h3>
                   <table style={tableStyle}>
                     <thead>
                       <tr>
-                        <th style={thStyle}>Item No.</th>
-                        <th style={thStyle}>Item Name</th>
-                        <th style={thStyle}>Category</th>
-                        <th style={thStyle}>Opening</th>
-                        <th style={thStyle}>+ Received</th>
-                        <th style={thStyle}>− Issued</th>
-                        <th style={thStyle}>Closing Stock</th>
-                        <th style={thStyle}>Status</th>
+                        <th style={thStyle}>{t("Item No.")}</th>
+                        <th style={thStyle}>{t("Item Name")}</th>
+                        <th style={thStyle}>{t("Category")}</th>
+                        <th style={thStyle}>{t("Opening")}</th>
+                        <th style={thStyle}>+ {t("Received")}</th>
+                        <th style={thStyle}>− {t("Issued")}</th>
+                        <th style={thStyle}>{t("Closing Stock")}</th>
+                        <th style={thStyle}>{t("Status")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -612,7 +612,7 @@ export default function InventoryManagement() {
                     </tbody>
                     <tfoot>
                       <tr style={{ borderTop: `2px solid ${colors.border}` }}>
-                        <td colSpan={3} style={{ ...tdStyle, fontWeight: 700, paddingTop: '12px' }}>TOTALS</td>
+                        <td colSpan={3} style={{ ...tdStyle, fontWeight: 700, paddingTop: '12px' }}>{t("TOTALS")}</td>
                         <td style={{ ...tdStyle, fontWeight: 700, paddingTop: '12px' }}>{reportData.report.reduce((s, r) => s + r.openingStock, 0)}</td>
                         <td style={{ ...tdStyle, fontWeight: 700, color: colors.success, paddingTop: '12px' }}>+{reportData.report.reduce((s, r) => s + r.totalReceived, 0)}</td>
                         <td style={{ ...tdStyle, fontWeight: 700, color: colors.warning, paddingTop: '12px' }}>−{reportData.report.reduce((s, r) => s + r.totalIssued, 0)}</td>
@@ -635,7 +635,7 @@ export default function InventoryManagement() {
         <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Add Inventory Item</h2>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>{t("Add Inventory Item")}</h2>
               <ModalCloseButton onClick={() => setShowAddModal(false)} />
             </div>
 
@@ -643,39 +643,39 @@ export default function InventoryManagement() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '10px', marginBottom: '16px', backgroundColor: colors.primaryGlow, border: `1px solid ${colors.primary}40` }}>
               <Hash size={18} color={colors.primary} />
               <div>
-                <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>Auto-Generated Item Number</div>
+                <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Auto-Generated Item Number")}</div>
                 <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '16px', color: colors.primary, letterSpacing: '0.05em' }}>{getNextItemNumberPreview()}</div>
               </div>
-              <div style={{ marginLeft: 'auto', fontSize: '11px', color: colors.textMuted, textAlign: 'right' }}>Assigned on save</div>
+              <div style={{ marginLeft: 'auto', fontSize: '11px', color: colors.textMuted, textAlign: 'right' }}>{t("Assigned on save")}</div>
             </div>
 
             <form onSubmit={handleCreate}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Item Name *</label>
-              <input style={inputStyle} name="name" placeholder="e.g. Paracetamol, Rice" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Item Name")} *</label>
+              <input style={inputStyle} name="name" placeholder={t("e.g. Paracetamol, Rice")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Category *</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Category")} *</label>
               <select style={selectStyle} name="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                <option value="Food">Food &amp; Groceries</option>
-                <option value="Medicine">Medicine &amp; First Aid</option>
-                <option value="Education">Education &amp; Toys</option>
-                <option value="Clothing">Clothing &amp; Apparel</option>
-                <option value="Other">Other General</option>
+                <option value="Food">{t("Food & Groceries")}</option>
+                <option value="Medicine">{t("Medicine & First Aid")}</option>
+                <option value="Education">{t("Education & Toys")}</option>
+                <option value="Clothing">{t("Clothing & Apparel")}</option>
+                <option value="Other">{t("Other General")}</option>
               </select>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Initial Quantity *</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Initial Quantity")} *</label>
                   <input type="number" style={inputStyle} name="quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Unit *</label>
-                  <input style={inputStyle} name="unit" placeholder="kg, boxes, pcs..." value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} required />
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Unit")} *</label>
+                  <input style={inputStyle} name="unit" placeholder={t("kg, boxes, pcs...")} value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} required />
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Adding...' : 'Add Item'}</button>
+                <button type="button" style={buttonSecondary} onClick={() => setShowAddModal(false)}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? t('Adding...') : t('Add Item')}</button>
               </div>
             </form>
           </div>
@@ -689,17 +689,17 @@ export default function InventoryManagement() {
         <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Edit Stock Quantity</h2>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>{t("Edit Stock Quantity")}</h2>
               <ModalCloseButton onClick={() => setEditingItem(null)} />
             </div>
-            <p style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '4px' }}>Item: <strong>{editingItem.name}</strong></p>
+            <p style={{ fontSize: '14px', color: colors.textSecondary, marginBottom: '4px' }}>{t("Item")}: <strong>{editingItem.name}</strong></p>
             {editingItem.itemNumber && <p style={{ fontSize: '12px', color: colors.textMuted, marginBottom: '16px', fontFamily: 'monospace' }}>{editingItem.itemNumber}</p>}
             <form onSubmit={handleUpdateStock}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity ({editingItem.unit}) *</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Quantity")} ({editingItem.unit}) *</label>
               <input type="number" style={inputStyle} value={editQty} onChange={(e) => setEditQty(e.target.value)} required />
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setEditingItem(null)}>Cancel</button>
-                <button type="submit" style={buttonPrimary}>Update</button>
+                <button type="button" style={buttonSecondary} onClick={() => setEditingItem(null)}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary}>{t("Update")}</button>
               </div>
             </form>
           </div>
@@ -714,13 +714,13 @@ export default function InventoryManagement() {
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ArrowDownCircle size={20} color={colors.success} /> Receive Stock — GRN
+                <ArrowDownCircle size={20} color={colors.success} /> {t("Receive Stock — GRN")}
               </h2>
               <ModalCloseButton onClick={() => { setShowReceiveModal(false); setReceiveSuccess(''); }} />
             </div>
 
             <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '16px' }}>
-              A GRN number (e.g. <strong style={{ fontFamily: 'monospace', color: colors.success }}>GRN-{new Date().getFullYear()}-001</strong>) will be auto-assigned when saved.
+              {t("A GRN number will be auto-assigned when saved.")}
             </p>
 
             {receiveSuccess && (
@@ -730,39 +730,39 @@ export default function InventoryManagement() {
             )}
 
             <form onSubmit={handleReceiveStock}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Item *</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Item")} *</label>
               <select style={selectStyle} value={receiveForm.itemId} onChange={(e) => setReceiveForm({ ...receiveForm, itemId: e.target.value })} required>
-                <option value="">— Select item —</option>
+                <option value="">— {t("Select item")} —</option>
                 {items.map(i => (
-                  <option key={i._id} value={i._id}>{i.itemNumber ? `[${i.itemNumber}] ` : ''}{i.name} ({i.quantity} {i.unit} in stock)</option>
+                  <option key={i._id} value={i._id}>{i.itemNumber ? `[${i.itemNumber}] ` : ''}{i.name} ({i.quantity} {i.unit} {t("in stock")})</option>
                 ))}
               </select>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity Received *</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Quantity Received")} *</label>
                   <input type="number" min="1" style={inputStyle} placeholder="0" value={receiveForm.quantity} onChange={(e) => setReceiveForm({ ...receiveForm, quantity: e.target.value })} required />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Date *</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Date")} *</label>
                   <input type="date" style={inputStyle} value={receiveForm.date} onChange={(e) => setReceiveForm({ ...receiveForm, date: e.target.value })} required />
                 </div>
               </div>
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Supplier / Source</label>
-              <input style={inputStyle} placeholder="e.g. Keells Holdings, Donation Drive" value={receiveForm.supplier} onChange={(e) => setReceiveForm({ ...receiveForm, supplier: e.target.value })} />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Supplier / Source")}</label>
+              <input style={inputStyle} placeholder={t("e.g. Keells Holdings, Donation Drive")} value={receiveForm.supplier} onChange={(e) => setReceiveForm({ ...receiveForm, supplier: e.target.value })} />
 
               {selectedReceiveItem && (
                 <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: colors.successGlow, border: `1px solid ${colors.success}30`, fontSize: '13px', color: colors.success, marginBottom: '8px' }}>
-                  Current stock: <strong>{selectedReceiveItem.quantity} {selectedReceiveItem.unit}</strong>
-                  {receiveForm.quantity && <> → After receipt: <strong>{selectedReceiveItem.quantity + Number(receiveForm.quantity)} {selectedReceiveItem.unit}</strong></>}
+                  {t("Current stock")}: <strong>{selectedReceiveItem.quantity} {selectedReceiveItem.unit}</strong>
+                  {receiveForm.quantity && <> → {t("After receipt")}: <strong>{selectedReceiveItem.quantity + Number(receiveForm.quantity)} {selectedReceiveItem.unit}</strong></>}
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => { setShowReceiveModal(false); setReceiveSuccess(''); }}>Close</button>
+                <button type="button" style={buttonSecondary} onClick={() => { setShowReceiveModal(false); setReceiveSuccess(''); }}>{t("Close")}</button>
                 <button type="submit" style={{ ...buttonPrimary, backgroundColor: colors.success, borderColor: colors.success, boxShadow: `0 4px 14px ${colors.successGlow}` }} disabled={receiveSaving}>
-                  {receiveSaving ? 'Saving...' : 'Save Receipt (GRN)'}
+                  {receiveSaving ? t('Saving...') : t('Save Receipt (GRN)')}
                 </button>
               </div>
             </form>
@@ -778,14 +778,13 @@ export default function InventoryManagement() {
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ArrowUpCircle size={20} color={colors.warning} /> Issue Stock
+                <ArrowUpCircle size={20} color={colors.warning} /> {t("Issue Stock")}
               </h2>
               <ModalCloseButton onClick={() => { setShowIssueModal(false); setIssueSuccess(''); }} />
             </div>
 
             <p style={{ fontSize: '13px', color: colors.textMuted, marginBottom: '16px' }}>
-              An issue number (e.g. <strong style={{ fontFamily: 'monospace', color: colors.warning }}>ISS-{new Date().getFullYear()}-001</strong>) will be auto-assigned.
-              The item's stock will be deducted automatically.
+              {t("An issue number will be auto-assigned. The item's stock will be deducted automatically.")}
             </p>
 
             {issueSuccess && (
@@ -795,47 +794,47 @@ export default function InventoryManagement() {
             )}
 
             <form onSubmit={handleIssueStock}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Item *</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Item")} *</label>
               <select style={selectStyle} value={issueForm.itemId} onChange={(e) => setIssueForm({ ...issueForm, itemId: e.target.value })} required>
-                <option value="">— Select item —</option>
+                <option value="">— {t("Select item")} —</option>
                 {items.filter(i => i.quantity > 0).map(i => (
-                  <option key={i._id} value={i._id}>{i.itemNumber ? `[${i.itemNumber}] ` : ''}{i.name} ({i.quantity} {i.unit} available)</option>
+                  <option key={i._id} value={i._id}>{i.itemNumber ? `[${i.itemNumber}] ` : ''}{i.name} ({i.quantity} {i.unit} {t("available")})</option>
                 ))}
               </select>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity to Issue *</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Quantity to Issue")} *</label>
                   <input type="number" min="1" max={selectedIssueItem?.quantity || undefined} style={inputStyle} placeholder="0" value={issueForm.quantity} onChange={(e) => setIssueForm({ ...issueForm, quantity: e.target.value })} required />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Date *</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Date")} *</label>
                   <input type="date" style={inputStyle} value={issueForm.date} onChange={(e) => setIssueForm({ ...issueForm, date: e.target.value })} required />
                 </div>
               </div>
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Issued To *</label>
-              <input style={inputStyle} placeholder="e.g. Kitchen Staff, Nurse, Teacher" value={issueForm.issuedTo} onChange={(e) => setIssueForm({ ...issueForm, issuedTo: e.target.value })} required />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Issued To")} *</label>
+              <input style={inputStyle} placeholder={t("e.g. Kitchen Staff, Nurse, Teacher")} value={issueForm.issuedTo} onChange={(e) => setIssueForm({ ...issueForm, issuedTo: e.target.value })} required />
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Purpose / Reason</label>
-              <input style={inputStyle} placeholder="e.g. Weekly meal preparation, First aid kit restock" value={issueForm.purpose} onChange={(e) => setIssueForm({ ...issueForm, purpose: e.target.value })} />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Purpose / Reason")}</label>
+              <input style={inputStyle} placeholder={t("e.g. Weekly meal preparation, First aid kit restock")} value={issueForm.purpose} onChange={(e) => setIssueForm({ ...issueForm, purpose: e.target.value })} />
 
               {selectedIssueItem && issueForm.quantity && (
                 <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: colors.warningGlow, border: `1px solid ${colors.warning}30`, fontSize: '13px', color: Number(issueForm.quantity) > selectedIssueItem.quantity ? colors.danger : colors.warning, marginBottom: '8px' }}>
                   {Number(issueForm.quantity) > selectedIssueItem.quantity
-                    ? `⚠️ Insufficient stock! Available: ${selectedIssueItem.quantity} ${selectedIssueItem.unit}`
-                    : <>Current: <strong>{selectedIssueItem.quantity} {selectedIssueItem.unit}</strong> → After issue: <strong>{selectedIssueItem.quantity - Number(issueForm.quantity)} {selectedIssueItem.unit}</strong></>
+                    ? `⚠️ ${t("Insufficient stock! Available")}: ${selectedIssueItem.quantity} ${selectedIssueItem.unit}`
+                    : <>{t("Current")}: <strong>{selectedIssueItem.quantity} {selectedIssueItem.unit}</strong> → {t("After issue")}: <strong>{selectedIssueItem.quantity - Number(issueForm.quantity)} {selectedIssueItem.unit}</strong></>
                   }
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => { setShowIssueModal(false); setIssueSuccess(''); }}>Close</button>
+                <button type="button" style={buttonSecondary} onClick={() => { setShowIssueModal(false); setIssueSuccess(''); }}>{t("Close")}</button>
                 <button type="submit"
                   style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.warning}, #d97706)`, boxShadow: `0 4px 14px ${colors.warningGlow}` }}
                   disabled={issueSaving || (selectedIssueItem && Number(issueForm.quantity) > selectedIssueItem.quantity)}
                 >
-                  {issueSaving ? 'Saving...' : 'Record Issue'}
+                  {issueSaving ? t('Saving...') : t('Record Issue')}
                 </button>
               </div>
             </form>

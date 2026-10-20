@@ -269,7 +269,7 @@ export default function ExpenseManagement() {
           <div style={{ fontSize: '24px', fontWeight: 700, color: netBalance >= 0 ? colors.primary : colors.danger, marginTop: '8px', fontFamily: "'Outfit', sans-serif" }}>
             LKR {netBalance.toLocaleString()}
           </div>
-          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>Overall cash flow</div>
+          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>{t("Overall cash flow")}</div>
         </div>
       </div>
 
@@ -281,24 +281,24 @@ export default function ExpenseManagement() {
               border: `3px solid ${colors.border}`, borderTopColor: colors.primary,
               animation: 'spin 0.8s linear infinite',
             }} />
-            Loading expense logs...
+            {t("Loading...")}
           </div>
         ) : expenses.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>💸</div>
-            <p>No expense logs registered. Click &quot;Record Expense&quot; to log one.</p>
+            <p>{t("No expenditures logged.")}</p>
           </div>
         ) : (
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={thStyle}>Date</th>
-                <th style={thStyle}>Category</th>
-                <th style={thStyle}>Description</th>
-                <th style={thStyle}>Amount</th>
-                <th style={thStyle}>Staff Member</th>
-                <th style={thStyle}>Bank Account</th>
-                <th style={thStyle}>Receipt / Ref</th>
+                <th style={thStyle}>{t("Date")}</th>
+                <th style={thStyle}>{t("Category")}</th>
+                <th style={thStyle}>{t("Description")}</th>
+                <th style={thStyle}>{t("Amount")}</th>
+                <th style={thStyle}>{t("Staff Member")}</th>
+                <th style={thStyle}>{t("Bank Account")}</th>
+                <th style={thStyle}>{t("Receipt Reference", "Receipt / Ref")}</th>
               </tr>
             </thead>
             <tbody>
@@ -358,31 +358,31 @@ export default function ExpenseManagement() {
         <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Record Expense</h2>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>{t("Record Expense")}</h2>
               <ModalCloseButton onClick={closeModal} />
             </div>
             <form onSubmit={handleCreate}>
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                Category <span style={{ color: '#ef4444' }}>*</span>
+                {t("Category")} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select style={selectStyle} name="category" value={form.category} onChange={handleChange}>
-                <option value="Food & Nutrition">Food & Nutrition</option>
-                <option value="Salaries">Staff Salaries</option>
-                <option value="Utility Bills">Utility Bills</option>
-                <option value="Medical">Medical Care</option>
-                <option value="Maintenance">Facility Maintenance</option>
-                <option value="Other">Other Expenses</option>
+                <option value="Food & Nutrition">{t("Food & Nutrition")}</option>
+                <option value="Salaries">{t("Staff Salaries")}</option>
+                <option value="Utility Bills">{t("Utility Bills")}</option>
+                <option value="Medical">{t("Medical Care")}</option>
+                <option value="Maintenance">{t("Facility Maintenance")}</option>
+                <option value="Other">{t("Other Expenses")}</option>
               </select>
 
               {form.category === 'Other' && (
                 <div style={{ marginTop: '12px' }}>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                    Specify Other Category <span style={{ color: '#ef4444' }}>*</span>
+                    {t("Category")} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     style={inputStyle}
                     name="customCategory"
-                    placeholder="Describe the expense (e.g. stationery, transport)"
+                    placeholder={t("Description")}
                     value={form.customCategory || ''}
                     onChange={handleChange}
                     required
@@ -392,22 +392,22 @@ export default function ExpenseManagement() {
               )}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Amount (LKR) <span style={{ color: '#ef4444' }}>*</span>
+                {t("Amount")} (LKR) <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <input type="text" style={inputStyle} name="amount" placeholder="Amount in LKR (e.g. 10,000)" value={form.amount} onChange={handleChange} required />
+              <input type="text" style={inputStyle} name="amount" placeholder={t("Amount")} value={form.amount} onChange={handleChange} required />
               {fieldErrors.amount && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.amount}</div>}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Short Description <span style={{ color: '#ef4444' }}>*</span>
+                {t("Description")} <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <input style={inputStyle} name="description" placeholder="e.g. Purchase of caregiver masks, January water bill" value={form.description} onChange={handleChange} required />
+              <input style={inputStyle} name="description" placeholder={t("Description")} value={form.description} onChange={handleChange} required />
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>Receipt / Ref Code</label>
-              <input style={inputStyle} name="referenceReceipt" placeholder="Receipt Reference (optional)" value={form.referenceReceipt} onChange={handleChange} />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>{t("Receipt Reference")}</label>
+              <input style={inputStyle} name="referenceReceipt" placeholder={t("Receipt Reference")} value={form.referenceReceipt} onChange={handleChange} />
               {fieldErrors.referenceReceipt && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.referenceReceipt}</div>}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Upload Proof of Receipt (Any Format)
+                {t("Upload Proof of Payment", "Upload Proof of Receipt")}
               </label>
               <input
                 type="file"
@@ -416,31 +416,31 @@ export default function ExpenseManagement() {
               />
               {form.proofOfReceipt && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '6px', background: colors.primaryGlow, padding: '6px 10px', borderRadius: '6px' }}>
-                  <span>Selected: <strong>{form.proofOfReceipt.fileName}</strong></span>
+                  <span>{t("Selected")}: <strong>{form.proofOfReceipt.fileName}</strong></span>
                   <button
                     type="button"
                     style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontWeight: 'bold' }}
                     onClick={() => setForm(f => ({ ...f, proofOfReceipt: null }))}
                   >
-                    Remove
+                    {t("Remove Photo", "Remove")}
                   </button>
                 </div>
               )}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Debit Bank Account <span style={{ color: '#ef4444' }}>*</span>
+                {t("Bank Account")} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select style={selectStyle} name="bankAccountId" value={form.bankAccountId} onChange={handleChange}>
                 {bankAccounts.map((acc) => (
                   <option key={acc._id} value={acc._id}>
-                    {acc.bankName} - {acc.accountName} (Bal: LKR {acc.balance.toLocaleString()})
+                    {acc.bankName} - {acc.accountName} ({t("Balance")}: LKR {acc.balance.toLocaleString()})
                   </option>
                 ))}
               </select>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
-                <button type="button" style={buttonSecondary} onClick={closeModal}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Save Record'}</button>
+                <button type="button" style={buttonSecondary} onClick={closeModal}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? t('Saving...') : t('Save')}</button>
               </div>
             </form>
           </div>

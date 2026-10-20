@@ -645,24 +645,24 @@ export default function StaffManagement() {
               {fieldErrors.confirmPassword && <div style={errorMsgStyle}>⚠️ {fieldErrors.confirmPassword}</div>}
 
               {/* Access Role */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Access Role (Permission level)</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>{t("Access Role (Permission level)")}</label>
               <select style={selectStyle} name="role" value={form.role} onChange={handleChange}>
-                <option value="staff">Staff</option>
-                <option value="accountant">Accountant</option>
-                <option value="admin">Admin</option>
+                <option value="staff">{t("Staff")}</option>
+                <option value="accountant">{t("Accountant")}</option>
+                <option value="admin">{t("Admin")}</option>
               </select>
 
               {/* Job Title */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Job Title <span style={{ color: '#ef4444' }}>*</span></label>
-              <input style={inputStyle} name="jobRole" placeholder="Job title (e.g. Caregiver)" value={form.jobRole} onChange={handleChange} required />
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>{t("Job Title")} <span style={{ color: '#ef4444' }}>*</span></label>
+              <input style={inputStyle} name="jobRole" placeholder={t("Job title (e.g. Caregiver)")} value={form.jobRole} onChange={handleChange} required />
               {fieldErrors.jobRole && <div style={errorMsgStyle}>⚠️ {fieldErrors.jobRole}</div>}
 
               {/* Phone Number */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Phone Number <span style={{ color: '#ef4444' }}>*</span></label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>{t("Phone Number")} <span style={{ color: '#ef4444' }}>*</span></label>
               <input
                 style={inputStyle}
                 name="contactDetails"
-                placeholder="Phone number (10 digits)"
+                placeholder={t("Phone number (10 digits)")}
                 value={form.contactDetails}
                 onChange={handleChange}
                 inputMode="numeric"
@@ -672,11 +672,11 @@ export default function StaffManagement() {
               {fieldErrors.phone && <div style={errorMsgStyle}>⚠️ {fieldErrors.phone}</div>}
 
               {/* NIC Number */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>NIC Number <span style={{ color: '#ef4444' }}>*</span></label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>{t("NIC Number")} <span style={{ color: '#ef4444' }}>*</span></label>
               <input
                 style={inputStyle}
                 name="nic"
-                placeholder="NIC Identification (max 12 chars)"
+                placeholder={t("NIC Identification (max 12 chars)")}
                 value={form.nic || ''}
                 onChange={handleChange}
                 maxLength={12}
@@ -685,13 +685,13 @@ export default function StaffManagement() {
               {fieldErrors.nic && <div style={errorMsgStyle}>⚠️ {fieldErrors.nic}</div>}
 
               {/* Date of Birth */}
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>Date of Birth <span style={{ color: '#ef4444' }}>*</span></label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px', marginTop: '12px' }}>{t("Date of Birth")} <span style={{ color: '#ef4444' }}>*</span></label>
               <input type="date" style={inputStyle} name="DOB" value={form.DOB} onChange={handleChange} required />
               {fieldErrors.DOB && <div style={errorMsgStyle}>⚠️ {fieldErrors.DOB}</div>}
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
-                <button type="button" style={buttonSecondary} onClick={closeModal}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+                <button type="button" style={buttonSecondary} onClick={closeModal}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? t("Saving...") : t("Save")}</button>
               </div>
             </form>
           </div>
@@ -723,14 +723,14 @@ export default function StaffManagement() {
                       color: selectedStaff.role === 'admin' ? colors.danger : selectedStaff.role === 'accountant' ? colors.warning : colors.primary,
                       textTransform: 'uppercase'
                     }}>
-                      {selectedStaff.role}
+                      {selectedStaff.role === 'admin' ? t('Admin') : selectedStaff.role === 'accountant' ? t('Accountant') : t('Staff')}
                     </span>
                     <span style={{
                       padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700,
                       background: selectedStaff.isActive ? colors.successGlow : colors.dangerGlow,
                       color: selectedStaff.isActive ? colors.success : colors.danger,
                     }}>
-                      {selectedStaff.isActive ? 'Active Account' : 'Deactivated'}
+                      {selectedStaff.isActive ? t('Active Account') : t('Deactivated')}
                     </span>
                   </div>
                 </div>
@@ -749,13 +749,13 @@ export default function StaffManagement() {
               border: `1px solid ${colors.border}`
             }}>
               {[
-                { label: 'Username', value: selectedStaff.username, icon: User },
-                { label: 'Job Title', value: selectedStaff.jobRole || 'N/A', icon: Briefcase },
-                { label: 'NIC Number', value: selectedStaff.nic || 'N/A', icon: Hash },
-                { label: 'Contact Phone', value: selectedStaff.contactDetails || 'N/A', icon: Phone },
-                { label: 'Date of Birth', value: selectedStaff.DOB ? new Date(selectedStaff.DOB).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
-                { label: 'Profile Created', value: selectedStaff.createdAt ? new Date(selectedStaff.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
-                { label: 'Last Updated', value: selectedStaff.updatedAt ? new Date(selectedStaff.updatedAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
+                { label: t('Username'), value: selectedStaff.username, icon: User },
+                { label: t('Job Title'), value: selectedStaff.jobRole || 'N/A', icon: Briefcase },
+                { label: t('NIC Number'), value: selectedStaff.nic || 'N/A', icon: Hash },
+                { label: t('Contact Phone'), value: selectedStaff.contactDetails || 'N/A', icon: Phone },
+                { label: t('Date of Birth'), value: selectedStaff.DOB ? new Date(selectedStaff.DOB).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
+                { label: t('Profile Created'), value: selectedStaff.createdAt ? new Date(selectedStaff.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
+                { label: t('Last Updated'), value: selectedStaff.updatedAt ? new Date(selectedStaff.updatedAt).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'N/A', icon: Calendar },
               ].map(({ label, value, icon: Icon }) => (
                 <div key={label} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                   <Icon size={16} style={{ color: colors.textMuted, marginTop: '2px', flexShrink: 0 }} />
@@ -776,7 +776,7 @@ export default function StaffManagement() {
                 style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', fontWeight: 600 }}
                 onClick={() => setSelectedStaff(null)}
               >
-                Close
+                {t('Close')}
               </button>
               <button
                 style={{ ...buttonSecondary, display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -784,7 +784,7 @@ export default function StaffManagement() {
                   startEdit(selectedStaff);
                 }}
               >
-                <Edit2 size={14} /> Edit Profile
+                <Edit2 size={14} /> {t('Edit Profile')}
               </button>
               <button
                 style={{
@@ -796,13 +796,13 @@ export default function StaffManagement() {
                   await toggleActive(selectedStaff);
                 }}
               >
-                {selectedStaff.isActive ? 'Deactivate Account' : 'Reactivate Account'}
+                {selectedStaff.isActive ? t('Deactivate Account') : t('Reactivate Account')}
               </button>
               <button
                 style={{ ...buttonDanger, display: 'flex', alignItems: 'center', gap: '6px' }}
                 onClick={() => handleDelete(selectedStaff._id)}
               >
-                <Trash2 size={14} /> Delete Account
+                <Trash2 size={14} /> {t('Delete Account')}
               </button>
             </div>
           </div>

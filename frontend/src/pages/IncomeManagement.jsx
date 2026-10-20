@@ -264,7 +264,7 @@ export default function IncomeManagement() {
           <div style={{ fontSize: '24px', fontWeight: 700, color: netBalance >= 0 ? colors.primary : colors.danger, marginTop: '8px', fontFamily: "'Outfit', sans-serif" }}>
             LKR {netBalance.toLocaleString()}
           </div>
-          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>Overall cash flow</div>
+          <div style={{ fontSize: '12px', color: colors.textMuted, marginTop: '4px' }}>{t("Overall cash flow")}</div>
         </div>
       </div>
 
@@ -276,24 +276,24 @@ export default function IncomeManagement() {
               border: `3px solid ${colors.border}`, borderTopColor: colors.primary,
               animation: 'spin 0.8s linear infinite',
             }} />
-            Loading income streams...
+            {t("Loading...")}
           </div>
         ) : incomes.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>💵</div>
-            <p>No income records logged yet. Click &quot;Record Income&quot; to register.</p>
+            <p>{t("No inflows logged.")}</p>
           </div>
         ) : (
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={thStyle}>Date</th>
-                <th style={thStyle}>Category</th>
-                <th style={thStyle}>Amount</th>
-                <th style={thStyle}>Payment Method</th>
-                <th style={thStyle}>Donor / Sponsor</th>
-                <th style={thStyle}>Bank Account</th>
-                <th style={thStyle}>Receipt / Ref</th>
+                <th style={thStyle}>{t("Date")}</th>
+                <th style={thStyle}>{t("Category")}</th>
+                <th style={thStyle}>{t("Amount")}</th>
+                <th style={thStyle}>{t("Payment Method")}</th>
+                <th style={thStyle}>{t("Donor / Sponsor", "Donor")}</th>
+                <th style={thStyle}>{t("Bank Account")}</th>
+                <th style={thStyle}>{t("Receipt Reference", "Receipt / Ref")}</th>
               </tr>
             </thead>
             <tbody>
@@ -357,29 +357,29 @@ export default function IncomeManagement() {
         <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Record Income</h2>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>{t("Record Income")}</h2>
               <ModalCloseButton onClick={closeModal} />
             </div>
             <form onSubmit={handleCreate}>
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                Category <span style={{ color: '#ef4444' }}>*</span>
+                {t("Category")} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select style={selectStyle} name="category" value={form.category} onChange={handleChange}>
-                <option value="Donation">Public Donation</option>
-                <option value="Grant">Government / NGO Grant</option>
-                <option value="Fundraising Event">Fundraising Event</option>
-                <option value="Other">Other Revenue</option>
+                <option value="Donation">{t("Public Donation")}</option>
+                <option value="Grant">{t("Government / NGO Grant", "Grant")}</option>
+                <option value="Fundraising Event">{t("Fundraising Event")}</option>
+                <option value="Other">{t("Other Revenue")}</option>
               </select>
 
               {form.category === 'Other' && (
                 <div style={{ marginTop: '12px' }}>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                    Specify Other Category <span style={{ color: '#ef4444' }}>*</span>
+                    {t("Category")} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     style={inputStyle}
                     name="customCategory"
-                    placeholder="Specify other category details"
+                    placeholder={t("Description")}
                     value={form.customCategory || ''}
                     onChange={handleChange}
                     required
@@ -389,32 +389,32 @@ export default function IncomeManagement() {
               )}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Amount (LKR) <span style={{ color: '#ef4444' }}>*</span>
+                {t("Amount")} (LKR) <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <input type="text" style={inputStyle} name="amount" placeholder="Amount in LKR (e.g. 10,000)" value={form.amount} onChange={handleChange} required />
+              <input type="text" style={inputStyle} name="amount" placeholder={t("Amount")} value={form.amount} onChange={handleChange} required />
               {fieldErrors.amount && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.amount}</div>}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Payment Method <span style={{ color: '#ef4444' }}>*</span>
+                {t("Payment Method")} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select style={selectStyle} name="paymentMethod" value={form.paymentMethod} onChange={handleChange}>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="cash">Cash In Hand</option>
-                <option value="cheque">Cheque</option>
-                <option value="online">Online Checkout</option>
+                <option value="bank_transfer">{t("Bank Transfer")}</option>
+                <option value="cash">{t("Cash In Hand")}</option>
+                <option value="cheque">{t("Cheque")}</option>
+                <option value="online">{t("Online Checkout")}</option>
               </select>
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Donor / Source Name
+                {t("Donor / Sponsor", "Donor Name")}
               </label>
-              <input style={inputStyle} name="donor" placeholder="Donor name or sponsoring entity (leave blank for Anonymous)" value={form.donor} onChange={handleChange} />
+              <input style={inputStyle} name="donor" placeholder={t("Donor Name")} value={form.donor} onChange={handleChange} />
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>Receipt / Txn Reference</label>
-              <input style={inputStyle} name="refReceipt" placeholder="Transaction or reference code" value={form.refReceipt} onChange={handleChange} />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>{t("Receipt Reference")}</label>
+              <input style={inputStyle} name="refReceipt" placeholder={t("Receipt Reference")} value={form.refReceipt} onChange={handleChange} />
               {fieldErrors.refReceipt && <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>⚠️ {fieldErrors.refReceipt}</div>}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Upload Proof of Receipt (Any Format)
+                {t("Upload Proof of Payment", "Upload Proof of Receipt")}
               </label>
               <input
                 type="file"
@@ -423,19 +423,19 @@ export default function IncomeManagement() {
               />
               {form.proofOfReceipt && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', marginTop: '6px', background: colors.primaryGlow, padding: '6px 10px', borderRadius: '6px' }}>
-                  <span>Selected: <strong>{form.proofOfReceipt.fileName}</strong></span>
+                  <span>{t("Selected")}: <strong>{form.proofOfReceipt.fileName}</strong></span>
                   <button
                     type="button"
                     style={{ background: 'none', border: 'none', color: colors.danger, cursor: 'pointer', fontWeight: 'bold' }}
                     onClick={() => setForm(f => ({ ...f, proofOfReceipt: null }))}
                   >
-                    Remove
+                    {t("Remove Photo", "Remove")}
                   </button>
                 </div>
               )}
 
               <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px', marginTop: '12px' }}>
-                Bank Account Destination <span style={{ color: '#ef4444' }}>*</span>
+                {t("Bank Account")} <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select style={selectStyle} name="bankAccountId" value={form.bankAccountId} onChange={handleChange}>
                 {bankAccounts.map((acc) => (
@@ -446,8 +446,8 @@ export default function IncomeManagement() {
               </select>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '18px' }}>
-                <button type="button" style={buttonSecondary} onClick={closeModal}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Save Record'}</button>
+                <button type="button" style={buttonSecondary} onClick={closeModal}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? t('Saving...') : t('Save')}</button>
               </div>
             </form>
           </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { api } from '../api/apiClient';
 import {
   colors, cardStyle, buttonPrimary, inputStyle
@@ -8,6 +9,7 @@ import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
 export default function PortalSettings() {
   const { user, updateUser } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     username: user?.username || '',
     password: '',
@@ -26,7 +28,7 @@ export default function PortalSettings() {
     setError('');
 
     if (form.newPassword && form.newPassword !== form.confirmPassword) {
-      setError('New passwords do not match.');
+      setError(t('New passwords do not match.'));
       return;
     }
 
@@ -38,7 +40,7 @@ export default function PortalSettings() {
         newPassword: form.newPassword
       });
 
-      setSuccess('Credentials updated successfully.');
+      setSuccess(t('Credentials updated successfully.'));
       updateUser({ ...user, username: res.user.username });
       setForm({
         username: res.user.username,
@@ -60,16 +62,16 @@ export default function PortalSettings() {
           margin: 0, color: colors.text, fontSize: '28px', fontWeight: 700,
           fontFamily: "'Outfit', sans-serif"
         }}>
-          Account Settings
+          {t('Account Settings')}
         </h1>
         <p style={{ margin: '4px 0 0', color: colors.textMuted, fontSize: '15px' }}>
-          Change your username or update your password
+          {t('Change your username or update your password')}
         </p>
       </div>
 
       <div style={cardStyle}>
         <h2 style={{ marginTop: 0, color: colors.text, fontSize: '20px', fontFamily: "'Outfit', sans-serif", marginBottom: '20px' }}>
-          Update Security Credentials
+          {t('Update Security Credentials')}
         </h2>
 
         {success && (
@@ -96,25 +98,25 @@ export default function PortalSettings() {
 
         <form onSubmit={handleSubmit}>
           <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
-            Username
+            {t('Username')}
           </label>
           <input
             style={inputStyle}
             name="username"
-            placeholder="Username"
+            placeholder={t('Username')}
             value={form.username}
             onChange={handleChange}
             required
           />
 
           <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
-            Current Password <span style={{ color: colors.danger }}>*</span>
+            {t('Current Password')} <span style={{ color: colors.danger }}>*</span>
           </label>
           <input
             style={inputStyle}
             name="password"
             type="password"
-            placeholder="Required to authorize change"
+            placeholder={t('Required to authorize change')}
             value={form.password}
             onChange={handleChange}
             required
@@ -122,30 +124,30 @@ export default function PortalSettings() {
 
           <div style={{ borderTop: `1px solid ${colors.border}`, margin: '20px 0', paddingTop: '20px' }}>
             <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', color: colors.text }}>
-              Change Password (Optional)
+              {t('Change Password (Optional)')}
             </h3>
 
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
-              New Password
+              {t('New Password')}
             </label>
             <input
               style={inputStyle}
               name="newPassword"
               type="password"
-              placeholder="Minimum 8 characters"
+              placeholder={t('Minimum 8 characters')}
               value={form.newPassword}
               onChange={handleChange}
               minLength={8}
             />
 
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: colors.textSecondary, marginBottom: '6px' }}>
-              Confirm New Password
+              {t('Confirm New Password')}
             </label>
             <input
               style={inputStyle}
               name="confirmPassword"
               type="password"
-              placeholder="Re-type new password"
+              placeholder={t('Re-type new password')}
               value={form.confirmPassword}
               onChange={handleChange}
             />
@@ -157,7 +159,7 @@ export default function PortalSettings() {
               style={{ ...buttonPrimary, padding: '12px 30px' }}
               disabled={loading}
             >
-              {loading ? 'Saving Changes...' : 'Save Settings'}
+              {loading ? t('Saving Changes...') : t('Save Settings')}
             </button>
           </div>
         </form>

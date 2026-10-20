@@ -169,13 +169,13 @@ export default function BankAccountManagement() {
 
               <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: '11px', color: colors.textMuted }}>Current Balance</div>
+                  <div style={{ fontSize: '11px', color: colors.textMuted }}>{t("Current Balance")}</div>
                   <div style={{ fontSize: '20px', fontWeight: 800, color: colors.success, marginTop: '2px', fontFamily: "'Outfit', sans-serif" }}>
                     LKR {acc.balance?.toLocaleString()}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '11px', color: colors.textMuted }}>Initial Balance</div>
+                  <div style={{ fontSize: '11px', color: colors.textMuted }}>{t("Initial Balance")}</div>
                   <div style={{ fontSize: '13px', color: colors.textSecondary, marginTop: '2px' }}>
                     LKR {acc.initialBalance?.toLocaleString()}
                   </div>
@@ -191,20 +191,20 @@ export default function BankAccountManagement() {
         <div style={modalOverlay}>
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>Add Bank Account</h2>
+              <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>{t("Add Bank Account")}</h2>
               <ModalCloseButton onClick={() => setShowModal(false)} />
             </div>
             <form onSubmit={handleCreate}>
-              <input style={inputStyle} name="accountName" placeholder="Account Name (e.g. Donation Fund, Savings)" value={form.accountName} onChange={handleChange} required />
-              <input style={inputStyle} name="bankName" placeholder="Bank Name (e.g. Ceylon National Bank)" value={form.bankName} onChange={handleChange} required />
-              <input style={inputStyle} name="accountNumber" placeholder="Account Number" value={form.accountNumber} onChange={handleChange} required />
+              <input style={inputStyle} name="accountName" placeholder={t("Account Name (e.g. Donation Fund, Savings)", "Account Name")} value={form.accountName} onChange={handleChange} required />
+              <input style={inputStyle} name="bankName" placeholder={t("Bank Name (e.g. Ceylon National Bank)", "Bank Name")} value={form.bankName} onChange={handleChange} required />
+              <input style={inputStyle} name="accountNumber" placeholder={t("Account Number")} value={form.accountNumber} onChange={handleChange} required />
               
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Initial Balance (LKR)</label>
-              <input type="text" style={inputStyle} name="initialBalance" placeholder="Initial balance (e.g. 100,000)" value={form.initialBalance} onChange={handleChange} required />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Initial Balance")} (LKR)</label>
+              <input type="text" style={inputStyle} name="initialBalance" placeholder={t("Initial balance (e.g. 100,000)", "Initial balance")} value={form.initialBalance} onChange={handleChange} required />
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Add Account'}</button>
+                <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? t('Saving...') : t('Add Account')}</button>
               </div>
             </form>
           </div>

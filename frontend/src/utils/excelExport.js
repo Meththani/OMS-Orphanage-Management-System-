@@ -213,7 +213,7 @@ export function exportDonationsToExcel(donations) {
       'Receipt Reference': d.receiptRef || 'N/A',
       'Meal Slot': d.mealType ? d.mealType.toUpperCase() : 'N/A',
       'Meal Date': d.mealDate ? formatDate(d.mealDate) : 'N/A',
-      'Meal Menu Package': d.menuPackage || 'N/A',
+      'Preparation': d.mealDonationType === 'bringyourown' ? 'Self-Catered' : 'Centre-Prepared',
       'Internal Notes': d.notes || d.dietaryNotes || 'N/A',
     };
   });
@@ -230,9 +230,8 @@ export function exportMealBookingsToExcel(meals) {
     'Meal Slot': (m.mealType || 'breakfast').toUpperCase(),
     'Donor Name': m.donorID?.name || 'Valued Donor',
     'Donor Phone': m.donorID?.contactDetails || 'N/A',
-    'Portions (Kids Fed)': m.quantity || 50,
-    'Catering Model': m.mealDonationType === 'bringyourown' ? 'Donor Prepares & Cooks' : 'Orphanage Cooks (Sponsored)',
-    'Menu Package': (m.menuPackage || 'standard').toUpperCase(),
+    'Beneficiary Children (All)': m.quantity || 50,
+    'Preparation': m.mealDonationType === 'bringyourown' ? 'Self-Catered' : 'Centre-Prepared',
     'Estimated Cost (LKR)': formatCurrency(m.estimatedCost),
     'Booking Status': (m.status || 'pending').toUpperCase(),
     'Occasion / Reason': m.occasion || 'General Blessing',
@@ -496,8 +495,8 @@ export function exportMasterSystemBackupToExcel({
         'Meal Date': formatDate(m.mealDate),
         'Slot': m.mealType,
         'Donor': m.donorID?.name || 'Valued Donor',
-        'Quantity': m.quantity,
-        'Package': m.menuPackage || 'standard',
+        'Beneficiaries': m.quantity || 50,
+        'Preparation': m.mealDonationType === 'bringyourown' ? 'Self-Catered' : 'Centre-Prepared',
         'Cost (LKR)': m.estimatedCost || 0,
         'Status': m.status,
       }))

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 import { colors } from '../styles';
 import { ArrowLeft, WifiOff } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
@@ -13,6 +15,7 @@ export default function LoginPage() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const { login } = useAuth();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,7 +34,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!navigator.onLine) {
-      setError('Internet connection disconnected. Please check your internet connection and try again.');
+      setError(t('Internet connection disconnected. Please check your network.'));
       return;
     }
     setError('');
@@ -41,7 +44,7 @@ export default function LoginPage() {
       navigate('/portal/dashboard');
     } catch (err) {
       if (!navigator.onLine || err.message?.toLowerCase().includes('connect') || err.message?.toLowerCase().includes('fetch')) {
-        setError('Network Error: Internet connection disconnected or server is unreachable. Please check your connection and try again.');
+        setError(t('Network Error: Internet connection disconnected or server is unreachable. Please check your connection and try again.'));
       } else {
         setError(err.message);
       }
@@ -89,8 +92,19 @@ export default function LoginPage() {
           e.currentTarget.style.transform = 'translateX(0)';
         }}
       >
-        <ArrowLeft size={14} /> Back to Website
+        <ArrowLeft size={14} /> {t('Back to Website')}
       </button>
+
+      {/* Language Selector Top-Right */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '24px',
+        zIndex: 10,
+      }}>
+        <LanguageSelector />
+      </div>
+
       {/* Decorative orbs */}
       <div style={{
         position: 'absolute', width: '400px', height: '400px',
@@ -133,7 +147,7 @@ export default function LoginPage() {
             Senehasa Dari Sewana
           </h1>
           <p style={{ color: colors.textMuted, fontSize: '14px', margin: 0 }}>
-            Sign in to your account to continue
+            {t('Sign in to your account to continue')}
           </p>
         </div>
 
@@ -178,13 +192,13 @@ export default function LoginPage() {
               display: 'block', fontSize: '13px', fontWeight: 600,
               color: colors.textSecondary, marginBottom: '8px',
             }}>
-              Username
+              {t('Username')}
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder={t('Enter your username')}
               required
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: '10px',
@@ -205,7 +219,7 @@ export default function LoginPage() {
                 display: 'block', fontSize: '13px', fontWeight: 600,
                 color: colors.textSecondary, margin: 0,
               }}>
-                Password
+                {t('Password')}
               </label>
               <button
                 type="button"
@@ -218,14 +232,14 @@ export default function LoginPage() {
                 onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
                 onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
               >
-                Forgot Password?
+                {t('Forgot Password?')}
               </button>
             </div>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('Enter your password')}
               required
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: '10px',
@@ -260,7 +274,7 @@ export default function LoginPage() {
               boxShadow: loading ? 'none' : `0 4px 20px ${colors.primaryGlow}`,
             }}
           >
-            {loading ? '⏳ Signing in...' : 'Sign In'}
+            {loading ? `⏳ ${t('Signing in...')}` : t('Sign In')}
           </button>
         </form>
 
@@ -268,7 +282,7 @@ export default function LoginPage() {
           textAlign: 'center', marginTop: '24px',
           fontSize: '12px', color: colors.textMuted,
         }}>
-          Contact your administrator for access
+          {t('Contact your administrator for access')}
         </p>
       </div>
 
@@ -295,12 +309,12 @@ export default function LoginPage() {
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif", fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🔑 Reset Password
+                🔑 {t('Reset Password')}
               </h2>
               <ModalCloseButton onClick={() => setShowForgotModal(false)} />
             </div>
             <p style={{ fontSize: '14px', color: colors.textSecondary, lineHeight: '1.5', marginTop: '12px', marginBottom: '20px' }}>
-              For security reasons, your account credentials can only be reset by a <strong>System Administrator</strong>.
+              {t('For security reasons, your account credentials can only be reset by a System Administrator.')}
             </p>
             <div style={{
               backgroundColor: colors.surface,
@@ -311,9 +325,9 @@ export default function LoginPage() {
               marginBottom: '20px',
               lineHeight: '1.6'
             }}>
-              <div>1. Reach out to the admin or Center Warden.</div>
-              <div>2. Request a password reset from the <strong>Staff Management</strong> module.</div>
-              <div>3. Log in using the temporary password provided by the Admin.</div>
+              <div>1. {language === 'si' ? 'පද්ධති පරිපාලක හෝ නේවාසික පාලිකාව අමතන්න.' : 'Reach out to the admin or Center Warden.'}</div>
+              <div>2. {language === 'si' ? 'කාර්ය මණ්ඩල කළමනාකරණ අංශයෙන් මුරපදය නැවත සකස් කිරීමට ඉල්ලුම් කරන්න.' : 'Request a password reset from the Staff Management module.'}</div>
+              <div>3. {language === 'si' ? 'පරිපාලක විසින් ලබාදෙන තාවකාලික මුරපදය භාවිතයෙන් ඇතුළු වන්න.' : 'Log in using the temporary password provided by the Admin.'}</div>
             </div>
             <button
               onClick={() => setShowForgotModal(false)}
@@ -329,7 +343,7 @@ export default function LoginPage() {
                 fontFamily: "'Plus Jakarta Sans', sans-serif"
               }}
             >
-              Okay, I understand
+              {t('Okay, I understand')}
             </button>
           </div>
         </div>

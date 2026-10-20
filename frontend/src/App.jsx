@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalPortalSearch from './components/GlobalPortalSearch';
+import LanguageSelector from './components/LanguageSelector';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import ChildrenManagement from './pages/ChildrenManagement';
@@ -290,16 +291,23 @@ function AppLayout() {
         backgroundColor: 'transparent',
         minHeight: '100vh',
       }}>
-        {/* Top Header Bar with Global Search */}
+        {/* Top Header Bar with Global Search & Language Selector */}
         <header style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '20px',
           marginBottom: '28px',
           paddingBottom: '16px',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           width: '100%',
         }}>
-          <GlobalPortalSearch />
+          <div style={{ flex: 1, maxWidth: '640px' }}>
+            <GlobalPortalSearch />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <LanguageSelector />
+          </div>
         </header>
 
         <Routes>

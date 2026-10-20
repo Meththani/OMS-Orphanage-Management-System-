@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Sans+Sinhala:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --font-serif: 'Lora', Georgia, serif;
   --font-heading: 'Outfit', sans-serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-sinhala: 'Noto Sans Sinhala', 'Plus Jakarta Sans', sans-serif;
 
   /* Premium Light Charity Theme (matching background photo) */
   --bg-app: rgba(230, 241, 252, 0.72);
@@ -67,6 +68,46 @@ h6 {
   font-family: var(--font-heading);
   font-weight: 600;
   letter-spacing: -0.02em;
+}
+
+/* ─── Noto Sans Sinhala Typography Rules (Active in Sinhala Mode) ─── */
+html[lang="si"],
+body.lang-si {
+  --font-body: 'Noto Sans Sinhala', 'Plus Jakarta Sans', sans-serif;
+  --font-heading: 'Noto Sans Sinhala', 'Outfit', sans-serif;
+  --font-serif: 'Noto Sans Sinhala', 'Lora', Georgia, serif;
+  font-family: var(--font-body);
+}
+
+body.lang-si h1,
+body.lang-si h2,
+body.lang-si h3,
+body.lang-si h4,
+body.lang-si h5,
+body.lang-si h6 {
+  font-family: var(--font-heading) !important;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+body.lang-si p,
+body.lang-si span,
+body.lang-si a,
+body.lang-si button,
+body.lang-si input,
+body.lang-si select,
+body.lang-si textarea,
+body.lang-si label,
+body.lang-si li,
+body.lang-si table,
+body.lang-si th,
+body.lang-si td {
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+body.lang-si button {
+  letter-spacing: 0;
 }
 
 /* Scrollbar styling */

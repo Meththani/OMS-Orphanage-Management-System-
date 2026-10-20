@@ -3,96 +3,109 @@ import {
   Landmark, ShieldCheck, Heart, ChevronLeft, ChevronRight,
   Calendar, Clock, Sparkles, Building2, Award
 } from 'lucide-react';
-
-/**
- * Historical photograph collection with verified assets and historical context tags.
- */
-const HISTORICAL_PHOTOS = [
-  {
-    id: 'outdoor-pavilion',
-    srcWebp: '/history/outdoor-pavilion-hd.webp',
-    srcJpg: '/history/outdoor-pavilion-hd.jpg',
-    alt: 'High resolution architectural photograph of the outdoor Buddhist shrine pavilion at Senehasa Dari Sewana',
-    title: 'Sanctuary Pavilion & Peaceful Grounds',
-    tag: 'Sanctuary Grounds • Webada',
-    year: 'Sanctuary Grounds'
-  },
-  {
-    id: 'indoor-centre',
-    srcWebp: '/history/indoor-centre-hd.webp',
-    srcJpg: '/history/indoor-centre-hd.jpg',
-    alt: 'High resolution interior photograph of the child guidance study center and reception wing',
-    title: 'Guidance Center & Study Wing',
-    tag: 'Administrative Wing • Kirillawala',
-    year: 'Child Development Center'
-  },
-  {
-    id: 'historical-1962',
-    srcWebp: '/history/historical-charity-1962-hd.webp',
-    srcJpg: '/history/historical-charity-1962-hd.jpg',
-    alt: 'High resolution archival photograph of Kelaniya Buddhist Women\'s Charitable Society founded in 1962',
-    title: 'Kelaniya Buddhist Women\'s Society Archive',
-    tag: 'Historical Foundation • Established 1962',
-    year: 'Origins Since 1962'
-  },
-  {
-    id: 'sanctuary-building',
-    srcWebp: '/history/sanctuary-building-hd.webp',
-    srcJpg: '/history/sanctuary-building-hd.jpg',
-    alt: 'Two-story main sanctuary building of Senehasa Dari Sewana with residential quarters',
-    title: 'Senehasa Dari Sewana Residential Sanctuary',
-    tag: 'Residential Sanctuary • Present Day',
-    year: 'Modern Facility'
-  }
-];
-
-/**
- * Verified Historical Milestones with 100% exact historical text preserved.
- */
-const MILESTONES = [
-  {
-    id: 'milestone-2018',
-    dateBadge: '2018 — Gazette Proposal',
-    theme: 'blue',
-    icon: Landmark,
-    title: 'Sanctuary Establishment',
-    content: (
-      <>
-        In 2018, a Parliamentary Gazette formally proposed the establishment and maintenance of the{' '}
-        <strong>Senehasa Child Development Center</strong> (also referred to as{' '}
-        <em>“Senehasa Dari Sevana Children&apos;s Home”</em>) at No. 307/16, Jaya Mawatha, Webada, Kirillawala.
-      </>
-    )
-  },
-  {
-    id: 'milestone-2024',
-    dateBadge: 'June 12 & 14, 2024 — Incorporation',
-    theme: 'teal',
-    icon: ShieldCheck,
-    title: 'Parliament Act No. 30 of 2024',
-    content: (
-      <>
-        The Sri Lankan Parliament enacted the{' '}
-        <strong>Kelaniya Buddhist Women&apos;s Charitable Society (Incorporation) Act, No. 30 of 2024</strong>{' '}
-        (certified June 12, effective June 14, 2024), establishing statutory authority to run the sanctuary.
-      </>
-    )
-  },
-  {
-    id: 'milestone-present',
-    dateBadge: 'Present Day — Residential Care',
-    theme: 'gold',
-    icon: Heart,
-    title: 'Residential Child Development',
-    content: (
-      <>
-        Today, Senehasa Dari Sewana provides children with round-the-clock care, shelter, education, healthcare, and guidance to build confident, independent futures.
-      </>
-    )
-  }
-];
+import { useLanguage } from '../context/LanguageContext';
 
 export default function HistoryTimelineCard() {
+  const { language, t } = useLanguage();
+  const isSi = language === 'si';
+
+  const HISTORICAL_PHOTOS = [
+    {
+      id: 'outdoor-pavilion',
+      srcWebp: '/history/outdoor-pavilion-hd.webp',
+      srcJpg: '/history/outdoor-pavilion-hd.jpg',
+      alt: isSi ? 'සෙනෙහස දැරි සෙවණ එළිමහන් බෞද්ධ වන්දනා මණ්ඩපය' : 'High resolution architectural photograph of the outdoor Buddhist shrine pavilion at Senehasa Dari Sewana',
+      title: isSi ? 'අභයභූමි පරිශ්‍රය සහ ශාන්ත පරිසරය' : 'Sanctuary Pavilion & Peaceful Grounds',
+      tag: isSi ? 'අභයභූමි පරිශ්‍රය • වැබඩ' : 'Sanctuary Grounds • Webada',
+      year: 'Sanctuary Grounds'
+    },
+    {
+      id: 'indoor-centre',
+      srcWebp: '/history/indoor-centre-hd.webp',
+      srcJpg: '/history/indoor-centre-hd.jpg',
+      alt: isSi ? 'ළමා මඟපෙන්වීම් සහ අධ්‍යයන අංශය' : 'High resolution interior photograph of the child guidance study center and reception wing',
+      title: isSi ? 'මඟපෙන්වීම් මධ්‍යස්ථානය සහ අධ්‍යයන අංශය' : 'Guidance Center & Study Wing',
+      tag: isSi ? 'පරිපාලන අංශය • කිරිල්ලවල' : 'Administrative Wing • Kirillawala',
+      year: 'Child Development Center'
+    },
+    {
+      id: 'historical-1962',
+      srcWebp: '/history/historical-charity-1962-hd.webp',
+      srcJpg: '/history/historical-charity-1962-hd.jpg',
+      alt: isSi ? '1962 පිහිටුවන ලද කැළණිය බෞද්ධ කාන්තා පුණ්‍යායතනය' : 'High resolution archival photograph of Kelaniya Buddhist Women\'s Charitable Society founded in 1962',
+      title: isSi ? 'කැළණිය බෞද්ධ කාන්තා පුණ්‍යායතන ලේඛනාගාරය' : 'Kelaniya Buddhist Women\'s Society Archive',
+      tag: isSi ? 'ඓතිහාසික පදනම • 1962 පිහිටුවන ලදී' : 'Historical Foundation • Established 1962',
+      year: 'Origins Since 1962'
+    },
+    {
+      id: 'sanctuary-building',
+      srcWebp: '/history/sanctuary-building-hd.webp',
+      srcJpg: '/history/sanctuary-building-hd.jpg',
+      alt: isSi ? 'සෙනෙහස දැරි සෙවණ දෙමහල් ප්‍රධාන නේවාසික ගොඩනැගිල්ල' : 'Two-story main sanctuary building of Senehasa Dari Sewana with residential quarters',
+      title: isSi ? 'සෙනෙහස දැරි සෙවණ නේවාසික අභයභූමිය' : 'Senehasa Dari Sewana Residential Sanctuary',
+      tag: isSi ? 'නේවාසික අභයභූමිය • වර්තමානය' : 'Residential Sanctuary • Present Day',
+      year: 'Modern Facility'
+    }
+  ];
+
+  const MILESTONES = [
+    {
+      id: 'milestone-2018',
+      dateBadge: isSi ? '2018 — ගැසට් යෝජනාව' : '2018 — Gazette Proposal',
+      theme: 'blue',
+      icon: Landmark,
+      title: isSi ? 'අභයභූමිය පිහිටුවීම' : 'Sanctuary Establishment',
+      content: isSi ? (
+        <>
+          2018 වසරේදී, කිරිල්ලවල, වැබඩ, ජය මාවත, අංක 307/16 ලිපිනයේ පිහිටි{' '}
+          <strong>සෙනෙහස ළමා සංවර්ධන මධ්‍යස්ථානය</strong> (හෝ{' '}
+          <em>“සෙනෙහස දැරි සෙවණ ළමා නිවාසය”</em>) පිහිටුවීම සහ පවත්වාගෙන යාම සඳහා පාර්ලිමේන්තු ගැසට් පත්‍රයක් මඟින් විධිමත්ව යෝජනා කරන ලදී.
+        </>
+      ) : (
+        <>
+          In 2018, a Parliamentary Gazette formally proposed the establishment and maintenance of the{' '}
+          <strong>Senehasa Child Development Center</strong> (also referred to as{' '}
+          <em>“Senehasa Dari Sevana Children&apos;s Home”</em>) at No. 307/16, Jaya Mawatha, Webada, Kirillawala.
+        </>
+      )
+    },
+    {
+      id: 'milestone-2024',
+      dateBadge: isSi ? '2024 ජූනි 12 සහ 14 — සංස්ථාපනය' : 'June 12 & 14, 2024 — Incorporation',
+      theme: 'teal',
+      icon: ShieldCheck,
+      title: isSi ? '2024 අංක 30 දරන පාර්ලිමේන්තු පනත' : 'Parliament Act No. 30 of 2024',
+      content: isSi ? (
+        <>
+          ශ්‍රී ලංකා පාර්ලිමේන්තුව විසින්{' '}
+          <strong>2024 අංක 30 දරන කැළණිය බෞද්ධ කාන්තා පුණ්‍යායතනය (සංස්ථාගත කිරීමේ) පනත</strong>{' '}
+          (2024 ජූනි 12 සහතික කර ජූනි 14 දින සිට බලාත්මක) සම්මත කරමින් අභයභූමිය පවත්වාගෙන යාම සඳහා ව්‍යවස්ථාපිත බලය ලබා දෙන ලදී.
+        </>
+      ) : (
+        <>
+          The Sri Lankan Parliament enacted the{' '}
+          <strong>Kelaniya Buddhist Women&apos;s Charitable Society (Incorporation) Act, No. 30 of 2024</strong>{' '}
+          (certified June 12, effective June 14, 2024), establishing statutory authority to run the sanctuary.
+        </>
+      )
+    },
+    {
+      id: 'milestone-present',
+      dateBadge: isSi ? 'වර්තමානය — නේවාසික රැකවරණය' : 'Present Day — Residential Care',
+      theme: 'gold',
+      icon: Heart,
+      title: isSi ? 'නේවාසික ළමා සංවර්ධනය' : 'Residential Child Development',
+      content: isSi ? (
+        <>
+          අද වන විට, සෙනෙහස දැරි සෙවණ ආයතනය දරුවන්ට විශ්වාසවන්ත, ස්වාධීන අනාගතයක් ගොඩනැගීම සඳහා පැය 24 පුරාම රැකවරණය, නවාතැන්, අධ්‍යාපනය, සෞඛ්‍ය සේවා සහ මඟපෙන්වීම් සලසයි.
+        </>
+      ) : (
+        <>
+          Today, Senehasa Dari Sewana provides children with round-the-clock care, shelter, education, healthcare, and guidance to build confident, independent futures.
+        </>
+      )
+    }
+  ];
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
@@ -166,15 +179,15 @@ export default function HistoryTimelineCard() {
         <div className="history-header">
           <div className="history-eyebrow-badge">
             <span className="history-eyebrow-dot" aria-hidden="true" />
-            <span>OFFICIAL HISTORY &amp; MILESTONES</span>
+            <span>{t("OFFICIAL HISTORY & MILESTONES")}</span>
           </div>
 
           <h2 id="history-heading" className="history-main-heading">
-            Our History &amp; Parliamentary Incorporation
+            {t("Our History & Parliamentary Incorporation")}
           </h2>
 
           <p className="history-subtitle">
-            From early welfare initiatives to formal Parliamentary Act certification in 2024.
+            {t("From early welfare initiatives to formal Parliamentary Act certification in 2024.")}
           </p>
         </div>
 
@@ -290,7 +303,7 @@ export default function HistoryTimelineCard() {
                 <div className="history-gallery-top-bar">
                   <div className="history-gallery-pill">
                     <Sparkles size={13} className="history-sparkle-icon" />
-                    <span>Historical Archive</span>
+                    <span>{isSi ? 'ඓතිහාසික ලේඛනාගාරය' : 'Historical Archive'}</span>
                   </div>
                   <div className="history-counter-pill">
                     <span>{String(activeSlide + 1).padStart(2, '0')}</span>

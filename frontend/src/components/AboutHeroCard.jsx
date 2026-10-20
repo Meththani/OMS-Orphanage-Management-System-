@@ -1,37 +1,67 @@
 import React from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 /**
  * AboutHeroCard Component
  * Faithfully matches the provided About Us showcase card design:
  * - Soft sky-blue card with 36px border radius
  * - Parliament Act verification pill badge
- * - Bold two-line headline with Outfit font
+ * - Bold two-line headline with Outfit/Noto Sans Sinhala font
  * - Left content with authentic text
  * - Organic sweeping wave cutout framing the building photo
  * - Decorative top-left soft wave blob, bottom-left hand-drawn heart, and bottom-right stylized blue leaf motif
  */
 export default function AboutHeroCard({
-  badgeText = 'Incorporated under Parliament Act No. 30 of 2024 • Webada, Kirillawala',
-  title = (
+  badgeText,
+  title,
+  firstParagraph,
+  secondParagraph,
+  imageSrc = '/about-building-trimmed.png',
+  imageAlt
+}) {
+  const { language, t } = useLanguage();
+  const isSi = language === 'si';
+
+  const defaultBadgeText = t('Incorporated under Parliament Act No. 30 of 2024 • Webada, Kirillawala');
+
+  const defaultTitle = isSi ? (
+    <>
+      <span className="about-title-line">අප කවුරුන්ද: උරුම වූ</span>{' '}
+      <span className="about-title-line">රැකවරණය, සෙනෙහස සහ ගෞරවය.</span>
+    </>
+  ) : (
     <>
       <span className="about-title-line">Who We Are: A Legacy of</span>{' '}
       <span className="about-title-line">Refuge, Care, &amp; Dignity.</span>
     </>
-  ),
-  firstParagraph = (
+  );
+
+  const defaultFirstParagraph = isSi ? (
+    <>
+      <strong>කිරිල්ලවල සෙනෙහස දැරි සෙවණ ළමා සංවර්ධන මධ්‍යස්ථානය</strong> (සෙනෙහස දැරි සෙවණ) ශ්‍රී ලංකාවේ කිරිල්ලවල, වැබඩ පිහිටි ආයතනයකි. මෙම මධ්‍යස්ථානය දරුවන්ගේ අධ්‍යාපනය, සුවතාවය සහ පෞද්ගලික සංවර්ධනය වෙනුවෙන් කැපවෙමින් ආරක්ෂිත සහ ආදරණීය පරිසරයක් සැපයීමට කැපවී සිටී.
+    </>
+  ) : (
     <>
       <strong>Kirillawala Senehasa Dari Sewana Child Development Centre</strong> (Senehasa Dari Sewana) is an institution located in Webada, Kirillawala, Sri Lanka. The centre is dedicated to providing a safe, caring, and supportive environment for children while actively supporting their education, wellbeing, and personal development.
     </>
-  ),
-  secondParagraph = (
+  );
+
+  const defaultSecondParagraph = isSi ? (
+    <>
+      මෙම මධ්‍යස්ථානය ශ්‍රී ලංකාව පුරා සමාජීය, අධ්‍යාපනික සහ සුබසාධන කටයුතු සිදුකිරීම සඳහා පිහිටුවන ලද <strong>කැළණිය බෞද්ධ කාන්තා පුණ්‍යායතනයේ</strong> මෙහෙයවීම යටතේ ක්‍රියාත්මක වේ.
+    </>
+  ) : (
     <>
       The centre operates under the stewardship of the <strong>Kelaniya Buddhist Women's Charitable Society</strong>, a charitable organization established to carry out social, educational, and welfare activities across Sri Lanka.
     </>
-  ),
-  imageSrc = '/about-building-trimmed.png',
-  imageAlt = 'Kirillawala Senehasa Dari Sewana Child Development Centre'
-}) {
+  );
+
+  const renderedBadge = badgeText || defaultBadgeText;
+  const renderedTitle = title || defaultTitle;
+  const renderedP1 = firstParagraph || defaultFirstParagraph;
+  const renderedP2 = secondParagraph || defaultSecondParagraph;
+  const renderedAlt = imageAlt || (isSi ? 'කිරිල්ලවල සෙනෙහස දැරි සෙවණ ළමා සංවර්ධන මධ්‍යස්ථානය' : 'Kirillawala Senehasa Dari Sewana Child Development Centre');
   return (
     <div className="about-hero-card-container">
       {/* Main Card */}
@@ -74,21 +104,21 @@ export default function AboutHeroCard({
           {/* Parliament Act Pill Badge */}
           <div className="about-parliament-badge">
             <ShieldCheck size={16} strokeWidth={2.4} className="about-badge-icon" />
-            <span>{badgeText}</span>
+            <span>{renderedBadge}</span>
           </div>
 
           {/* Heading */}
           <h1 className="about-hero-title">
-            {title}
+            {renderedTitle}
           </h1>
 
           {/* Descriptive Body Text */}
           <div className="about-hero-text">
             <p className="about-hero-p1">
-              {firstParagraph}
+              {renderedP1}
             </p>
             <p className="about-hero-p2">
-              {secondParagraph}
+              {renderedP2}
             </p>
           </div>
         </div>
@@ -98,7 +128,7 @@ export default function AboutHeroCard({
           <div className="about-hero-photo-container">
             <img
               src={imageSrc}
-              alt={imageAlt}
+              alt={renderedAlt}
               className="about-hero-img"
               loading="eager"
             />

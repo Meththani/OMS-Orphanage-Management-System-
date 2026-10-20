@@ -4,11 +4,12 @@ import {
   Heart, HandHeart, Phone, Mail, MapPin, Calendar, Clock, Check, Lock,
   ChevronLeft, ChevronRight, BookOpen, FileText, Sparkles, Trophy, Apple, Palette,
   HandCoins, UtensilsCrossed, Utensils, CreditCard, Landmark, Target, Compass,
-  ShieldCheck, Users, ArrowRight, Award, GraduationCap
+  ShieldCheck, Users, ArrowRight, Award, GraduationCap, Baby
 } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import AboutHeroCard from '../components/AboutHeroCard';
 import HistoryTimelineCard from '../components/HistoryTimelineCard';
+import LanguageSelector from '../components/LanguageSelector';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -91,7 +92,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       primaryBtnColor: charityTheme.accentGreen,
       primaryBtnHoverColor: '#059669',
       primaryBtnAction: () => setShowMealModal(true),
-      secondaryBtnText: t('View Meal Packages'),
+      secondaryBtnText: t('View Meal Schedule'),
       secondaryBtnIcon: Calendar,
       secondaryBtnAction: () => setActiveTab('programs'),
       image: '/full-plates-meal-program.jpg',
@@ -330,15 +331,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const getPackagePrice = (pkg) => {
-    if (pkg === 'feast') return 1800;
-    if (pkg === 'special') return 1200;
-    return 600; // standard
-  };
-
   const calculateMealTotal = () => {
-    const qty = Number(mealForm.quantity || childCount || 50);
-    return qty * getPackagePrice(mealForm.menuPackage);
+    const qty = Number(childCount || mealForm.quantity || 50);
+    return qty * 600;
   };
 
   const calculateAdvanceAmount = () => {
@@ -574,7 +569,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShieldCheck size={15} color={charityTheme.accentAmber} />
-          <span>Government Registered Child Sanctuary &bull; <strong style={{ color: '#ffffff' }}>Kirillawala Senehasa Dari Sewana</strong></span>
+          <span>{t("Government Registered Child Sanctuary")} &bull; <strong style={{ color: '#ffffff' }}>{t("Kirillawala Senehasa Dari Sewana")}</strong></span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <a href="tel:+94112972129" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0' }}>
@@ -587,7 +582,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
           </a>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
             <MapPin size={13} />
-            <span>Kirillawala, Webada, Sri Lanka</span>
+            <span>{t("Kirillawala, Webada, Sri Lanka")}</span>
           </span>
         </div>
       </div>
@@ -687,51 +682,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
 
           <div style={{ width: '1px', height: '24px', backgroundColor: charityTheme.border, margin: '0 8px' }} />
 
-          {/* Language Switcher: English / සිංහල */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: 'rgba(15, 23, 42, 0.05)',
-            borderRadius: '9px',
-            padding: '3px',
-            border: `1px solid ${charityTheme.border}`,
-            gap: '2px',
-            marginRight: '6px'
-          }}>
-            <button
-              type="button"
-              onClick={() => setLanguage('en')}
-              style={{
-                padding: '5px 11px',
-                borderRadius: '7px',
-                border: 'none',
-                backgroundColor: language === 'en' ? charityTheme.primary : 'transparent',
-                color: language === 'en' ? '#ffffff' : charityTheme.textHeading,
-                fontWeight: 700,
-                fontSize: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('si')}
-              style={{
-                padding: '5px 11px',
-                borderRadius: '7px',
-                border: 'none',
-                backgroundColor: language === 'si' ? charityTheme.primary : 'transparent',
-                color: language === 'si' ? '#ffffff' : charityTheme.textHeading,
-                fontWeight: 700,
-                fontSize: '12px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              සිංහල
-            </button>
+          {/* Language Switcher Dropdown: 🇬🇧 English / 🇱🇰 සිංහල */}
+          <div style={{ marginRight: '6px' }}>
+            <LanguageSelector />
           </div>
 
           {/* Quick Action Buttons */}
@@ -793,7 +746,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             }}
           >
             <Lock size={13} />
-            <span>{t("Portal Login", "Staff Portal")}</span>
+            <span>{t("Authorized Staff Login", "Staff Portal")}</span>
           </button>
         </nav>
       </header>
@@ -1050,7 +1003,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   backdropFilter: 'blur(6px)',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
                 }}>
-                  Card {heroSlideIdx + 1} of {heroSlides.length}
+                  {language === 'si' ? `කාඩ්පත ${heroSlideIdx + 1} / ${heroSlides.length}` : `Card ${heroSlideIdx + 1} of ${heroSlides.length}`}
                 </div>
 
                 {/* Center: Pagination Dots */}
@@ -1069,7 +1022,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         cursor: 'pointer',
                         transition: 'all 0.3s ease'
                       }}
-                      title={`Go to card ${dotIdx + 1}`}
+                      title={language === 'si' ? `${dotIdx + 1} වන කාඩ්පත වෙත යන්න` : `Go to card ${dotIdx + 1}`}
                     />
                   ))}
                 </div>
@@ -1094,7 +1047,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.92)'}
-                    title="Previous card"
+                    title={t("Previous card")}
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -1116,7 +1069,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.92)'}
-                    title="Next card"
+                    title={t("Next card")}
                   >
                     <ChevronRight size={18} />
                   </button>
@@ -1192,13 +1145,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 </div>
 
                 <h3 style={{ fontSize: '22px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                  Direct Financial Gift
+                  {t("Direct Financial Gift")}
                 </h3>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6, flex: 1, marginBottom: '20px' }}>
-                  Fund educational textbooks, medical checkups, utility bills, and caregiver stipends. Instant online card donation or bank deposit.
+                  {t("Fund educational textbooks, medical checkups, utility bills, and caregiver stipends. Instant online card donation or bank deposit.")}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: charityTheme.primary, fontWeight: 700, fontSize: '14px' }}>
-                  <span>Donate Now</span>
+                  <span>{t("Donate Now")}</span>
                   <ArrowRight size={16} />
                 </div>
               </div>
@@ -1263,13 +1216,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   </div>
                 </div>
                 <h3 style={{ fontSize: '22px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                  Sponsor a Warm Meal
+                  {t("Sponsor a Warm Meal")}
                 </h3>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6, flex: 1, marginBottom: '20px' }}>
-                  Mark your birthday or special family occasion by sponsoring Breakfast, Lunch, or Dinner for our 50+ children.
+                  {t("Mark your birthday or special family occasion by sponsoring Breakfast, Lunch, or Dinner for our 50+ children.")}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: charityTheme.accentGreen, fontWeight: 700, fontSize: '14px' }}>
-                  <span>Open Booking Calendar</span>
+                  <span>{t("Open Booking Calendar")}</span>
                   <ArrowRight size={16} />
                 </div>
               </div>
@@ -1334,13 +1287,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   </div>
                 </div>
                 <h3 style={{ fontSize: '22px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                  Child Scholarship Fund
+                  {t("Child Scholarship Fund")}
                 </h3>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6, flex: 1, marginBottom: '20px' }}>
-                  Provide school uniform sets, shoes, stationeries, tuition classes, and specialized learning materials for school-going kids.
+                  {t("Provide school uniform sets, shoes, stationeries, tuition classes, and specialized learning materials for school-going kids.")}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: charityTheme.accentAmber, fontWeight: 700, fontSize: '14px' }}>
-                  <span>Explore Programs</span>
+                  <span>{t("Explore Programs")}</span>
                   <ArrowRight size={16} />
                 </div>
               </div>
@@ -1354,10 +1307,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               marginBottom: '48px'
             }}>
               {[
-                { number: '50+', label: 'Active Children in Care', icon: Users, color: charityTheme.primary, bg: charityTheme.primaryLight },
-                { number: '100%', label: 'School Enrollment Rate', icon: BookOpen, color: charityTheme.accentGreen, bg: charityTheme.accentGreenLight },
-                { number: '3 Meals', label: 'Daily Balanced Nutrition', icon: Utensils, color: charityTheme.accentAmber, bg: charityTheme.accentAmberLight },
-                { number: '24 / 7', label: 'Dedicated Caregiver Staff', icon: Heart, color: charityTheme.accentRose, bg: charityTheme.accentRoseLight },
+                { number: '50+', label: t('Active Children in Care'), icon: Users, color: charityTheme.primary, bg: charityTheme.primaryLight },
+                { number: '100%', label: t('School Enrollment Rate'), icon: BookOpen, color: charityTheme.accentGreen, bg: charityTheme.accentGreenLight },
+                { number: '3 Meals', label: t('Daily Balanced Nutrition'), icon: Utensils, color: charityTheme.accentAmber, bg: charityTheme.accentAmberLight },
+                { number: '24 / 7', label: t('Dedicated Caregiver Staff'), icon: Heart, color: charityTheme.accentRose, bg: charityTheme.accentRoseLight },
               ].map((item, i) => {
                 const IconComponent = item.icon;
                 return (
@@ -1417,13 +1370,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   letterSpacing: '0.08em',
                   marginBottom: '8px'
                 }}>
-                  Transparent Giving Process
+                  {t("Transparent Giving Process")}
                 </div>
                 <h2 style={{ fontSize: '34px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '12px' }}>
-                  How Your Contribution Reaches the Children
+                  {t("How Your Contribution Reaches the Children")}
                 </h2>
                 <p style={{ color: charityTheme.textMuted, fontSize: '15px' }}>
-                  We prioritize total transparency, digital receipting, and real-time portal logging for every single rupee received.
+                  {t("We prioritize total transparency, digital receipting, and real-time portal logging for every single rupee received.")}
                 </p>
               </div>
 
@@ -1431,36 +1384,36 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 <div style={{
                   padding: '28px', borderRadius: '16px', backgroundColor: charityTheme.bgSurface, border: `1px solid ${charityTheme.border}`
                 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.primary, marginBottom: '10px' }}>STEP 01</div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.primary, marginBottom: '10px' }}>{t("STEP 01")}</div>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontHeading }}>
-                    Select Cause or Meal Date
+                    {t("Select Cause or Meal Date")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
-                    Choose between monetary donations or select an open slot on the interactive meal calendar.
+                    {t("Choose between monetary donations or select an open slot on the interactive meal calendar.")}
                   </p>
                 </div>
 
                 <div style={{
                   padding: '28px', borderRadius: '16px', backgroundColor: charityTheme.bgSurface, border: `1px solid ${charityTheme.border}`
                 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.accentGreen, marginBottom: '10px' }}>STEP 02</div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.accentGreen, marginBottom: '10px' }}>{t("STEP 02")}</div>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontHeading }}>
-                    Instant Digital Verification
+                    {t("Instant Digital Verification")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
-                    Payments via Stripe or bank receipt uploads are logged into the staff portal system instantly.
+                    {t("Payments via Stripe or bank receipt uploads are logged into the staff portal system instantly.")}
                   </p>
                 </div>
 
                 <div style={{
                   padding: '28px', borderRadius: '16px', backgroundColor: charityTheme.bgSurface, border: `1px solid ${charityTheme.border}`
                 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.accentAmber, marginBottom: '10px' }}>STEP 03</div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.accentAmber, marginBottom: '10px' }}>{t("STEP 03")}</div>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontHeading }}>
-                    Direct Child Impact
+                    {t("Direct Child Impact")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
-                    100% of funds are allocated to purchasing fresh food, school supplies, and medical care for the kids.
+                    {t("100% of funds are allocated to purchasing fresh food, school supplies, and medical care for the kids.")}
                   </p>
                 </div>
               </div>
@@ -1483,7 +1436,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   letterSpacing: '0.08em',
                   marginBottom: '8px'
                 }}>
-                  About Senehasa Dari Sewana
+                  {t("About Senehasa Dari Sewana")}
                 </div>
                 <h2 style={{
                   fontSize: '34px',
@@ -1493,10 +1446,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   lineHeight: 1.25,
                   marginBottom: '16px'
                 }}>
-                  Dedicated to Restoring Hope &amp; Happiness
+                  {t("Dedicated to Restoring Hope & Happiness")}
                 </h2>
                 <p style={{ color: charityTheme.textBody, fontSize: '15px', lineHeight: 1.75 }}>
-                  Founded in Sri Lanka as a sanctuary for orphaned and underprivileged children, Senehasa Dari Sewana offers safe living space, wholesome daily meals, tuition classes, and emotional support.
+                  {t("Founded in Sri Lanka as a sanctuary for orphaned and underprivileged children, Senehasa Dari Sewana offers safe living space, wholesome daily meals, tuition classes, and emotional support.")}
                 </p>
               </div>
 
@@ -1506,10 +1459,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <Target size={22} color={charityTheme.primary} />
                   </div>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontHeading }}>
-                    Our Mission
+                    {t("Our Mission")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
-                    To offer vulnerable children safe sanctuary, quality health, tailored learning, and life coaching.
+                    {t("To offer vulnerable children safe sanctuary, quality health, tailored learning, and life coaching.")}
                   </p>
                 </div>
 
@@ -1518,10 +1471,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <Compass size={22} color={charityTheme.accentGreen} />
                   </div>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontHeading }}>
-                    Our Vision
+                    {t("Our Vision")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
-                    A world where every orphaned child becomes an empowered, educated, and independent adult.
+                    {t("A world where every orphaned child becomes an empowered, educated, and independent adult.")}
                   </p>
                 </div>
 
@@ -1530,10 +1483,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <ShieldCheck size={22} color={charityTheme.accentAmber} />
                   </div>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '8px', fontFamily: charityTheme.fontHeading }}>
-                    Full Accountability
+                    {t("Full Accountability")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.6 }}>
-                    All donations are digitally tracked with official receipt issuance and government audit inspections.
+                    {t("All donations are digitally tracked with official receipt issuance and government audit inspections.")}
                   </p>
                 </div>
               </div>
@@ -1572,13 +1525,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   <Target size={28} color={charityTheme.primary} />
                 </div>
                 <h3 style={{ fontSize: '26px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '14px' }}>
-                  Our Mission
+                  {t("Our Mission")}
                 </h3>
                 <p style={{ fontSize: '16px', color: charityTheme.textHeading, fontWeight: 600, lineHeight: 1.65, marginBottom: '16px' }}>
-                  “Our mission is to provide children with a safe, caring and supportive environment where they can grow, learn and develop with dignity.”
+                  {t("“Our mission is to provide children with a safe, caring and supportive environment where they can grow, learn and develop with dignity.”")}
                 </p>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.7 }}>
-                  We aim to support education, health, skills, positive moral values, and work hand-in-hand with donors and well-wishers to support the children's needs.
+                  {t("We aim to support education, health, skills, positive moral values, and work hand-in-hand with donors and well-wishers to support the children's needs.")}
                 </p>
               </div>
 
@@ -1598,13 +1551,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   <Compass size={28} color={charityTheme.accentGreen} />
                 </div>
                 <h3 style={{ fontSize: '26px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '14px' }}>
-                  Our Vision
+                  {t("Our Vision")}
                 </h3>
                 <p style={{ fontSize: '18px', color: charityTheme.accentGreen, fontWeight: 700, lineHeight: 1.65, marginBottom: '16px' }}>
-                  “To create a safe, caring and supportive environment where every child has the opportunity to learn, grow and build a better future.”
+                  {t("“To create a safe, caring and supportive environment where every child has the opportunity to learn, grow and build a better future.”")}
                 </p>
                 <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.7 }}>
-                  Creating an empowering environment where every child develops the confidence, knowledge, and life skills for their next stage of life.
+                  {t("Creating an empowering environment where every child develops the confidence, knowledge, and life skills for their next stage of life.")}
                 </p>
               </div>
             </div>
@@ -1627,24 +1580,24 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   letterSpacing: '0.08em',
                   marginBottom: '8px'
                 }}>
-                  Our Commitment to Children
+                  {t("Our Commitment to Children")}
                 </div>
                 <h2 style={{ fontSize: '36px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '12px' }}>
-                  How We Support Each Child's Future
+                  {t("How We Support Each Child's Future")}
                 </h2>
                 <p style={{ color: charityTheme.textMuted, fontSize: '15px' }}>
-                  Children need more than basic care — they also need education, encouragement, emotional support, and talent development opportunities.
+                  {t("Children need more than basic care — they also need education, encouragement, emotional support, and talent development opportunities.")}
                 </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
                 {[
-                  { title: 'Safe & Supportive Living', desc: 'Provide a safe and supportive living environment where children feel protected and valued.', icon: ShieldCheck, color: charityTheme.primary, bg: charityTheme.primaryLight },
-                  { title: 'Education & Personal Growth', desc: 'Support formal schooling, books, tuition classes, and individual academic achievement.', icon: BookOpen, color: charityTheme.accentGreen, bg: charityTheme.accentGreenLight },
-                  { title: 'Health, Nutrition & Values', desc: 'Promote good health, balanced nutrition, pediatric care, and positive moral values.', icon: Apple, color: charityTheme.accentAmber, bg: charityTheme.accentAmberLight },
-                  { title: 'Talent & Skill Development', desc: 'Provide rich opportunities for children to discover and develop their unique talents.', icon: Award, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
-                  { title: 'Independent Adult Readiness', desc: 'Encourage children to become responsible, confident, and independent members of society.', icon: Trophy, color: charityTheme.accentRose, bg: charityTheme.accentRoseLight },
-                  { title: 'Community & Donor Partnership', desc: 'Work together with donors, volunteers, and well-wishers to support the children\'s everyday needs.', icon: Users, color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.12)' },
+                  { title: t('Safe & Supportive Living'), desc: t('Provide a safe and supportive living environment where children feel protected and valued.'), icon: ShieldCheck, color: charityTheme.primary, bg: charityTheme.primaryLight },
+                  { title: t('Education & Personal Growth'), desc: t('Support formal schooling, books, tuition classes, and individual academic achievement.'), icon: BookOpen, color: charityTheme.accentGreen, bg: charityTheme.accentGreenLight },
+                  { title: t('Health, Nutrition & Values'), desc: t('Promote good health, balanced nutrition, pediatric care, and positive moral values.'), icon: Apple, color: charityTheme.accentAmber, bg: charityTheme.accentAmberLight },
+                  { title: t('Talent & Skill Development'), desc: t('Provide rich opportunities for children to discover and develop their unique talents.'), icon: Award, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.12)' },
+                  { title: t('Independent Adult Readiness'), desc: t('Encourage children to become responsible, confident, and independent members of society.'), icon: Trophy, color: charityTheme.accentRose, bg: charityTheme.accentRoseLight },
+                  { title: t('Community & Donor Partnership'), desc: t('Work together with donors, volunteers, and well-wishers to support the children\'s everyday needs.'), icon: Users, color: '#0ea5e9', bg: 'rgba(14, 165, 233, 0.12)' },
                 ].map((item, idx) => {
                   const ItemIcon = item.icon;
                   return (
@@ -1713,13 +1666,17 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   marginBottom: '16px'
                 }}>
                   <Award size={15} />
-                  <span>Statutory Legal Authorization</span>
+                  <span>{t("Statutory Legal Authorization")}</span>
                 </div>
                 <h3 style={{ fontSize: '28px', fontWeight: 800, fontFamily: charityTheme.fontHeading, marginBottom: '14px', color: '#ffffff' }}>
-                  Legal Empowerment under Act No. 30 of 2024
+                  {t("Legal Empowerment under Act No. 30 of 2024")}
                 </h3>
                 <p style={{ fontSize: '15px', lineHeight: 1.7, color: '#cbd5e1' }}>
-                  The <strong>Kelaniya Buddhist Women's Charitable Society</strong> is statutory authorized under the <em>Kelaniya Buddhist Women's Charitable Society (Incorporation) Act, No. 30 of 2024</em> to maintain bank accounts on behalf of Senehasa Dari Sewana and accept monetary donations, gifts, and assistance for the children.
+                  {language === 'si' ? (
+                    <><strong>කැළණිය බෞද්ධ කාන්තා පුණ්‍යායතනය</strong> වෙත <em>2024 අංක 30 දරන කැළණිය බෞද්ධ කාන්තා පුණ්‍යායතනය (සංස්ථාගත කිරීමේ) පනත</em> යටතේ සෙනෙහස දැරි සෙවණ වෙනුවෙන් බැංකු ගිණුම් පවත්වාගෙන යාමට සහ ළමුන් වෙනුවෙන් පරිත්‍යාග, ආධාර ලබා ගැනීමට ව්‍යවස්ථාපිත නීතිමය බලය හිමිව ඇත.</>
+                  ) : (
+                    <>The <strong>Kelaniya Buddhist Women's Charitable Society</strong> is statutory authorized under the <em>Kelaniya Buddhist Women's Charitable Society (Incorporation) Act, No. 30 of 2024</em> to maintain bank accounts on behalf of Senehasa Dari Sewana and accept monetary donations, gifts, and assistance for the children.</>
+                  )}
                 </p>
               </div>
 
@@ -1745,7 +1702,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.accentAmber}
               >
                 <HandCoins size={18} />
-                <span>Support the Centre</span>
+                <span>{t("Support the Centre")}</span>
               </button>
             </div>
 
@@ -1760,26 +1717,30 @@ export default function PublicWebsite({ initialTab = 'home' }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '36px', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: charityTheme.primary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
-                    Institutional Directory Verification
+                    {t("Institutional Directory Verification")}
                   </div>
                   <h3 style={{ fontSize: '26px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '14px' }}>
-                    Where We Are
+                    {t("Where We Are")}
                   </h3>
                   <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.7, marginBottom: '20px' }}>
-                    Listed in the Sri Lankan Ministry of Health directory as <strong>Kirillawala Senehasa Dari Sewana Child Development Centre (Private)</strong> and classified under residential child care services.
+                    {language === 'si' ? (
+                      <>ශ්‍රී ලංකා සෞඛ්‍ය අමාත්‍යාංශ නාමාවලියේ <strong>කිරිල්ලවල සෙනෙහස දැරි සෙවණ ළමා සංවර්ධන මධ්‍යස්ථානය (පුද්ගලික)</strong> ලෙස ලියාපදිංචි වී නේවාසික ළමා සුබසාධන සේවාවක් ලෙස වර්ගීකරණය කර ඇත.</>
+                    ) : (
+                      <>Listed in the Sri Lankan Ministry of Health directory as <strong>Kirillawala Senehasa Dari Sewana Child Development Centre (Private)</strong> and classified under residential child care services.</>
+                    )}
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '14px', color: charityTheme.textHeading }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <MapPin size={18} color={charityTheme.primary} />
-                      <span><strong>Address:</strong> No. 307/16, Jaya Mawatha, Webada, Kirillawala, Sri Lanka</span>
+                      <span><strong>{t("Address:")}</strong> {t("No. 307/16, Jaya Mawatha, Webada, Kirillawala, Sri Lanka")}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Phone size={18} color={charityTheme.accentGreen} />
-                      <span><strong>Telephone:</strong> 011 297 2129 (+94 11 297 2129)</span>
+                      <span><strong>{t("Telephone:")}</strong> 011 297 2129 (+94 11 297 2129)</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Compass size={18} color={charityTheme.accentAmber} />
-                      <span><strong>Divisional Secretariat:</strong> Mahara Divisional Secretariat Area</span>
+                      <span><strong>{t("Divisional Secretariat:")}</strong> {t("Mahara Divisional Secretariat Area")}</span>
                     </div>
                   </div>
                 </div>
@@ -1799,10 +1760,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <Heart size={28} color={charityTheme.primary} fill={charityTheme.primaryLight} />
                   </div>
                   <h4 style={{ fontSize: '20px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                    Our Hope for the Future
+                    {t("Our Hope for the Future")}
                   </h4>
                   <p style={{ fontSize: '13px', color: charityTheme.textBody, lineHeight: 1.65, margin: 0 }}>
-                    “We believe that every child deserves the opportunity to build a positive future. Through education, care, guidance and community support, Senehasa Dari Sewana strives to help children develop the confidence, knowledge and skills they need for the next stage of their lives.”
+                    {t("“We believe that every child deserves the opportunity to build a positive future. Through education, care, guidance and community support, Senehasa Dari Sewana strives to help children develop the confidence, knowledge and skills they need for the next stage of their lives.”")}
                   </p>
                 </div>
               </div>
@@ -1825,13 +1786,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 letterSpacing: '0.08em',
                 marginBottom: '8px'
               }}>
-                Holistic Child Care Environment
+                {t('Holistic Child Care Environment')}
               </div>
               <h2 style={{ fontSize: '38px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '12px' }}>
-                Six Pillars of Child Development
+                {t('Six Pillars of Child Development')}
               </h2>
               <p style={{ color: charityTheme.textMuted, fontSize: '16px', lineHeight: 1.6 }}>
-                We structure child care across six developmental areas, offering safe spaces, modern study setups, and dedicated caregiver supervision.
+                {t('We structure child care across six developmental areas, offering safe spaces, modern study setups, and dedicated caregiver supervision.')}
               </p>
             </div>
 
@@ -1879,7 +1840,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       }}>
                         <img
                           src={fac.image}
-                          alt={fac.title}
+                          alt={t(fac.title)}
                           style={{
                             width: '100%',
                             height: '100%',
@@ -1922,10 +1883,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     )}
 
                     <h3 style={{ fontSize: '19px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '10px', fontFamily: charityTheme.fontHeading }}>
-                      {fac.title}
+                      {t(fac.title)}
                     </h3>
                     <p style={{ fontSize: '14px', color: charityTheme.textBody, lineHeight: 1.65 }}>
-                      {fac.desc}
+                      {t(fac.desc)}
                     </p>
                   </div>
                 );
@@ -1945,17 +1906,17 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             }}>
               <div>
                 <div style={{ fontSize: '40px', fontWeight: 800, color: charityTheme.primary, fontFamily: charityTheme.fontHeading }}>100%</div>
-                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>School Enrollment</div>
+                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>{t('School Enrollment')}</div>
               </div>
               <div style={{ width: '1px', backgroundColor: charityTheme.border }} />
               <div>
-                <div style={{ fontSize: '40px', fontWeight: 800, color: charityTheme.accentGreen, fontFamily: charityTheme.fontHeading }}>6 Pillars</div>
-                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>Development Program</div>
+                <div style={{ fontSize: '40px', fontWeight: 800, color: charityTheme.accentGreen, fontFamily: charityTheme.fontHeading }}>{t('6 Pillars')}</div>
+                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>{t('Development Program')}</div>
               </div>
               <div style={{ width: '1px', backgroundColor: charityTheme.border }} />
               <div>
-                <div style={{ fontSize: '40px', fontWeight: 800, color: charityTheme.accentAmber, fontFamily: charityTheme.fontHeading }}>24 / 7</div>
-                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>Continuous Care</div>
+                <div style={{ fontSize: '40px', fontWeight: 800, color: charityTheme.accentAmber, fontFamily: charityTheme.fontHeading }}>{t('24 / 7')}</div>
+                <div style={{ fontSize: '13px', color: charityTheme.textMuted, marginTop: '4px', fontWeight: 600 }}>{t('Continuous Care')}</div>
               </div>
             </div>
           </div>
@@ -1975,11 +1936,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 letterSpacing: '0.08em',
                 marginBottom: '6px'
               }}>
-                Community Initiatives
+                {t('Community Initiatives')}
               </div>
-              <h2 style={{ fontSize: '38px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading }}>Sponsorship Programs</h2>
+              <h2 style={{ fontSize: '38px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading }}>{t('Sponsorship Programs')}</h2>
               <p style={{ color: charityTheme.textMuted, marginTop: '6px', fontSize: '16px' }}>
-                Special initiatives that connect donors directly to child development outcomes.
+                {t('Special initiatives that connect donors directly to child development outcomes.')}
               </p>
             </div>
 
@@ -2242,7 +2203,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em'
                       }}>
-                        {prog.category}
+                        {t(prog.category)}
                       </span>
                       {prog.badge && (
                         <span style={{
@@ -2254,7 +2215,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           color: prog.badgeColor,
                           letterSpacing: '0.04em'
                         }}>
-                          {prog.badge}
+                          {t(prog.badge)}
                         </span>
                       )}
                     </div>
@@ -2268,7 +2229,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       lineHeight: 1.25,
                       letterSpacing: '-0.01em'
                     }}>
-                      {prog.title}
+                      {t(prog.title)}
                     </h3>
 
                     <p style={{
@@ -2277,7 +2238,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       lineHeight: 1.7,
                       marginBottom: '24px'
                     }}>
-                      {prog.desc}
+                      {t(prog.desc)}
                     </p>
 
                     {/* Detailed Feature Items Aligned in 2x2 Grid */}
@@ -2315,10 +2276,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                             </div>
                             <div>
                               <div style={{ fontSize: '13px', fontWeight: 700, color: charityTheme.textHeading, marginBottom: '2px' }}>
-                                {sub.title}
+                                {t(sub.title)}
                               </div>
                               <div style={{ fontSize: '12px', color: charityTheme.textMuted, lineHeight: 1.45 }}>
-                                {sub.desc}
+                                {t(sub.desc)}
                               </div>
                             </div>
                           </div>
@@ -2341,7 +2302,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   }}>
                     <img
                       src={prog.image}
-                      alt={`${prog.title} Poster`}
+                      alt={`${t(prog.title)} Poster`}
                       style={{
                         width: '100%',
                         height: '100%',
@@ -2371,13 +2332,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   letterSpacing: '0.08em',
                   marginBottom: '6px'
                 }}>
-                  Direct Assistance
+                  {t('Direct Assistance')}
                 </div>
                 <h2 style={{ fontSize: '38px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '16px' }}>
-                  Contact Us
+                  {t('Contact Us')}
                 </h2>
                 <p style={{ color: charityTheme.textBody, fontSize: '15px', lineHeight: 1.7, marginBottom: '32px' }}>
-                  Have questions about monetary donations, visiting procedures, or meal scheduling? Send us a message and our coordinator team will respond within 24 hours.
+                  {t('Have questions about monetary donations, visiting procedures, or meal scheduling? Send us a message and our coordinator team will respond within 24 hours.')}
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -2389,7 +2350,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       <MapPin size={20} color={charityTheme.primary} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Sanctuary Address (Mahara DS Area)</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>{t('Sanctuary Address (Mahara DS Area)')}</div>
                       <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>No. 307/16, Jaya Mawatha, Webada, Kirillawala, Sri Lanka</div>
                     </div>
                   </div>
@@ -2402,7 +2363,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       <Phone size={20} color={charityTheme.accentGreen} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Telephone Contact</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>{t('Telephone Contact')}</div>
                       <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>011 297 2129 (+94 11 297 2129)</div>
                     </div>
                   </div>
@@ -2415,7 +2376,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       <Mail size={20} color={charityTheme.accentAmber} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Official Email</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>{t('Official Email')}</div>
                       <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>info@senehasadarisewana.org</div>
                     </div>
                   </div>
@@ -2428,8 +2389,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       <Clock size={20} color={charityTheme.primary} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>Sponsor Visiting Hours</div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>09:00 AM - 05:00 PM (Prior Appointment)</div>
+                      <div style={{ fontSize: '12px', color: charityTheme.textMuted, fontWeight: 600 }}>{t('Sponsor Visiting Hours')}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: charityTheme.textHeading, marginTop: '2px' }}>{t('09:00 AM - 05:00 PM (Prior Appointment)')}</div>
                     </div>
                   </div>
                 </div>
@@ -2444,10 +2405,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 boxShadow: charityTheme.shadowCard
               }}>
                 <h3 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '6px', fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading }}>
-                  Send Us a Message
+                  {t('Send Us a Message')}
                 </h3>
                 <p style={{ fontSize: '13px', color: charityTheme.textMuted, marginBottom: '24px' }}>
-                  Fill in the details below and our coordinator team will be in touch shortly.
+                  {t('Fill in the details below and our coordinator team will be in touch shortly.')}
                 </p>
 
                 {contactSuccess ? (
@@ -2472,35 +2433,35 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     }}>
                       <Check size={26} color={charityTheme.accentGreen} />
                     </div>
-                    <h4 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>Message Submitted!</h4>
-                    <p style={{ fontSize: '13px', color: charityTheme.textBody }}>Thank you for reaching out. Our coordinator will review your note and respond promptly.</p>
+                    <h4 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>{t('Message Submitted!')}</h4>
+                    <p style={{ fontSize: '13px', color: charityTheme.textBody }}>{t('Thank you for reaching out. Our coordinator will review your note and respond promptly.')}</p>
                   </div>
                 ) : (
                   <form onSubmit={handleContactSubmit}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>First Name *</label>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>{t('First Name *')}</label>
                         <input
                           style={{
                             width: '100%', padding: '11px 14px', borderRadius: '10px',
                             border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
                             color: charityTheme.textHeading, fontSize: '14px', boxSizing: 'border-box'
                           }}
-                          placeholder="First Name"
+                          placeholder={t('First Name')}
                           value={contactForm.firstName}
                           onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
                           required
                         />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Last Name *</label>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>{t('Last Name *')}</label>
                         <input
                           style={{
                             width: '100%', padding: '11px 14px', borderRadius: '10px',
                             border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
                             color: charityTheme.textHeading, fontSize: '14px', boxSizing: 'border-box'
                           }}
-                          placeholder="Last Name"
+                          placeholder={t('Last Name')}
                           value={contactForm.lastName}
                           onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
                           required
@@ -2509,7 +2470,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     </div>
 
                     <div style={{ marginBottom: '14px' }}>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Email Address *</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>{t('Email Address *')}</label>
                       <input
                         type="email"
                         style={{
@@ -2525,7 +2486,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     </div>
 
                     <div style={{ marginBottom: '14px' }}>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Phone Number (Optional)</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>{t('Phone Number (Optional)')}</label>
                       <input
                         style={{
                           width: '100%', padding: '11px 14px', borderRadius: '10px',
@@ -2539,7 +2500,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>Message *</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>{t('Message *')}</label>
                       <textarea
                         style={{
                           width: '100%', padding: '11px 14px', borderRadius: '10px',
@@ -2547,7 +2508,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           color: charityTheme.textHeading, fontSize: '14px', minHeight: '110px',
                           resize: 'vertical', boxSizing: 'border-box'
                         }}
-                        placeholder="How can we assist you?"
+                        placeholder={t('How can we assist you?')}
                         value={contactForm.message}
                         onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
                         required
@@ -2573,7 +2534,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = charityTheme.primaryDark}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.primary}
                     >
-                      {contactLoading ? 'Sending Message...' : 'Send Message'}
+                      {contactLoading ? t('Sending Message...') : t('Send Message')}
                     </button>
                   </form>
                 )}
@@ -2596,13 +2557,13 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 letterSpacing: '0.08em',
                 marginBottom: '8px'
               }}>
-                Direct Support Pathways
+                {t('Direct Support Pathways')}
               </div>
               <h2 style={{ fontSize: '38px', fontWeight: 800, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '12px' }}>
-                Choose How You Wish to Support
+                {t('Choose How You Wish to Support')}
               </h2>
               <p style={{ color: charityTheme.textMuted, fontSize: '16px', lineHeight: 1.6 }}>
-                Make a tangible difference through direct financial contributions or sponsoring warm, nutritious daily meals for our 50+ children.
+                {t('Make a tangible difference through direct financial contributions or sponsoring warm, nutritious daily meals for our 50+ children.')}
               </p>
             </div>
 
@@ -2628,7 +2589,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 }}>
                   <img
                     src="/financial-gift.jpg"
-                    alt="Donate Funds"
+                    alt={t('Donate Funds')}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -2655,26 +2616,26 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 </div>
 
                 <h3 style={{ fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '10px' }}>
-                  Donate Funds
+                  {t('Donate Funds')}
                 </h3>
 
                 <p style={{ color: charityTheme.textBody, fontSize: '14px', lineHeight: 1.65, marginBottom: '24px', flex: 1 }}>
-                  Support general sanctuary operations, healthcare checkups, textbooks, uniform kits, caregiver stipends, and children's recreational activities. Instant online card checkout or bank deposit.
+                  {t("Support general sanctuary operations, healthcare checkups, textbooks, uniform kits, caregiver stipends, and children's recreational activities. Instant online card checkout or bank deposit.")}
                 </p>
 
                 <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '20px', marginBottom: '24px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: charityTheme.textBody }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Check size={16} color={charityTheme.accentGreen} />
-                      <span>Instant official digital receipt</span>
+                      <span>{t('Instant official digital receipt')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Check size={16} color={charityTheme.accentGreen} />
-                      <span>Secure card checkout via Stripe or bank transfer</span>
+                      <span>{t('Secure card checkout via Stripe or bank transfer')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Check size={16} color={charityTheme.accentGreen} />
-                      <span>100% directly allocated to child welfare</span>
+                      <span>{t('100% directly allocated to child welfare')}</span>
                     </div>
                   </div>
                 </div>
@@ -2701,7 +2662,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.primary}
                 >
                   <HandCoins size={18} />
-                  <span>Proceed to Cash Donation</span>
+                  <span>{t('Proceed to Cash Donation')}</span>
                 </button>
               </div>
 
@@ -2726,7 +2687,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 }}>
                   <img
                     src="/sponsor-meal.jpg"
-                    alt="Sponsor a Warm Meal"
+                    alt={t('Sponsor a Meal')}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -2753,26 +2714,26 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 </div>
 
                 <h3 style={{ fontSize: '24px', fontWeight: 700, fontFamily: charityTheme.fontHeading, color: charityTheme.textHeading, marginBottom: '10px' }}>
-                  Sponsor a Meal
+                  {t('Sponsor a Meal')}
                 </h3>
 
                 <p style={{ color: charityTheme.textBody, fontSize: '14px', lineHeight: 1.65, marginBottom: '24px', flex: 1 }}>
-                  Celebrate birthdays, family anniversaries, or memorial days by sponsoring a full warm nutritious meal (Breakfast, Lunch, or Dinner) for all 50+ children residing at the sanctuary.
+                  {t('Celebrate birthdays, family anniversaries, or memorial days by sponsoring a full warm nutritious meal (Breakfast, Lunch, or Dinner) for all 50+ children residing at the sanctuary.')}
                 </p>
 
                 <div style={{ borderTop: `1px solid ${charityTheme.border}`, paddingTop: '20px', marginBottom: '24px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: charityTheme.textBody }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Check size={16} color={charityTheme.accentGreen} />
-                      <span>Live interactive booking calendar</span>
+                      <span>{t('Live interactive booking calendar')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Check size={16} color={charityTheme.accentGreen} />
-                      <span>Choice of Standard, Special, or Feast menus</span>
+                      <span>{t('Fresh wholesome meals prepared for all resident children')}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Check size={16} color={charityTheme.accentGreen} />
-                      <span>Dedicated portion allocations &amp; SMS notification</span>
+                      <span>{t('Guaranteed nutrition for all children & instant confirmation')}</span>
                     </div>
                   </div>
                 </div>
@@ -2799,7 +2760,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = charityTheme.accentGreen}
                 >
                   <UtensilsCrossed size={18} />
-                  <span>Open Meal Booking Calendar</span>
+                  <span>{t('Open Meal Booking Calendar')}</span>
                 </button>
               </div>
             </div>
@@ -2827,7 +2788,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   <Landmark size={22} color={charityTheme.accentAmber} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: charityTheme.textHeading }}>Direct Bank Wire Account Details</div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: charityTheme.textHeading }}>{t('Direct Bank Wire Account Details')}</div>
                   <div style={{ fontSize: '13px', color: charityTheme.textMuted }}>Commercial Bank of Ceylon &bull; A/C: <strong style={{ color: charityTheme.textHeading }}>800-459-2104</strong> &bull; Branch: Kollupitiya</div>
                 </div>
               </div>
@@ -2848,7 +2809,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                   transition: 'all 0.15s ease'
                 }}
               >
-                Upload Transfer Slip
+                {t('Upload Transfer Slip')}
               </button>
             </div>
           </div>
@@ -2877,42 +2838,42 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 </span>
               </div>
               <p style={{ fontSize: '13px', lineHeight: 1.7, color: '#cbd5e1', marginBottom: '16px' }}>
-                Kirillawala Senehasa Dari Sewana Child Development Centre is a registered residential sanctuary managed by the Kelaniya Buddhist Women's Charitable Society.
+                {t("Kirillawala Senehasa Dari Sewana Child Development Centre is a registered residential sanctuary managed by the Kelaniya Buddhist Women's Charitable Society.")}
               </p>
               <div style={{ fontSize: '12px', color: '#94a3b8' }}>
-                Incorporation Act: <strong style={{ color: '#ffffff' }}>Act No. 30 of 2024</strong>
+                {t('Incorporation Act:')} <strong style={{ color: '#ffffff' }}>{t('Act No. 30 of 2024')}</strong>
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>Quick Links</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>{t('Quick Links')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                <span onClick={() => { setActiveTab('home'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>About Our Sanctuary</span>
-                <span onClick={() => { setActiveTab('facilities'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Six Developmental Pillars</span>
-                <span onClick={() => { setActiveTab('programs'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Welfare Programs</span>
-                <span onClick={() => { setActiveTab('donate'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Donate &amp; Support</span>
-                <span onClick={() => { setActiveTab('contact'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Contact Coordinators</span>
+                <span onClick={() => { setActiveTab('home'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('About Our Sanctuary')}</span>
+                <span onClick={() => { setActiveTab('facilities'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Six Developmental Pillars')}</span>
+                <span onClick={() => { setActiveTab('programs'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Welfare Programs')}</span>
+                <span onClick={() => { setActiveTab('donate'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Donate & Support')}</span>
+                <span onClick={() => { setActiveTab('contact'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Contact Coordinators')}</span>
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>Ways to Help</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>{t('Ways to Help')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                <span onClick={() => setShowCashModal(true)} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Direct Monetary Gift</span>
-                <span onClick={() => setShowMealModal(true)} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Sponsor a Daily Meal</span>
-                <span onClick={() => { setActiveTab('programs'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Scholarship &amp; Books Fund</span>
-                <span onClick={() => { setActiveTab('programs'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>Health &amp; Pediatric Care</span>
+                <span onClick={() => setShowCashModal(true)} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Direct Monetary Gift')}</span>
+                <span onClick={() => setShowMealModal(true)} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Sponsor a Daily Meal')}</span>
+                <span onClick={() => { setActiveTab('programs'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Scholarship & Books Fund')}</span>
+                <span onClick={() => { setActiveTab('programs'); window.scrollTo(0, 0); }} style={{ cursor: 'pointer', color: '#cbd5e1' }}>{t('Health & Pediatric Care')}</span>
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>Sanctuary Address</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', marginBottom: '14px' }}>{t('Sanctuary Address')}</div>
               <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div>No. 307/16, Jaya Mawatha, Webada, Kirillawala, Sri Lanka</div>
                 <div>Phone: 011 297 2129 (+94 11 297 2129)</div>
                 <div>Email: info@senehasadarisewana.org</div>
                 <div style={{ marginTop: '8px', fontSize: '12px', color: charityTheme.accentAmber }}>
-                  Divisional Secretariat: Mahara
+                  {t('Divisional Secretariat: Mahara')}
                 </div>
               </div>
             </div>
@@ -2929,10 +2890,10 @@ export default function PublicWebsite({ initialTab = 'home' }) {
             gap: '12px'
           }}>
             <div>
-              &copy; {new Date().getFullYear()} Senehasa Dari Sewana Child Sanctuary. All rights reserved.
+              &copy; {new Date().getFullYear()} Senehasa Dari Sewana Child Sanctuary. {t('All rights reserved.')}
             </div>
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-              <span style={{ color: '#64748b' }}>Non-Profit Protection Center</span>
+              <span style={{ color: '#64748b' }}>{t('Non-Profit Protection Center')}</span>
               <button
                 onClick={() => navigate('/login')}
                 style={{
@@ -2947,7 +2908,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                 }}
               >
                 <Lock size={12} />
-                <span>Authorized Staff Login</span>
+                <span>{t('Authorized Staff Login')}</span>
               </button>
             </div>
           </div>
@@ -3152,9 +3113,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                       {t("Bank Transfer Account Details:")}
                     </div>
                     <div style={{ fontSize: '12px', color: charityTheme.textMuted, lineHeight: 1.6, marginBottom: '12px' }}>
-                      {t("Bank Name")}: <strong>Commercial Bank of Ceylon</strong><br />
-                      {t("Account Name")}: <strong>Senehasa Dari Sewana Foundation</strong><br />
-                      {t("Account Number")}: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya
+                      {t("Bank Name")}: <strong>{t("Commercial Bank of Ceylon")}</strong><br />
+                      {t("Account Name")}: <strong>{t("Senehasa Dari Sewana Foundation")}</strong><br />
+                      {t("Account Number")}: <strong>800-459-2104</strong> &bull; {t("Branch")}: {t("Kollupitiya")}
                     </div>
 
                     <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: charityTheme.textBody, marginBottom: '6px' }}>
@@ -3216,7 +3177,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
                         fontSize: '13px', color: charityTheme.textHeading, boxSizing: 'border-box'
                       }}
-                      placeholder="e.g. Priyantha Silva"
+                      placeholder={t("e.g. Priyantha Silva")}
                       value={cashForm.name}
                       onChange={(e) => setCashForm({ ...cashForm, name: e.target.value })}
                       required
@@ -3287,7 +3248,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                         fontSize: '13px', color: charityTheme.textHeading, minHeight: '60px',
                         resize: 'vertical', boxSizing: 'border-box'
                       }}
-                      placeholder="e.g. In memory of family, birthday celebration"
+                      placeholder={t("e.g. In memory of family, birthday celebration")}
                       value={cashForm.notes}
                       onChange={(e) => setCashForm({ ...cashForm, notes: e.target.value })}
                     />
@@ -3519,9 +3480,9 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                               <span>{day}</span>
                               {!isPast && (
                                 <div style={{ display: 'flex', gap: '3px', marginTop: '2px' }}>
-                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: breakfastBooked ? '#ef4444' : '#10b981' }} title="Breakfast" />
-                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: lunchBooked ? '#ef4444' : '#10b981' }} title="Lunch" />
-                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: dinnerBooked ? '#ef4444' : '#10b981' }} title="Dinner" />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: breakfastBooked ? '#ef4444' : '#10b981' }} title={t("Breakfast")} />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: lunchBooked ? '#ef4444' : '#10b981' }} title={t("Lunch")} />
+                                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: dinnerBooked ? '#ef4444' : '#10b981' }} title={t("Dinner")} />
                                 </div>
                               )}
                             </div>
@@ -3533,7 +3494,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                     <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: charityTheme.textMuted }}>
                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981' }} /> {t("In Stock", "Available")}
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#10b981' }} /> {t("Available")}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                           <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#ef4444' }} /> {t("Sponsored")}
@@ -3620,42 +3581,58 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           </div>
                         </div>
 
-                        {/* Package Selection & Portions */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
-                              {t("Menu Package")}
-                            </label>
-                            <select
-                              style={{
-                                width: '100%', padding: '9px 10px', borderRadius: '8px',
-                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
-                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
-                              }}
-                              value={mealForm.menuPackage}
-                              onChange={(e) => setMealForm(prev => ({ ...prev, menuPackage: e.target.value }))}
-                            >
-                              <option value="standard">{t("Standard Menu (LKR 600/kid)")}</option>
-                              <option value="special">{t("Special Menu (LKR 1,200/kid)")}</option>
-                              <option value="feast">{t("Feast Menu (LKR 1,800/kid)")}</option>
-                            </select>
+                        {/* Beneficiary Children: All Orphanage Children */}
+                        <div style={{
+                          marginBottom: '14px',
+                          padding: '12px 14px',
+                          borderRadius: '10px',
+                          background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(16,185,129,0.06))',
+                          border: `1.5px solid rgba(37,99,235,0.22)`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '8px',
+                              background: 'linear-gradient(135deg, #1d70b8, #10b981)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#ffffff',
+                              flexShrink: 0
+                            }}>
+                              <Baby size={20} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '11px', color: charityTheme.textMuted, fontWeight: 700, textTransform: 'uppercase' }}>
+                                {t("Beneficiary Children")}
+                              </div>
+                              <div style={{ fontSize: '14px', fontWeight: 800, color: charityTheme.textHeading }}>
+                                {t("All Orphanage Children")}
+                              </div>
+                              <div style={{ fontSize: '11px', color: charityTheme.textBody }}>
+                                {t("Meals must cover all children currently residing in the orphanage.")}
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: charityTheme.textHeading, marginBottom: '4px' }}>
-                              {t("Portions Count")}
-                            </label>
-                            <input
-                              type="number"
-                              min="10"
-                              style={{
-                                width: '100%', padding: '9px 10px', borderRadius: '8px',
-                                border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
-                                fontSize: '12px', color: charityTheme.textHeading, boxSizing: 'border-box'
-                              }}
-                              value={mealForm.quantity}
-                              onChange={(e) => setMealForm(prev => ({ ...prev, quantity: e.target.value }))}
-                              required
-                            />
+                          <div style={{
+                            textAlign: 'right',
+                            padding: '6px 12px',
+                            backgroundColor: '#ffffff',
+                            border: `1.5px solid rgba(29,112,184,0.25)`,
+                            borderRadius: '8px',
+                            minWidth: '85px'
+                          }}>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: charityTheme.textMuted, textTransform: 'uppercase' }}>
+                              {t("Active Children")}
+                            </div>
+                            <div style={{ fontSize: '20px', fontWeight: 900, color: charityTheme.primary, marginTop: '1px' }}>
+                              {childCount || 50}
+                            </div>
                           </div>
                         </div>
 
@@ -3666,8 +3643,11 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                           border: `1px solid rgba(16, 185, 129, 0.25)`, borderRadius: '8px',
                           color: charityTheme.accentGreen, marginBottom: '14px'
                         }}>
-                          <span style={{ fontSize: '12px', fontWeight: 600 }}>{t("Total Meal Cost:")}</span>
-                          <span style={{ fontWeight: 800, fontSize: '16px' }}>
+                          <div>
+                            <span style={{ fontSize: '12px', fontWeight: 700, display: 'block' }}>{t("Total Meal Cost:")}</span>
+                            <span style={{ fontSize: '11px', opacity: 0.85 }}>LKR 600 × {childCount || 50} {t("Kids")}</span>
+                          </div>
+                          <span style={{ fontWeight: 800, fontSize: '17px' }}>
                             LKR {calculateMealTotal().toLocaleString()}
                           </span>
                         </div>
@@ -3740,7 +3720,7 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                     border: `1px solid ${charityTheme.border}`, backgroundColor: '#ffffff',
                                     fontSize: '12px', fontWeight: 700, color: charityTheme.textHeading, boxSizing: 'border-box'
                                   }}
-                                  placeholder="e.g. 10,000"
+                                  placeholder={t("e.g. 10,000")}
                                   value={mealForm.customAdvance}
                                   onChange={(e) => setMealForm(prev => ({ ...prev, customAdvance: formatWithCommas(e.target.value) }))}
                                   required
@@ -3844,8 +3824,8 @@ export default function PublicWebsite({ initialTab = 'home' }) {
                                 {t("Bank Transfer Account Details:")}
                               </div>
                               <div style={{ fontSize: '11px', color: charityTheme.textMuted, lineHeight: 1.5, marginBottom: '8px' }}>
-                                {t("Bank Name")}: <strong>Commercial Bank</strong> &bull; {t("Account Name")}: <strong>Senehasa Dari Sewana Foundation</strong><br />
-                                {t("Account Number")}: <strong>800-459-2104</strong> &bull; Branch: Kollupitiya
+                                {t("Bank Name")}: <strong>{t("Commercial Bank")}</strong> &bull; {t("Account Name")}: <strong>{t("Senehasa Dari Sewana Foundation")}</strong><br />
+                                {t("Account Number")}: <strong>800-459-2104</strong> &bull; {t("Branch")}: {t("Kollupitiya")}
                               </div>
 
                               <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: charityTheme.textBody, marginBottom: '4px' }}>

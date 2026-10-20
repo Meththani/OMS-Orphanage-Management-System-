@@ -32,6 +32,7 @@ export default function DonationsManagement() {
   const [saving, setSaving] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [selectedDonation, setSelectedDonation] = useState(null);
+  const [activeChildrenCount, setActiveChildrenCount] = useState(50);
 
   // Edit Donation States (Admin/Accountant only)
   const [showEditModal, setShowEditModal] = useState(false);
@@ -44,12 +45,16 @@ export default function DonationsManagement() {
     setError('');
     try {
       const query = (filter === 'all' || filter === 'donors') ? '' : `?type=${filter}`;
-      const [donationRes, donorRes] = await Promise.all([
+      const [donationRes, donorRes, childrenRes] = await Promise.all([
         api.get(`/donations${query}`),
         api.get('/donations/donors-list'),
+        api.get('/children?status=active').catch(() => ({ data: [] })),
       ]);
       setDonations(donationRes.data);
       setDonors(donorRes.data);
+      if (childrenRes?.data && Array.isArray(childrenRes.data)) {
+        setActiveChildrenCount(childrenRes.data.length || 50);
+      }
       if (donorRes.data.length > 0) {
         setForm(f => ({ ...f, donorID: donorRes.data[0]._id }));
       }
@@ -84,7 +89,8 @@ export default function DonationsManagement() {
       } else if (form.type === 'goods') {
         payload.quantity = Number(form.quantity);
       } else if (form.type === 'meal') {
-        payload.quantity = Number(form.quantity);
+        payload.quantity = Number(activeChildrenCount || form.quantity || 50);
+        payload.menuPackage = 'standard';
         payload.mealDate = new Date(form.mealDate);
       }
       
@@ -148,9 +154,9 @@ export default function DonationsManagement() {
       } else if (editForm.type === 'meal') {
         payload.mealDate = new Date(editForm.mealDate);
         payload.mealType = editForm.mealType;
-        payload.quantity = Number(editForm.quantity);
+        payload.quantity = Number(editForm.quantity || activeChildrenCount || 50);
         payload.occasion = editForm.occasion;
-        payload.menuPackage = editForm.menuPackage;
+        payload.menuPackage = 'standard';
         payload.dietaryNotes = editForm.dietaryNotes;
       }
 
@@ -469,12 +475,12 @@ export default function DonationsManagement() {
           <div style={modalBox} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, color: colors.text, fontFamily: "'Outfit', sans-serif" }}>
-                Record Donation
+                {t("Record Donation")}
               </h2>
               <ModalCloseButton onClick={() => setShowModal(false)} />
             </div>
             <form onSubmit={handleCreate}>
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Select Donor Profile</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Select Donor Profile")}</label>
               <select style={selectStyle} name="donorID" value={form.donorID} onChange={handleChange} required>
                 {donors.map((donor) => (
                   <option key={donor._id} value={donor._id}>
@@ -483,63 +489,94 @@ export default function DonationsManagement() {
                 ))}
               </select>
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Donation Type</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Donation Type")}</label>
               <select style={selectStyle} name="type" value={form.type} onChange={handleChange}>
-                <option value="cash">Cash</option>
-                <option value="goods">Goods</option>
-                <option value="meal">Meal Booking</option>
+                <option value="cash">{t("Cash")}</option>
+                <option value="goods">{t("Goods")}</option>
+                <option value="meal">{t("Meal Booking")}</option>
               </select>
 
               {form.type === 'cash' && (
                 <>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Amount (LKR)</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Amount")} (LKR)</label>
                   <input style={inputStyle} name="amount" type="text" placeholder="e.g. 50,000" value={form.amount} onChange={handleChange} required />
                 </>
               )}
 
               {form.type === 'goods' && (
                 <>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Item Type / Name</label>
-                  <input style={inputStyle} name="itemType" placeholder="e.g. Notebooks, Bed sheets" value={form.itemType} onChange={handleChange} required />
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity</label>
-                  <input style={inputStyle} name="quantity" type="number" placeholder="Quantity" value={form.quantity} onChange={handleChange} required />
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Item Type")} / {t("Name")}</label>
+                  <input style={inputStyle} name="itemType" placeholder={t("e.g. Notebooks, Bed sheets", "Notebooks, Bed sheets")} value={form.itemType} onChange={handleChange} required />
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Quantity")}</label>
+                  <input style={inputStyle} name="quantity" type="number" placeholder={t("Quantity")} value={form.quantity} onChange={handleChange} required />
                 </>
               )}
 
               {form.type === 'meal' && (
                 <>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Meal Date</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Meal Date")}</label>
                   <input style={inputStyle} name="mealDate" type="date" value={form.mealDate} onChange={handleChange} required />
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Meal Slot</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Meal Slot")}</label>
                   <select style={selectStyle} name="mealType" value={form.mealType} onChange={handleChange}>
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
+                    <option value="breakfast">{t("Breakfast")}</option>
+                    <option value="lunch">{t("Lunch")}</option>
+                    <option value="dinner">{t("Dinner")}</option>
                   </select>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Quantity (Kids portions)</label>
-                  <input style={inputStyle} name="quantity" type="number" placeholder="Number of kids fed" value={form.quantity} onChange={handleChange} required />
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Occasion (Optional)</label>
-                  <input style={inputStyle} name="occasion" placeholder="e.g. Birthday Celebration" value={form.occasion} onChange={handleChange} />
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Menu Package</label>
-                  <select style={selectStyle} name="menuPackage" value={form.menuPackage} onChange={handleChange}>
-                    <option value="standard">Standard Menu ($2/kid)</option>
-                    <option value="special">Special Menu ($4/kid)</option>
-                    <option value="feast">Feast Menu ($6/kid)</option>
-                  </select>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Dietary Notes (Optional)</label>
-                  <textarea style={{ ...inputStyle, minHeight: '50px', resize: 'vertical' }} name="dietaryNotes" placeholder="e.g. Vegetarian only, no seafood" value={form.dietaryNotes} onChange={handleChange} />
+                  {/* Beneficiary Children: All Orphanage Children */}
+                  <div style={{
+                    margin: '14px 0',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(29,112,184,0.06)',
+                    border: `1.5px solid rgba(29,112,184,0.22)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, fontWeight: 700, textTransform: 'uppercase' }}>
+                        {t("Beneficiary Children")}
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 800, color: colors.text }}>
+                        {t("All Orphanage Children")}
+                      </div>
+                      <div style={{ fontSize: '11px', color: colors.textSecondary }}>
+                        {t("Meals must cover all children currently residing in the orphanage.")}
+                      </div>
+                    </div>
+                    <div style={{
+                      textAlign: 'right',
+                      padding: '6px 12px',
+                      backgroundColor: colors.card,
+                      border: `1px solid rgba(29,112,184,0.25)`,
+                      borderRadius: '8px',
+                      minWidth: '75px'
+                    }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase' }}>
+                        {t("Active Children")}
+                      </div>
+                      <div style={{ fontSize: '18px', fontWeight: 900, color: colors.primary }}>
+                        {activeChildrenCount || 50}
+                      </div>
+                    </div>
+                  </div>
+
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Occasion")} ({t("Optional", "විකල්ප")})</label>
+                  <input style={inputStyle} name="occasion" placeholder={t("e.g. Birthday Celebration", "Birthday Celebration")} value={form.occasion} onChange={handleChange} />
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Dietary Notes")} ({t("Optional", "විකල්ප")})</label>
+                  <textarea style={{ ...inputStyle, minHeight: '50px', resize: 'vertical' }} name="dietaryNotes" placeholder={t("Dietary Instructions")} value={form.dietaryNotes} onChange={handleChange} />
                 </>
               )}
 
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Receipt Reference (optional)</label>
-              <input style={inputStyle} name="receiptRef" placeholder="Reference ID" value={form.receiptRef} onChange={handleChange} />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Receipt Reference")}</label>
+              <input style={inputStyle} name="receiptRef" placeholder={t("Receipt Reference")} value={form.receiptRef} onChange={handleChange} />
               
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Internal Notes (optional)</label>
-              <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} name="notes" placeholder="Notes..." value={form.notes} onChange={handleChange} />
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Internal Notes")}</label>
+              <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} name="notes" placeholder={t("Notes")} value={form.notes} onChange={handleChange} />
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? 'Saving...' : 'Save Record'}</button>
+                <button type="button" style={buttonSecondary} onClick={() => setShowModal(false)}>{t("Cancel")}</button>
+                <button type="submit" style={buttonPrimary} disabled={saving}>{saving ? t('Saving...') : t('Save')}</button>
               </div>
             </form>
           </div>
@@ -583,13 +620,13 @@ export default function DonationsManagement() {
               ) : (
                 <div style={{ textAlign: 'center', color: colors.textMuted }}>
                   <div style={{ fontSize: '48px', marginBottom: '12px' }}>📁</div>
-                  <p style={{ margin: '4px 0 12px' }}>In-browser preview is not supported for this file type.</p>
+                  <p style={{ margin: '4px 0 12px' }}>{t("In-browser preview is not supported for this file type.")}</p>
                   <a
                     href={previewFile.fileData}
                     download={previewFile.fileName}
                     style={{ ...buttonPrimary, display: 'inline-block', textDecoration: 'none' }}
                   >
-                    Download File
+                    {t("Download File")}
                   </a>
                 </div>
               )}
@@ -601,9 +638,9 @@ export default function DonationsManagement() {
                 download={previewFile.fileName}
                 style={{ ...buttonSecondary, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                📥 Download
+                📥 {t("Download")}
               </a>
-              <button type="button" style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', fontWeight: 600 }} onClick={() => setPreviewFile(null)}>Close</button>
+              <button type="button" style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.3)', fontWeight: 600 }} onClick={() => setPreviewFile(null)}>{t("Close")}</button>
             </div>
           </div>
         </div>
@@ -712,12 +749,8 @@ export default function DonationsManagement() {
                           <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text, textTransform: 'capitalize' }}>{t(selectedDonation.mealType)}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Portions")}</div>
-                          <div style={{ fontSize: '13px', color: colors.text }}>{selectedDonation.quantity} portions</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Menu Package")}</div>
-                          <div style={{ fontSize: '13px', color: colors.text, textTransform: 'capitalize' }}>{t(selectedDonation.menuPackage)}</div>
+                          <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Beneficiaries")}</div>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{t("All Children")} ({selectedDonation.quantity || activeChildrenCount || 50} {t("Kids")})</div>
                         </div>
                         {selectedDonation.occasion && (
                           <div>
@@ -874,22 +907,22 @@ export default function DonationsManagement() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                    Status
+                    {t("Status")}
                   </label>
                   <select
                     style={selectStyle}
                     value={editForm.status}
                     onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                   >
-                    <option value="pending">Pending</option>
-                    <option value="received">Received / Approved</option>
-                    <option value="cancelled">Cancelled / Rejected</option>
+                    <option value="pending">{t("Pending")}</option>
+                    <option value="received">{t("Received")}</option>
+                    <option value="cancelled">{t("Cancelled")}</option>
                   </select>
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                    Receipt Reference
+                    {t("Receipt Reference")}
                   </label>
                   <input
                     style={inputStyle}
@@ -904,7 +937,7 @@ export default function DonationsManagement() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                      Amount (LKR)
+                      {t("Amount")} (LKR)
                     </label>
                     <input
                       style={inputStyle}
@@ -916,17 +949,17 @@ export default function DonationsManagement() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                      Payment Method
+                      {t("Payment Method")}
                     </label>
                     <select
                       style={selectStyle}
                       value={editForm.paymentMethod}
                       onChange={(e) => setEditForm({ ...editForm, paymentMethod: e.target.value })}
                     >
-                      <option value="bank_transfer">Bank Transfer</option>
-                      <option value="cash">Cash Handover</option>
-                      <option value="cheque">Cheque</option>
-                      <option value="online">Online Payment</option>
+                      <option value="bank_transfer">{t("Bank Transfer")}</option>
+                      <option value="cash">{t("Cash Handover")}</option>
+                      <option value="cheque">{t("Cheque")}</option>
+                      <option value="online">{t("Online Payment")}</option>
                     </select>
                   </div>
                 </div>
@@ -936,7 +969,7 @@ export default function DonationsManagement() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px', marginBottom: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                      Item Type / Description
+                      {t("Item Type")} / {t("Description")}
                     </label>
                     <input
                       style={inputStyle}
@@ -947,7 +980,7 @@ export default function DonationsManagement() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>
-                      Quantity
+                      {t("Quantity")}
                     </label>
                     <input
                       style={inputStyle}
@@ -964,7 +997,7 @@ export default function DonationsManagement() {
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Meal Date</label>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Meal Date")}</label>
                       <input
                         style={inputStyle}
                         type="date"
@@ -974,55 +1007,46 @@ export default function DonationsManagement() {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Meal Slot</label>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Meal Slot")}</label>
                       <select
                         style={selectStyle}
                         value={editForm.mealType}
                         onChange={(e) => setEditForm({ ...editForm, mealType: e.target.value })}
                       >
-                        <option value="breakfast">Breakfast</option>
-                        <option value="lunch">Lunch</option>
-                        <option value="dinner">Dinner</option>
+                        <option value="breakfast">{t("Breakfast")}</option>
+                        <option value="lunch">{t("Lunch")}</option>
+                        <option value="dinner">{t("Dinner")}</option>
                       </select>
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Kids Portions</label>
-                      <input
-                        style={inputStyle}
-                        type="number"
-                        value={editForm.quantity}
-                        onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Occasion</label>
-                      <input
-                        style={inputStyle}
-                        value={editForm.occasion}
-                        placeholder="e.g. Birthday"
-                        onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Menu Package</label>
-                      <select
-                        style={selectStyle}
-                        value={editForm.menuPackage}
-                        onChange={(e) => setEditForm({ ...editForm, menuPackage: e.target.value })}
-                      >
-                        <option value="standard">Standard Menu</option>
-                        <option value="special">Special Menu</option>
-                        <option value="feast">Feast Menu</option>
-                      </select>
+                      <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Beneficiaries")}</label>
+                      <div style={{
+                        ...inputStyle,
+                        backgroundColor: 'rgba(255,255,255,0.04)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontWeight: 600,
+                        color: colors.text
+                      }}>
+                        <span>{t("All Children")}</span>
+                        <span style={{ color: colors.primary, fontWeight: 700 }}>{editForm.quantity || activeChildrenCount || 50} {t("Kids")}</span>
+                      </div>
                     </div>
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Dietary / Preparation Notes</label>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Occasion")}</label>
+                    <input
+                      style={inputStyle}
+                      value={editForm.occasion}
+                      placeholder="e.g. Birthday"
+                      onChange={(e) => setEditForm({ ...editForm, occasion: e.target.value })}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Dietary & Prep Notes")}</label>
                     <textarea
                       style={{ ...inputStyle, minHeight: '50px', resize: 'vertical' }}
                       value={editForm.dietaryNotes}
@@ -1033,11 +1057,11 @@ export default function DonationsManagement() {
               )}
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>Internal Notes</label>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textMuted, marginBottom: '6px' }}>{t("Internal Notes")}</label>
                 <textarea
                   style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }}
                   value={editForm.notes}
-                  placeholder="Additional remarks or instructions..."
+                  placeholder={t("Notes")}
                   onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                 />
               </div>

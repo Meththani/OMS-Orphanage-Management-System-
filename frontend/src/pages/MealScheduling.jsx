@@ -3,7 +3,7 @@ import { api } from '../api/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { colors, cardStyle, buttonPrimary, buttonSecondary, tableStyle, thStyle, tdStyle, modalOverlay, modalBox, inputStyle, selectStyle } from '../styles';
-import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone, FileSpreadsheet, Lock } from 'lucide-react';
+import { Calendar, Clock, Check, X, AlertCircle, List, ChevronLeft, ChevronRight, User, Sparkles, Plus, Edit2, Utensils, ShoppingBag, DollarSign, MessageSquare, Smartphone, FileSpreadsheet, Lock, Baby } from 'lucide-react';
 import ModalCloseButton from '../components/ModalCloseButton';
 import { formatWithCommas, stripCommas } from '../utils/numberFormat';
 import { exportMealBookingsToExcel } from '../utils/excelExport';
@@ -16,6 +16,7 @@ export default function MealScheduling() {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeChildrenCount, setActiveChildrenCount] = useState(0);
   
   // New States
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
@@ -56,7 +57,6 @@ export default function MealScheduling() {
     quantity: '50',
     occasion: '',
     mealDonationType: 'sponsor',   // 'sponsor' | 'bringyourown'
-    menuPackage: 'standard',
     estimatedCost: '',
     donorCooksMenu: '',
     dietaryNotes: '',
@@ -87,13 +87,25 @@ export default function MealScheduling() {
     }
   };
 
+  const loadActiveChildren = async () => {
+    try {
+      const res = await api.get('/children?status=active');
+      const count = Array.isArray(res.data) ? res.data.length : 0;
+      setActiveChildrenCount(count);
+    } catch (err) {
+      console.error('Error loading active children count:', err);
+    }
+  };
+
   useEffect(() => {
     loadMeals();
     loadDonors();
+    loadActiveChildren();
   }, []);
 
   const handleOpenForm = (meal = null) => {
     setFormError('');
+    const effectiveCount = activeChildrenCount > 0 ? String(activeChildrenCount) : '50';
     if (meal) {
       if (!canEditOrAction) {
         alert('Action restricted: Only Admin and Accountant are authorized to edit existing meal bookings.');
@@ -104,10 +116,9 @@ export default function MealScheduling() {
         donorID: meal.donorID?._id || meal.donorID || '',
         mealDate: meal.mealDate ? new Date(meal.mealDate).toISOString().split('T')[0] : '',
         mealType: meal.mealType || 'breakfast',
-        quantity: String(meal.quantity || 50),
+        quantity: String(meal.quantity || effectiveCount),
         occasion: meal.occasion || '',
         mealDonationType: meal.mealDonationType || 'sponsor',
-        menuPackage: meal.menuPackage || 'standard',
         estimatedCost: meal.estimatedCost ? formatWithCommas(meal.estimatedCost) : '',
         donorCooksMenu: meal.donorCooksMenu || '',
         dietaryNotes: meal.dietaryNotes || '',
@@ -119,10 +130,9 @@ export default function MealScheduling() {
         donorID: donors[0]?._id || '',
         mealDate: new Date().toISOString().split('T')[0],
         mealType: 'breakfast',
-        quantity: '50',
+        quantity: effectiveCount,
         occasion: '',
         mealDonationType: 'sponsor',
-        menuPackage: 'standard',
         estimatedCost: '',
         donorCooksMenu: '',
         dietaryNotes: '',
@@ -137,9 +147,11 @@ export default function MealScheduling() {
     setSavingForm(true);
     setFormError('');
     try {
+      const finalCount = activeChildrenCount > 0 ? activeChildrenCount : Number(form.quantity || 50);
       const payload = {
         ...form,
-        quantity: Number(form.quantity),
+        quantity: finalCount,
+        menuPackage: 'standard', // preserve backward compatibility with backend discriminator
         estimatedCost: form.estimatedCost ? Number(stripCommas(form.estimatedCost)) : 0,
       };
 
@@ -323,12 +335,12 @@ export default function MealScheduling() {
               border: `3px solid ${colors.border}`, borderTopColor: colors.primary,
               animation: 'spin 0.8s linear infinite',
             }} />
-            Loading meal schedules...
+            {t("Loading meal schedules...")}
           </div>
         ) : meals.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍽️</div>
-            <p>No meal bookings recorded. Visit the public website to test meal reservations.</p>
+            <p>{t("No meal bookings recorded. Visit the public website to test meal reservations.")}</p>
           </div>
         ) : viewMode === 'list' ? (
           /* ─── LIST VIEW ─── */
@@ -336,15 +348,15 @@ export default function MealScheduling() {
             <table style={tableStyle}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Date Scheduled</th>
-                  <th style={thStyle}>Meal Slot</th>
-                  <th style={thStyle}>Donor / Sponsor</th>
-                  <th style={thStyle}>Occasion</th>
-                  <th style={thStyle}>Menu</th>
-                  <th style={thStyle}>Quantity</th>
-                  <th style={thStyle}>Dietary Notes</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={thStyle}>Actions</th>
+                  <th style={thStyle}>{t("Date Scheduled")}</th>
+                  <th style={thStyle}>{t("Meal Slot")}</th>
+                  <th style={thStyle}>{t("Donor / Sponsor")}</th>
+                  <th style={thStyle}>{t("Occasion")}</th>
+                  <th style={thStyle}>{t("Preparation")}</th>
+                  <th style={thStyle}>{t("Beneficiaries")}</th>
+                  <th style={thStyle}>{t("Dietary Notes")}</th>
+                  <th style={thStyle}>{t("Status")}</th>
+                  <th style={thStyle}>{t("Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -376,7 +388,7 @@ export default function MealScheduling() {
                         {meal.occasion ? (
                           <span style={{ fontSize: '13px' }}>🎉 {meal.occasion}</span>
                         ) : (
-                          <span style={{ color: colors.textMuted, fontStyle: 'italic', fontSize: '12px' }}>None</span>
+                          <span style={{ color: colors.textMuted, fontStyle: 'italic', fontSize: '12px' }}>{t("None")}</span>
                         )}
                       </td>
                       <td style={tdStyle}>
@@ -391,20 +403,25 @@ export default function MealScheduling() {
                         ) : (
                           <span style={{
                             padding: '3px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            backgroundColor: meal.menuPackage === 'feast' ? colors.warningGlow : meal.menuPackage === 'special' ? colors.successGlow : colors.primaryGlow,
-                            color: meal.menuPackage === 'feast' ? colors.warning : meal.menuPackage === 'special' ? colors.success : colors.primary,
-                            fontWeight: 600, fontSize: '11px', textTransform: 'capitalize'
+                            backgroundColor: colors.primaryGlow,
+                            color: colors.primary,
+                            fontWeight: 600, fontSize: '11px'
                           }}>
-                            <Utensils size={10} /> {t(meal.menuPackage || 'standard')}
+                            <Utensils size={10} /> {t("Centre-Prepared")}
                           </span>
                         )}
                       </td>
-                      <td style={tdStyle}>{meal.quantity} {t("portions")}</td>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Baby size={13} color={colors.primary} />
+                          <span style={{ fontWeight: 600 }}>{meal.quantity || activeChildrenCount || 50} {t("Kids (All)")}</span>
+                        </div>
+                      </td>
                       <td style={{ ...tdStyle, fontSize: '12px', maxWidth: '150px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={meal.dietaryNotes}>
                         {meal.dietaryNotes ? (
                           <span style={{ color: colors.danger }}>⚠️ {meal.dietaryNotes}</span>
                         ) : (
-                          <span style={{ color: colors.textMuted, fontStyle: 'italic' }}>None</span>
+                          <span style={{ color: colors.textMuted, fontStyle: 'italic' }}>{t("None")}</span>
                         )}
                       </td>
                       <td style={tdStyle}>
@@ -637,14 +654,14 @@ export default function MealScheduling() {
           <div style={{ ...modalBox, width: '500px' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px' }}>
               <h3 style={{ margin: 0, color: colors.text, display: 'flex', alignItems: 'center', gap: '8px', fontFamily: "'Outfit', sans-serif" }}>
-                <Utensils size={18} color={colors.primary} /> Sponsor Meal Details
+                <Utensils size={18} color={colors.primary} /> {t("Sponsor Meal Details")}
               </h3>
               <ModalCloseButton onClick={() => setSelectedMeal(null)} />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Scheduled Date & Slot</span>
+                <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Scheduled Date & Slot")}</span>
                 <div style={{ fontWeight: 700, fontSize: '15px', color: colors.text, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                   <Calendar size={15} color={colors.primary} />
                   {new Date(selectedMeal.mealDate || selectedMeal.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
@@ -653,25 +670,25 @@ export default function MealScheduling() {
                     backgroundColor: selectedMeal.mealType === 'breakfast' ? colors.warningGlow : selectedMeal.mealType === 'lunch' ? colors.infoGlow : colors.primaryGlow,
                     color: selectedMeal.mealType === 'breakfast' ? colors.warning : selectedMeal.mealType === 'lunch' ? colors.info : colors.primary
                   }}>
-                    {selectedMeal.mealType}
+                    {t(selectedMeal.mealType)}
                   </span>
                 </div>
               </div>
 
               <div>
-                <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Donor / Sponsor</span>
+                <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Donor / Sponsor")}</span>
                 <div style={{ fontWeight: 600, fontSize: '14px', color: colors.text, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                   <User size={15} color={colors.textSecondary} />
                   {selectedMeal.donorID?.name || 'Unknown Sponsor'}
                 </div>
                 <div style={{ fontSize: '12px', color: colors.textMuted, marginLeft: '23px' }}>
-                  Email: {selectedMeal.donorID?.email || 'N/A'} | Contact: {selectedMeal.donorID?.contactDetails || 'N/A'}
+                  {t("Email")}: {selectedMeal.donorID?.email || 'N/A'} | {t("Contact")}: {selectedMeal.donorID?.contactDetails || 'N/A'}
                 </div>
               </div>
 
               {selectedMeal.occasion && (
                 <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Occasion / Purpose</span>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Occasion / Purpose")}</span>
                   <div style={{ fontSize: '13px', color: colors.text, fontWeight: 500, marginTop: '4px', padding: '6px 10px', backgroundColor: colors.surface, borderRadius: '6px' }}>
                     🎉 {selectedMeal.occasion}
                   </div>
@@ -686,7 +703,7 @@ export default function MealScheduling() {
                     padding: '5px 12px', borderRadius: '20px',
                     background: 'rgba(168,85,247,0.12)', color: '#a855f7', fontWeight: 700, fontSize: '12px'
                   }}>
-                    <ShoppingBag size={12} /> Bring Your Own Meal
+                    <ShoppingBag size={12} /> {t("Bring Your Own Meal")}
                   </span>
                 ) : (
                   <span style={{
@@ -694,29 +711,21 @@ export default function MealScheduling() {
                     padding: '5px 12px', borderRadius: '20px',
                     background: colors.primaryGlow, color: colors.primary, fontWeight: 700, fontSize: '12px'
                   }}>
-                    <DollarSign size={12} /> Sponsor a Meal
+                    <DollarSign size={12} /> {t("Sponsor a Meal")}
                   </span>
                 )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {selectedMeal.mealDonationType !== 'bringyourown' && (
-                  <div>
-                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Menu Package</span>
-                    <div style={{ fontWeight: 600, fontSize: '13px', color: colors.primary, marginTop: '4px', textTransform: 'capitalize' }}>
-                      🍽️ {selectedMeal.menuPackage || 'standard'}
-                    </div>
-                  </div>
-                )}
                 <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Children to Feed</span>
-                  <div style={{ fontWeight: 600, fontSize: '13px', color: colors.text, marginTop: '4px' }}>
-                    😋 {selectedMeal.quantity} Kids
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Beneficiary Children")}</span>
+                  <div style={{ fontWeight: 700, fontSize: '13px', color: colors.text, marginTop: '4px' }}>
+                    👶 {t("All Children")} ({selectedMeal.quantity || activeChildrenCount || 50} {t("Kids")})
                   </div>
                 </div>
                 {selectedMeal.mealDonationType === 'sponsor' && selectedMeal.estimatedCost && (
                   <div>
-                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Estimated Cost</span>
+                    <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Estimated Cost")}</span>
                     <div style={{ fontWeight: 600, fontSize: '13px', color: colors.success, marginTop: '4px' }}>
                       💰 LKR {selectedMeal.estimatedCost.toLocaleString()}
                     </div>
@@ -732,14 +741,14 @@ export default function MealScheduling() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 700 }}>
-                      Advance Payment
+                      {t("Advance Payment")}
                     </span>
                     <span style={{
                       padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700,
                       backgroundColor: selectedMeal.advanceStatus === 'received' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(245, 158, 11, 0.18)',
                       color: selectedMeal.advanceStatus === 'received' ? '#10b981' : '#f59e0b'
                     }}>
-                      {selectedMeal.advanceStatus === 'received' ? 'Advance Paid' : 'Advance Pending'}
+                      {selectedMeal.advanceStatus === 'received' ? t('Advance Paid') : t('Advance Pending')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '6px' }}>
@@ -747,7 +756,7 @@ export default function MealScheduling() {
                       LKR {Number(selectedMeal.advanceAmount || 0).toLocaleString()}
                     </span>
                     <span style={{ fontSize: '12px', color: colors.textSecondary, textTransform: 'capitalize' }}>
-                      Via: {selectedMeal.advancePaymentMethod?.replace('_', ' ') || 'Bank Transfer'}
+                      {t("Via")}: {selectedMeal.advancePaymentMethod ? t(selectedMeal.advancePaymentMethod.replace('_', ' ')) : t('Bank Transfer')}
                     </span>
                   </div>
                   {selectedMeal.proofOfPayment?.fileData && (
@@ -759,7 +768,7 @@ export default function MealScheduling() {
                         rel="noopener noreferrer"
                         style={{ fontSize: '12px', color: colors.primary, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
                       >
-                        📎 View Advance Deposit Slip ({selectedMeal.proofOfPayment.fileName || 'Receipt'})
+                        📎 {t("View Advance Deposit Slip")} ({selectedMeal.proofOfPayment.fileName || t('Receipt')})
                       </a>
                     </div>
                   )}
@@ -769,7 +778,7 @@ export default function MealScheduling() {
               {/* Bring Your Own Meal description */}
               {selectedMeal.mealDonationType === 'bringyourown' && selectedMeal.donorCooksMenu && (
                 <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Donor&apos;s Menu Plan</span>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Donor's Menu Plan")}</span>
                   <div style={{
                     fontSize: '13px', color: '#a855f7', fontWeight: 500, marginTop: '4px',
                     padding: '8px 12px', background: 'rgba(168,85,247,0.08)',
@@ -784,7 +793,7 @@ export default function MealScheduling() {
 
               {selectedMeal.dietaryNotes && (
                 <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Dietary Instructions</span>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Dietary Instructions")}</span>
                   <div style={{ fontSize: '12px', color: colors.danger, fontWeight: 500, marginTop: '4px', padding: '8px 12px', backgroundColor: colors.dangerGlow, borderRadius: '8px', display: 'flex', gap: '6px', alignItems: 'start' }}>
                     <AlertCircle size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
                     <span>{selectedMeal.dietaryNotes}</span>
@@ -793,21 +802,21 @@ export default function MealScheduling() {
               )}
 
               <div>
-                <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Sponsorship Status</span>
+                <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Sponsorship Status")}</span>
                 <div style={{ marginTop: '4px' }}>
                   <span style={{
                     padding: '4px 12px', borderRadius: '6px', fontWeight: 700, fontSize: '12px', textTransform: 'capitalize',
                     background: selectedMeal.status === 'received' ? colors.successGlow : selectedMeal.status === 'pending' ? colors.warningGlow : colors.dangerGlow,
                     color: selectedMeal.status === 'received' ? colors.success : selectedMeal.status === 'pending' ? colors.warning : colors.danger,
                   }}>
-                    {selectedMeal.status === 'received' ? 'Completed (Served)' : selectedMeal.status}
+                    {selectedMeal.status === 'received' ? t('Completed (Served)') : t(selectedMeal.status)}
                   </span>
                 </div>
               </div>
 
               {selectedMeal.notes && (
                 <div>
-                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>Internal Notes</span>
+                  <span style={{ fontSize: '11px', color: colors.textMuted, textTransform: 'uppercase', fontWeight: 600 }}>{t("Internal Notes")}</span>
                   <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '4px', fontStyle: 'italic' }}>
                     {selectedMeal.notes}
                   </div>
@@ -827,7 +836,7 @@ export default function MealScheduling() {
                     }}
                     style={{ ...buttonSecondary, display: 'inline-flex', alignItems: 'center', gap: '4px', color: colors.primary, borderColor: colors.primaryGlow }}
                   >
-                    <Edit2 size={12} /> Edit Details
+                    <Edit2 size={12} /> {t("Edit Details")}
                   </button>
                   {selectedMeal.status === 'pending' && (
                     <>
@@ -838,7 +847,7 @@ export default function MealScheduling() {
                         }}
                         style={{ ...buttonSecondary, color: colors.danger, borderColor: 'rgba(239,68,68,0.2)' }}
                       >
-                        Cancel Sponsorship
+                        {t("Cancel Sponsorship")}
                       </button>
                       <button
                         onClick={() => {
@@ -847,17 +856,17 @@ export default function MealScheduling() {
                         }}
                         style={{ ...buttonPrimary, background: `linear-gradient(135deg, ${colors.success}, #059669)` }}
                       >
-                        Mark Served
+                        {t("Mark Served")}
                       </button>
                     </>
                   )}
                 </>
               ) : (
                 <div style={{ alignSelf: 'center', fontSize: '12px', color: colors.textMuted, display: 'inline-flex', alignItems: 'center', gap: '4px', marginRight: 'auto' }}>
-                  <Lock size={13} color={colors.warning} /> Staff View Mode (Read-Only)
+                  <Lock size={13} color={colors.warning} /> {t("Staff View Mode (Read-Only)")}
                 </div>
               )}
-              <button type="button" style={buttonSecondary} onClick={() => setSelectedMeal(null)}>Close</button>
+              <button type="button" style={buttonSecondary} onClick={() => setSelectedMeal(null)}>{t("Close")}</button>
             </div>
           </div>
         </div>
@@ -927,12 +936,12 @@ export default function MealScheduling() {
                         <DollarSign size={16} color="#fff" />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '13px', color: form.mealDonationType === 'sponsor' ? colors.primary : colors.text }}>Sponsor a Meal</div>
-                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '1px' }}>Donate money · Staff cook</div>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: form.mealDonationType === 'sponsor' ? colors.primary : colors.text }}>{t("Sponsor a Meal")}</div>
+                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '1px' }}>{t("Donate money · Staff cook")}</div>
                       </div>
                     </div>
                     <p style={{ fontSize: '11px', color: colors.textSecondary, margin: 0, lineHeight: '1.5' }}>
-                      Donor contributes funds. Our orphanage staff will prepare and serve the meal.
+                      {t("Donor contributes funds. Our orphanage staff will prepare and serve the meal.")}
                     </p>
                   </div>
 
@@ -965,12 +974,12 @@ export default function MealScheduling() {
                         <ShoppingBag size={16} color="#fff" />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '13px', color: form.mealDonationType === 'bringyourown' ? '#a855f7' : colors.text }}>Bring Your Own Meal</div>
-                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '1px' }}>Self-catered · Donor prepares</div>
+                        <div style={{ fontWeight: 700, fontSize: '13px', color: form.mealDonationType === 'bringyourown' ? '#a855f7' : colors.text }}>{t("Bring Your Own Meal")}</div>
+                        <div style={{ fontSize: '11px', color: colors.textMuted, marginTop: '1px' }}>{t("Self-catered · Donor prepares")}</div>
                       </div>
                     </div>
                     <p style={{ fontSize: '11px', color: colors.textSecondary, margin: 0, lineHeight: '1.5' }}>
-                      Donor books a date and brings or prepares the meal themselves.
+                      {t("Donor books a date and brings or prepares the meal themselves.")}
                     </p>
                   </div>
 
@@ -978,14 +987,14 @@ export default function MealScheduling() {
               </div>
 
               {/* ── COMMON FIELDS ── */}
-              <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Select Donor Profile</label>
+              <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Select Donor Profile")}</label>
               <select
                 style={selectStyle}
                 value={form.donorID}
                 onChange={(e) => setForm({ ...form, donorID: e.target.value })}
                 required
               >
-                <option value="" disabled>-- Select Donor --</option>
+                <option value="" disabled>-- {t("Select Donor")} --</option>
                 {donors.map(donor => (
                   <option key={donor._id} value={donor._id}>
                     {donor.name} ({donor.email})
@@ -995,7 +1004,7 @@ export default function MealScheduling() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Meal Date</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Meal Date")}</label>
                   <input
                     type="date"
                     style={inputStyle}
@@ -1005,15 +1014,15 @@ export default function MealScheduling() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Meal Slot</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Meal Slot")}</label>
                   <select
                     style={selectStyle}
                     value={form.mealType}
                     onChange={(e) => setForm({ ...form, mealType: e.target.value })}
                   >
-                    <option value="breakfast">🌅 Breakfast</option>
-                    <option value="lunch">☀️ Lunch</option>
-                    <option value="dinner">🌙 Dinner</option>
+                    <option value="breakfast">🌅 {t("Breakfast")}</option>
+                    <option value="lunch">☀️ {t("Lunch")}</option>
+                    <option value="dinner">🌙 {t("Dinner")}</option>
                   </select>
                 </div>
               </div>
@@ -1025,33 +1034,19 @@ export default function MealScheduling() {
                   border: `1px solid rgba(29,112,184,0.2)`,
                   borderRadius: '10px', padding: '14px', marginBottom: '14px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                     <Utensils size={14} color={colors.primary} />
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Staff-Cooked Meal Options</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: colors.primary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t("Staff-Cooked Meal Options")}</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Menu Package</label>
-                      <select
-                        style={selectStyle}
-                        value={form.menuPackage}
-                        onChange={(e) => setForm({ ...form, menuPackage: e.target.value })}
-                      >
-                        <option value="standard">🍛 Standard Menu</option>
-                        <option value="special">⭐ Special Menu</option>
-                        <option value="feast">🎉 Feast Menu</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Estimated Cost (LKR)</label>
-                      <input
-                        type="text"
-                        style={inputStyle}
-                        placeholder="e.g. 15,000"
-                        value={form.estimatedCost}
-                        onChange={(e) => setForm({ ...form, estimatedCost: formatWithCommas(e.target.value) })}
-                      />
-                    </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Estimated Cost (LKR)")}</label>
+                    <input
+                      type="text"
+                      style={inputStyle}
+                      placeholder={t("e.g. 15,000")}
+                      value={form.estimatedCost}
+                      onChange={(e) => setForm({ ...form, estimatedCost: formatWithCommas(e.target.value) })}
+                    />
                   </div>
                 </div>
               )}
@@ -1065,12 +1060,12 @@ export default function MealScheduling() {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
                     <ShoppingBag size={14} color="#a855f7" />
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>What Will the Donor Bring?</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#a855f7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t("What Will the Donor Bring?")}</span>
                   </div>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Meal Description / Menu Plan</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Meal Description / Menu Plan")}</label>
                   <textarea
                     style={{ ...inputStyle, minHeight: '72px', resize: 'vertical', borderColor: 'rgba(168,85,247,0.3)' }}
-                    placeholder="e.g. Rice & curry with 3 side dishes, fresh juice and dessert for all children"
+                    placeholder={t("e.g. Rice & curry with 3 side dishes, fresh juice and dessert for all children")}
                     value={form.donorCooksMenu}
                     onChange={(e) => setForm({ ...form, donorCooksMenu: e.target.value })}
                     required={form.mealDonationType === 'bringyourown'}
@@ -1078,25 +1073,69 @@ export default function MealScheduling() {
                 </div>
               )}
 
-              {/* ── QUANTITY (always shown) ── */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Number of Children to Feed</label>
-                <input
-                  type="number"
-                  min="1"
-                  style={inputStyle}
-                  value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                  required
-                />
+              {/* ── BENEFICIARY CHILDREN (Mandatory: All Active Children) ── */}
+              <div style={{
+                marginBottom: '16px',
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(59,130,246,0.04))',
+                border: `1.5px solid rgba(37,99,235,0.25)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '14px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(37,99,235,0.25)'
+                  }}>
+                    <Baby size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: colors.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {t("Beneficiary Children")}
+                    </div>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: colors.text, marginTop: '2px' }}>
+                      {t("All Orphanage Children")}
+                    </div>
+                    <div style={{ fontSize: '12px', color: colors.textSecondary, marginTop: '2px' }}>
+                      {t("Meals must cover all children currently residing in the orphanage.")}
+                    </div>
+                  </div>
+                </div>
+                <div style={{
+                  textAlign: 'right',
+                  padding: '8px 14px',
+                  backgroundColor: colors.card,
+                  border: `1.5px solid rgba(37,99,235,0.3)`,
+                  borderRadius: '10px',
+                  boxShadow: '0 2px 8px rgba(37,99,235,0.08)',
+                  minWidth: '95px'
+                }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase' }}>
+                    {t("Active Children")}
+                  </div>
+                  <div style={{ fontSize: '22px', fontWeight: 900, color: colors.primary, marginTop: '1px' }}>
+                    {activeChildrenCount || form.quantity || 50}
+                  </div>
+                </div>
               </div>
 
               {/* Occasion */}
               <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Occasion / Purpose (Optional)</label>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Occasion / Purpose (Optional)")}</label>
                 <input
                   style={inputStyle}
-                  placeholder="e.g. Birthday celebration, Memorial day"
+                  placeholder={t("e.g. Birthday celebration, Memorial day")}
                   value={form.occasion}
                   onChange={(e) => setForm({ ...form, occasion: e.target.value })}
                 />
@@ -1104,10 +1143,10 @@ export default function MealScheduling() {
 
               {/* Dietary Notes */}
               <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Dietary Instructions (Optional)</label>
+                <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Dietary Instructions (Optional)")}</label>
                 <textarea
                   style={{ ...inputStyle, minHeight: '56px', resize: 'vertical' }}
-                  placeholder="e.g. Vegetarian only, mild spices, no nuts"
+                  placeholder={t("e.g. Vegetarian only, mild spices, no nuts")}
                   value={form.dietaryNotes}
                   onChange={(e) => setForm({ ...form, dietaryNotes: e.target.value })}
                 />
@@ -1116,21 +1155,21 @@ export default function MealScheduling() {
               {/* Status (Only when editing) */}
               {editingMealId && (
                 <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>Status</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: colors.textSecondary, marginBottom: '6px', fontWeight: 600 }}>{t("Status")}</label>
                   <select
                     style={selectStyle}
                     value={form.status}
                     onChange={(e) => setForm({ ...form, status: e.target.value })}
                   >
-                    <option value="pending">Pending</option>
-                    <option value="received">Completed (Served)</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="pending">{t("Pending")}</option>
+                    <option value="received">{t("Completed (Served)")}</option>
+                    <option value="cancelled">{t("Cancelled")}</option>
                   </select>
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px', borderTop: `1px solid ${colors.border}`, paddingTop: '16px' }}>
-                <button type="button" style={buttonSecondary} onClick={() => setShowFormModal(false)}>Cancel</button>
+                <button type="button" style={buttonSecondary} onClick={() => setShowFormModal(false)}>{t("Cancel")}</button>
                 <button
                   type="submit"
                   style={{
@@ -1141,7 +1180,7 @@ export default function MealScheduling() {
                   }}
                   disabled={savingForm}
                 >
-                  {savingForm ? 'Saving...' : editingMealId ? 'Update Booking' : 'Confirm Booking'}
+                  {savingForm ? t('Saving...') : editingMealId ? t('Update Booking') : t('Confirm Booking')}
                 </button>
               </div>
             </form>
@@ -1213,13 +1252,15 @@ export default function MealScheduling() {
                       <div style={{ fontSize: '12px', fontWeight: 600, color: colors.primary, textTransform: 'uppercase' }}>{t(selectedMeal.mealType)}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Portions")}</div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>{selectedMeal.quantity} {t("portions")}</div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Beneficiaries")}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text }}>
+                        {t("All Children")} ({selectedMeal.quantity || activeChildrenCount || 50} {t("Kids")})
+                      </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Meal Type")}</div>
+                      <div style={{ fontSize: '11px', color: colors.textMuted, marginBottom: '2px' }}>{t("Preparation")}</div>
                       <div style={{ fontSize: '12px', fontWeight: 600, color: '#a855f7', textTransform: 'capitalize' }}>
-                        {selectedMeal.mealDonationType === 'bringyourown' ? t("Self-Catered") : t("Sponsor package")}
+                        {selectedMeal.mealDonationType === 'bringyourown' ? t("Self-Catered") : t("Centre-Prepared")}
                       </div>
                     </div>
                   </div>
@@ -1227,18 +1268,11 @@ export default function MealScheduling() {
 
               </div>
 
-              {/* Menu Package info */}
-              {selectedMeal.mealDonationType !== 'bringyourown' && (
-                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(241,156,56,0.04)', border: `1px solid rgba(241,156,56,0.15)`, borderRadius: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '11px', color: colors.primary, fontWeight: 700, textTransform: 'uppercase' }}>{t("Menu Package")}</span>
-                    {selectedMeal.estimatedCost && (
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: colors.success }}>LKR {selectedMeal.estimatedCost.toLocaleString()}</span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: colors.text, textTransform: 'capitalize' }}>
-                    🍴 {selectedMeal.menuPackage} {t("Menu")}
-                  </div>
+              {/* Estimated Cost info if provided */}
+              {selectedMeal.estimatedCost > 0 && (
+                <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: 'rgba(241,156,56,0.04)', border: `1px solid rgba(241,156,56,0.15)`, borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: colors.primary, fontWeight: 700, textTransform: 'uppercase' }}>{t("Meal Cost / Contribution")}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: colors.success }}>LKR {selectedMeal.estimatedCost.toLocaleString()}</span>
                 </div>
               )}
 
